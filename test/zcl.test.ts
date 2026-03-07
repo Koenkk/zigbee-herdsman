@@ -1945,9 +1945,9 @@ describe("Zcl", () => {
     });
 
     it("Zcl utils get cluster with manufacturerCode", () => {
-        const cluster = Zcl.Utils.getCluster(0xfc00, 0x100b, MANU_SPE_CUSTOM_CLUSTERS);
-        expect(cluster.ID).toBe(0xfc00);
-        expect(cluster.name).toBe("manuSpecificPhilips");
+        const cluster = Zcl.Utils.getCluster(0xfc57, 0x1217, MANU_SPE_CUSTOM_CLUSTERS);
+        expect(cluster.ID).toBe(0xfc57);
+        expect(cluster.name).toBe("manuSpecificAmazonWWAH");
     });
 
     it("Zcl utils get cluster manufacturerCode", () => {
