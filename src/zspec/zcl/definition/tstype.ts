@@ -405,5 +405,4 @@ export type ClusterName =
     | "manuSpecificSmartThingsArrivalSensor"
     | "manuSpecificSiglisZigfred"
     | "owonClearMetering"
-    | "manuSpecificProfalux1"
     | "manuSpecificAmazonWWAH";
