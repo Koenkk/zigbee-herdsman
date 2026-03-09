@@ -8,7 +8,7 @@ import {Clusters} from "../src/zspec/zcl/definition/cluster";
 import {BuffaloZclDataType, DataType} from "../src/zspec/zcl/definition/enums";
 import {Foundation, type FoundationCommandName, type FoundationDefinition} from "../src/zspec/zcl/definition/foundation";
 import {ManufacturerCode} from "../src/zspec/zcl/definition/manufacturerCode";
-import type {AttributeDefinition, ClusterName, CommandDefinition, ParameterDefinition} from "../src/zspec/zcl/definition/tstype";
+import type {Attribute, ClusterName, Command, Parameter} from "../src/zspec/zcl/definition/tstype";
 import {isFoundationDiscoverRsp} from "../src/zspec/zcl/utils";
 
 const FILENAME = "clusters-types.ts";
@@ -158,7 +158,7 @@ const getPropertyStr = (key: string, val: unknown, padId = 4) => {
     return valStr;
 };
 
-const getConditionStr = (conditions: ParameterDefinition["conditions"]): string | undefined => {
+const getConditionStr = (conditions: Parameter["conditions"]): string | undefined => {
     if (conditions) {
         let str = "conditions=[";
 
@@ -180,7 +180,7 @@ const getConditionStr = (conditions: ParameterDefinition["conditions"]): string 
     }
 };
 
-const addAttributes = (attributes: Readonly<Record<string, Readonly<AttributeDefinition>>>): ts.TypeNode => {
+const addAttributes = (attributes: Readonly<Record<string, Readonly<Attribute>>>): ts.TypeNode => {
     const elements: ts.PropertySignature[] = [];
 
     for (const attributeName in attributes) {
@@ -199,6 +199,10 @@ const addAttributes = (attributes: Readonly<Record<string, Readonly<AttributeDef
         const commentChunks: string[] = [];
 
         for (const key in attribute) {
+            if (key === "name") {
+                continue;
+            }
+
             commentChunks.push(`${key}=${getPropertyStr(key, attribute[key as keyof typeof attribute], 4)}`);
         }
 
@@ -210,7 +214,7 @@ const addAttributes = (attributes: Readonly<Record<string, Readonly<AttributeDef
     return elements.length > 0 ? ts.factory.createTypeLiteralNode(elements) : ts.factory.createKeywordTypeNode(ts.SyntaxKind.NeverKeyword);
 };
 
-const addCommands = (commands: Readonly<Record<string, Readonly<CommandDefinition>>>): ts.TypeNode => {
+const addCommands = (commands: Readonly<Record<string, Readonly<Command>>>): ts.TypeNode => {
     const elements: ts.PropertySignature[] = [];
 
     for (const commandName in commands) {
@@ -278,7 +282,7 @@ const addCommands = (commands: Readonly<Record<string, Readonly<CommandDefinitio
         const commentChunks: string[] = [];
 
         for (const key in command) {
-            if (key === "parameters") {
+            if (key === "name" || key === "parameters") {
                 continue;
             }
 
