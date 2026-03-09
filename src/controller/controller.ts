@@ -297,7 +297,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 zcl.manufacturerCode,
                 0,
                 zcl.commandKey,
-                clusterKey ?? Zcl.Clusters.touchlink.ID,
+                clusterKey ?? "touchlink",
                 zcl.payload,
                 customClusters,
             );

@@ -147,7 +147,7 @@ export interface FrameControl {
 /**
  * @see https://github.com/project-chip/zap/blob/master/zcl-builtin/dotdot/README.md#restrictions
  */
-interface Restrictions {
+type Restrictions = Readonly<{
     /** specifies an exact length, generally used for a string. */
     length?: number;
     /** specifies the minimum length that a type must take, generally used for a string or a list/array */
@@ -177,7 +177,7 @@ interface Restrictions {
      * `value` is kept as string for easier handling (will be checked on spot if used anyway) though most often is a hex number string (without 0x)
      */
     special?: [name: string, value: string][];
-}
+}>;
 
 /**
  * @see https://github.com/project-chip/zap/blob/master/zcl-builtin/dotdot/README.md#attributes
@@ -188,7 +188,7 @@ interface Restrictions {
  * - requiredIf: Allows for an expression to be implemented which indicates the conditions in which an attribute is mandatory.
  *               Defaults to false
  */
-export interface Attribute extends Restrictions {
+export type Attribute = Readonly<{
     ID: number;
     name: string;
     type: DataType;
@@ -215,12 +215,13 @@ export interface Attribute extends Restrictions {
     // defaultRef?: string;
     /** If attribute is client side */
     client?: true;
-}
+}> &
+    Restrictions;
 
-export interface Parameter extends Restrictions {
+export type Parameter = Readonly<{
     name: string;
     type: DataType | BuffaloZclDataType;
-    conditions?: (
+    conditions?: readonly (
         | {type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES; value: number}
         | {type: ParameterCondition.BITMASK_SET; param: string; mask: number /* not set */; reversed?: boolean}
         | {type: ParameterCondition.BITFIELD_ENUM; param: string; offset: number; size: number; value: number}
@@ -239,54 +240,34 @@ export interface Parameter extends Restrictions {
      * that field may be referenced using this attribute.
      */
     // arrayLengthField?: string;
-}
+}> &
+    Restrictions;
 
 /**
  * @see https://github.com/project-chip/zap/blob/master/zcl-builtin/dotdot/README.md#commands
  * Extra metadata:
  * - requiredIf: Allows for an expression to be implemented which indicates the conditions in which a command is mandatory. Defaults to false
  */
-export interface Command {
+export type Command = Readonly<{
     ID: number;
     name: string;
     parameters: readonly Parameter[];
     response?: number;
     /** If the command is mandatory. Defaults to false */
     required?: true;
-}
+}>;
 
-export interface AttributeDefinition extends Omit<Attribute, "name"> {}
-
-export interface CommandDefinition extends Omit<Command, "name"> {
-    parameters: readonly Parameter[];
-}
-
-export interface Cluster {
+export type Cluster = Readonly<{
     ID: number;
     name: string;
     manufacturerCode?: number;
-    attributes: {[s: string]: Attribute};
-    commands: {
-        [s: string]: Command;
-    };
-    commandsResponse: {
-        [s: string]: Command;
-    };
-    getAttribute: (key: number | string) => Attribute | undefined;
-    getCommand: (key: number | string) => Command;
-    getCommandResponse: (key: number | string) => Command;
-}
-
-export interface ClusterDefinition {
-    ID: number;
-    manufacturerCode?: number;
-    attributes: Readonly<Record<string, Readonly<AttributeDefinition>>>;
-    commands: Readonly<Record<string, Readonly<CommandDefinition>>>;
-    commandsResponse: Readonly<Record<string, Readonly<CommandDefinition>>>;
-}
+    attributes: Readonly<Record<string, Attribute>>;
+    commands: Readonly<Record<string, Command>>;
+    commandsResponse: Readonly<Record<string, Command>>;
+}>;
 
 export interface CustomClusters {
-    [k: string]: ClusterDefinition;
+    [k: string]: Cluster;
 }
 
 export type ClusterName =
