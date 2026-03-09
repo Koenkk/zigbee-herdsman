@@ -1,5 +1,17 @@
 # Changelog
 
+## [10.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.11...v10.0.0) (2026-03-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* improve performance with ZCL clusters handling ([#1663](https://github.com/Koenkk/zigbee-herdsman/issues/1663))
+
+### Bug Fixes
+
+* improve performance with ZCL clusters handling ([#1663](https://github.com/Koenkk/zigbee-herdsman/issues/1663)) ([8356e5d](https://github.com/Koenkk/zigbee-herdsman/commit/8356e5d2c5efd9eb75a03e881ceeefeda8c93cb5))
+* Move manuSpecificPhilips and manuSpecificPhilips2 from ZH to ZHC ([#1682](https://github.com/Koenkk/zigbee-herdsman/issues/1682)) ([e6f67ef](https://github.com/Koenkk/zigbee-herdsman/commit/e6f67ef5e5247c80cd6902011e6064b76cf888d9))
+
 ## [9.0.11](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.10...v9.0.11) (2026-03-03)
 
 
