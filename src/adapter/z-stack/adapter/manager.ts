@@ -206,9 +206,9 @@ export class ZnpAdapterManager {
             /* Warn if preconfigured key doesn't match (Z-Stack 3.x only, non-fatal) */
             if (this.options.version !== ZnpVersion.ZStack12 && !this.nwkOptions.networkKey.equals(preconfiguredKey.key)) {
                 logger.warning(
-                    `Adapter preconfigured (transport) key does not match configured network key ` +
+                    "Adapter preconfigured (transport) key does not match configured network key " +
                         `(preconfigured=${preconfiguredKey.key.toString("hex")}, configured=${this.nwkOptions.networkKey.toString("hex")}). ` +
-                        `This is typically harmless on Z-Stack 3.x adapters where only the active key matters.`,
+                        "This is typically harmless on Z-Stack 3.x adapters where only the active key matters.",
                     NS,
                 );
             }
