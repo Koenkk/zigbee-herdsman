@@ -268,7 +268,7 @@ export class Group extends ZigbeeEntity {
         const payload: TFoundation["write"] = [];
 
         for (const nameOrID in attributes) {
-            const attribute = cluster.getAttribute(nameOrID);
+            const attribute = Zcl.Utils.getClusterAttribute(cluster, nameOrID, options?.manufacturerCode);
 
             if (attribute) {
                 const attrData = Zcl.Utils.processAttributeWrite(attribute, attributes[nameOrID]);
@@ -328,7 +328,7 @@ export class Group extends ZigbeeEntity {
             if (typeof attribute === "number") {
                 payload.push({attrId: attribute});
             } else {
-                const attr = cluster.getAttribute(attribute);
+                const attr = Zcl.Utils.getClusterAttribute(cluster, attribute, options?.manufacturerCode);
 
                 if (attr) {
                     Zcl.Utils.processAttributePreRead(attr);
@@ -379,8 +379,8 @@ export class Group extends ZigbeeEntity {
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
         const command =
             optionsWithDefaults.direction === Zcl.Direction.CLIENT_TO_SERVER
-                ? cluster.getCommand(commandKey)
-                : cluster.getCommandResponse(commandKey);
+                ? Zcl.Utils.getClusterCommand(cluster, commandKey)
+                : Zcl.Utils.getClusterCommandResponse(cluster, commandKey);
 
         const createLogMessage = (): string => `Command ${this.groupID} ${cluster.name}.${command.name}(${JSON.stringify(payload)})`;
         logger.debug(createLogMessage, NS);
