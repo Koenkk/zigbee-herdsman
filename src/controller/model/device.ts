@@ -408,7 +408,7 @@ export class Device extends Entity<ControllerEventMap> {
                         }
 
                         // XXX: technically, if `readResponse` fails before reaching the network (internal to ZH), we should send a default response
-                        //      currently not possible due to implementation, although default response would likely fail as well
+                        //      currently not possible due to implementation (no distinction as to "where" it failed)
                         sendDefaultResponse = false; // per spec, already used `transactionSequenceNumber`
                     }
 
