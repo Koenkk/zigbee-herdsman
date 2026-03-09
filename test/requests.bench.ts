@@ -275,6 +275,7 @@ describe("Requests", () => {
                 },
                 BASIC_REQ_FRAME,
                 endpoint,
+                Zcl.Status.SUCCESS,
             );
         },
         {
@@ -307,6 +308,7 @@ describe("Requests", () => {
                 },
                 TIME_REQ_FRAME,
                 endpoint,
+                Zcl.Status.SUCCESS,
             );
         },
         {
