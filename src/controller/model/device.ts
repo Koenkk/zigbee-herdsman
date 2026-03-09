@@ -8,7 +8,7 @@ import {BroadcastAddress} from "../../zspec/enums";
 import type {Eui64} from "../../zspec/tstypes";
 import * as Zcl from "../../zspec/zcl";
 import type {TClusterCommandPayload, TClusterPayload, TPartialClusterAttributes} from "../../zspec/zcl/definition/clusters-types";
-import type {ClusterDefinition, CustomClusters} from "../../zspec/zcl/definition/tstype";
+import type {Cluster, CustomClusters} from "../../zspec/zcl/definition/tstype";
 import type {TZclFrame} from "../../zspec/zcl/zclFrame";
 import * as Zdo from "../../zspec/zdo";
 import type {BindingTableEntry, LQITableEntry, RoutingTableEntry} from "../../zspec/zdo/definition/tstypes";
@@ -42,6 +42,11 @@ const INTERVIEW_GENBASIC_ATTRIBUTES = [
     "dateCode",
     "swBuildId",
 ] as const;
+
+const GEN_BASIC_CLUSTER_ID = Zcl.Clusters.genBasic.ID;
+const GEN_TIME_CLUSTER_ID = Zcl.Clusters.genTime.ID;
+const GEN_POLL_CTRL_CLUSTER_ID = Zcl.Clusters.genPollCtrl.ID;
+const GEN_OTA_CLUSTER_ID = Zcl.Clusters.genOta.ID;
 
 type CustomReadResponse = (frame: Zcl.Frame, endpoint: Endpoint) => boolean;
 
@@ -357,7 +362,7 @@ export class Device extends Entity<ControllerEventMap> {
                     ...endpoint.clusters,
                 };
 
-                const isTimeReadRequest = dataPayload.clusterID === Zcl.Clusters.genTime.ID;
+                const isTimeReadRequest = dataPayload.clusterID === GEN_TIME_CLUSTER_ID;
                 if (isTimeReadRequest) {
                     attributes.genTime = {
                         attributes: timeService.getTimeClusterAttributes(),
@@ -368,7 +373,8 @@ export class Device extends Entity<ControllerEventMap> {
                     const response: KeyValue = {};
 
                     for (const entry of frame.payload) {
-                        const name = frame.cluster.getAttribute(entry.attrId)?.name;
+                        // TODO: this.manufacturerID or frame.header.manufacturerCode
+                        const name = Zcl.Utils.getClusterAttribute(frame.cluster, entry.attrId, this.manufacturerID)?.name;
 
                         if (name && name in attributes[frame.cluster.name].attributes) {
                             response[name] = attributes[frame.cluster.name].attributes[name];
@@ -518,7 +524,7 @@ export class Device extends Entity<ControllerEventMap> {
 
         // default: no timeout (messages expire immediately after first send attempt)
         let pendingRequestTimeout = 0;
-        if (endpoints.filter((e): boolean => e.inputClusters.includes(Zcl.Clusters.genPollCtrl.ID)).length > 0) {
+        if (endpoints.filter((e): boolean => e.inputClusters.includes(GEN_POLL_CTRL_CLUSTER_ID)).length > 0) {
             // default for devices that support genPollCtrl cluster (RX off when idle): 1 day
             pendingRequestTimeout = 86400000;
         }
@@ -1319,29 +1325,34 @@ export class Device extends Entity<ControllerEventMap> {
         // Zigbee does not have an official pinging mechanism. Use a read request
         // of a mandatory basic cluster attribute to keep it as lightweight as
         // possible.
-        const endpoint = this.endpoints.find((ep) => ep.inputClusters.includes(0)) ?? this.endpoints[0];
+        const endpoint = this.endpoints.find((ep) => ep.inputClusters.includes(GEN_BASIC_CLUSTER_ID)) ?? this.endpoints[0];
         await endpoint.read("genBasic", ["zclVersion"], {disableRecovery, sendPolicy: "immediate"});
     }
 
-    public addCustomCluster(name: string, cluster: ClusterDefinition): void {
+    public addCustomCluster(name: string, cluster: Cluster): void {
         assert(
-            ![Zcl.Clusters.touchlink.ID, Zcl.Clusters.greenPower.ID].includes(cluster.ID),
+            cluster.ID !== Zcl.Clusters.touchlink.ID && cluster.ID !== Zcl.Clusters.greenPower.ID,
             "Overriding of greenPower or touchlink cluster is not supported",
         );
-        if (Zcl.Utils.isClusterName(name)) {
-            const existingCluster = this._customClusters[name] ?? Zcl.Clusters[name];
 
+        if (Zcl.Utils.isClusterName(name)) {
             // Extend existing cluster
+            const existingCluster = this._customClusters[name] ?? Zcl.Clusters[name];
             assert(existingCluster.ID === cluster.ID, `Custom cluster ID (${cluster.ID}) should match existing cluster ID (${existingCluster.ID})`);
-            cluster = {
+
+            const extendedCluster: Cluster = {
+                name: cluster.name,
                 ID: cluster.ID,
                 manufacturerCode: cluster.manufacturerCode,
                 attributes: {...existingCluster.attributes, ...cluster.attributes},
                 commands: {...existingCluster.commands, ...cluster.commands},
                 commandsResponse: {...existingCluster.commandsResponse, ...cluster.commandsResponse},
             };
+
+            this._customClusters[name] = extendedCluster;
+        } else {
+            this._customClusters[name] = cluster;
         }
-        this._customClusters[name] = cluster;
     }
 
     #waitForOtaCommand<Co extends string>(
@@ -1356,7 +1367,7 @@ export class Device extends Entity<ControllerEventMap> {
             Zcl.FrameType.SPECIFIC,
             Zcl.Direction.CLIENT_TO_SERVER,
             transactionSequenceNumber,
-            Zcl.Clusters.genOta.ID,
+            GEN_OTA_CLUSTER_ID,
             commandId,
             timeout,
         );
@@ -1699,7 +1710,7 @@ export class Device extends Entity<ControllerEventMap> {
                 await endpoint.defaultResponse(
                     Zcl.Clusters.genOta.commands.upgradeEndRequest.ID,
                     Zcl.Status.SUCCESS,
-                    Zcl.Clusters.genOta.ID,
+                    GEN_OTA_CLUSTER_ID,
                     endResult.header.transactionSequenceNumber,
                 );
             } catch (error) {
