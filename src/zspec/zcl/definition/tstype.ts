@@ -397,7 +397,6 @@ export type ClusterName =
     | "haElectricalMeasurement"
     | "haDiagnostic"
     | "touchlink"
-    | "manuSpecificSinope"
     | "manuSpecificTuya"
     | "manuSpecificLumi"
     | "manuSpecificTuya2"
