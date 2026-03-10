@@ -3870,15 +3870,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                 write: true,
                 max: 0xffff,
             },
-            elkoDisplayText: {name: "elkoDisplayText", ID: 0x0402, type: DataType.CHAR_STR, write: true},
-            SinopeBacklight: {
-                name: "SinopeBacklight",
-                ID: 0x0402,
-                type: DataType.ENUM8,
-                manufacturerCode: ManufacturerCode.SINOPE_TECHNOLOGIES,
-                write: true,
-                max: 0xff,
-            },
             SinopeAuxCycleOutput: {
                 name: "SinopeAuxCycleOutput",
                 ID: 0x0404,
