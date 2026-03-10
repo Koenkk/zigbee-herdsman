@@ -3191,8 +3191,6 @@ export interface TClusters {
             SinopeOccupancy?: number;
             /** ID=0x0401 | type=UINT16 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=65535 */
             SinopeMainCycleOutput?: number;
-            /** ID=0x0402 | type=CHAR_STR | write=true */
-            elkoDisplayText: string;
             /** ID=0x0402 | type=ENUM8 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=255 */
             SinopeBacklight?: number;
             /** ID=0x0404 | type=UINT16 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=65535 */
