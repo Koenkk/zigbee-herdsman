@@ -576,12 +576,6 @@ export interface TClusters {
             moesStartUpOnOff: number;
             /** ID=0x8004 | type=ENUM8 | write=true | max=255 */
             tuyaOperationMode: number;
-            /** ID=0xe000 | type=UINT16 | manufacturerCode=ADEO(0x1277) | write=true | max=65535 */
-            elkoPreWarningTime?: number;
-            /** ID=0xe001 | type=UINT32 | manufacturerCode=ADEO(0x1277) | write=true | max=4294967295 */
-            elkoOnTimeReload?: number;
-            /** ID=0xe002 | type=BITMAP8 | manufacturerCode=ADEO(0x1277) | write=true */
-            elkoOnTimeReloadOptions?: number;
         };
         commands: {
             /** ID=0x00 | required=true */
@@ -663,8 +657,6 @@ export interface TClusters {
             defaultMoveRate: number;
             /** ID=0x4000 | type=UINT8 | write=true | max=255 | special=MinimumDeviceValuePermitted,00,SetToPreviousValue,ff */
             startUpCurrentLevel: number;
-            /** ID=0x4000 | type=UINT8 | manufacturerCode=ADEO(0x1277) | write=true | max=255 */
-            elkoStartUpCurrentLevel?: number;
         };
         commands: {
             /** ID=0x00 | required=true */
@@ -2919,22 +2911,6 @@ export interface TClusters {
             intermediateSetpointsTilt: Buffer;
             /** ID=0x000a | type=BITMAP8 */
             operationalStatus: number;
-            /** ID=0xe000 | type=UINT16 | manufacturerCode=ADEO(0x1277) | write=true | max=65535 */
-            elkoDriveCloseDuration?: number;
-            /** ID=0xe010 | type=BITMAP8 | manufacturerCode=ADEO(0x1277) | write=true */
-            elkoProtectionStatus?: number;
-            /** ID=0xe012 | type=UINT16 | manufacturerCode=ADEO(0x1277) | write=true | max=65535 */
-            elkoSunProtectionIlluminanceThreshold?: number;
-            /** ID=0xe013 | type=BITMAP8 | manufacturerCode=ADEO(0x1277) | write=true */
-            elkoProtectionSensor?: number;
-            /** ID=0xe014 | type=UINT16 | manufacturerCode=ADEO(0x1277) | write=true | max=65535 */
-            elkoLiftDriveUpTime?: number;
-            /** ID=0xe015 | type=UINT16 | manufacturerCode=ADEO(0x1277) | write=true | max=65535 */
-            elkoLiftDriveDownTime?: number;
-            /** ID=0xe016 | type=UINT16 | manufacturerCode=ADEO(0x1277) | write=true | max=65535 */
-            elkoTiltOpenCloseAndStepTime?: number;
-            /** ID=0xe017 | type=UINT8 | manufacturerCode=ADEO(0x1277) | write=true | max=255 */
-            elkoTiltPositionPercentageAfterMoveToLevel?: number;
             /** ID=0xf000 | type=ENUM8 | write=true | max=255 */
             tuyaMovingState: number;
             /** ID=0xf001 | type=ENUM8 | write=true | max=255 */
@@ -2982,13 +2958,6 @@ export interface TClusters {
             goToTiltPercentage: {
                 /** type=UINT8 | max=100 */
                 percentagetiltvalue: number;
-            };
-            /** ID=0x80 */
-            elkoStopOrStepLiftPercentage: {
-                /** type=UINT16 | max=65535 */
-                direction: number;
-                /** type=UINT16 | max=65535 */
-                stepvalue: number;
             };
         };
         commandResponses: never;
@@ -3855,8 +3824,6 @@ export interface TClusters {
             lampAlarmMode: number;
             /** ID=0x0035 | type=UINT24 | write=true | max=16777214 | default=16777215 */
             lampBurnHoursTripPoint: number;
-            /** ID=0xe000 | type=ENUM8 | manufacturerCode=ADEO(0x1277) | write=true | max=255 */
-            elkoControlMode?: number;
             /** ID=0xe000 | type=ENUM8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=255 */
             wiserControlMode?: number;
         };
@@ -3995,14 +3962,6 @@ export interface TClusters {
             sprutOccupancyLevel?: number;
             /** ID=0x6601 | type=UINT16 | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true | max=65535 */
             sprutOccupancySensitivity?: number;
-            /** ID=0xe000 | type=ENUM8 | manufacturerCode=ADEO(0x1277) | write=true | max=255 */
-            elkoOccupancyDfltOperationMode?: number;
-            /** ID=0xe001 | type=ENUM8 | manufacturerCode=ADEO(0x1277) | write=true | max=255 */
-            elkoOccupancyOperationMode?: number;
-            /** ID=0xe002 | type=UINT16 | manufacturerCode=ADEO(0x1277) | write=true | max=65535 */
-            elkoForceOffTimeout?: number;
-            /** ID=0xe003 | type=UINT8 | manufacturerCode=ADEO(0x1277) | write=true | max=255 */
-            elkoOccupancySensitivity?: number;
         };
         commands: never;
         commandResponses: never;
