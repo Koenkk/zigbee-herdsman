@@ -5789,69 +5789,6 @@ export interface TClusters {
             /** ID=0x5008 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=255 */
             owonPercentChangeInPower?: number;
             /** ID=0x4010 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderActiveEnergyTotal?: number;
-            /** ID=0x4011 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderReactiveEnergyTotal?: number;
-            /** ID=0x4012 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderApparentEnergyTotal?: number;
-            /** ID=0x4014 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialActiveEnergyTotal?: number;
-            /** ID=0x4015 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialReactiveEnergyTotal?: number;
-            /** ID=0x4016 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialApparentEnergyTotal?: number;
-            /** ID=0x4100 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialActiveEnergyL1Phase?: number;
-            /** ID=0x4101 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialReactiveEnergyL1Phase?: number;
-            /** ID=0x4102 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialApparentEnergyL1Phase?: number;
-            /** ID=0x4103 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderActiveEnergyL1Phase?: number;
-            /** ID=0x4104 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderReactiveEnergyL1Phase?: number;
-            /** ID=0x4105 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderApparentEnergyL1Phase?: number;
-            /** ID=0x4200 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialActiveEnergyL2Phase?: number;
-            /** ID=0x4201 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialReactiveEnergyL2Phase?: number;
-            /** ID=0x4202 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialApparentEnergyL2Phase?: number;
-            /** ID=0x4203 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderActiveEnergyL2Phase?: number;
-            /** ID=0x4204 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderReactiveEnergyL2Phase?: number;
-            /** ID=0x4205 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderApparentEnergyL2Phase?: number;
-            /** ID=0x4300 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialActiveEnergyL3Phase?: number;
-            /** ID=0x4301 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialReactiveEnergyL3Phase?: number;
-            /** ID=0x4302 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialApparentEnergyL3Phase?: number;
-            /** ID=0x4303 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderActiveEnergyL3Phase?: number;
-            /** ID=0x4304 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderReactiveEnergyL3Phase?: number;
-            /** ID=0x4305 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderApparentEnergyL3Phase?: number;
-            /** ID=0x4400 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=16777215 */
-            schneiderActiveEnergyMultiplier?: number;
-            /** ID=0x4401 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=16777215 */
-            schneiderActiveEnergyDivisor?: number;
-            /** ID=0x4402 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=16777215 */
-            schneiderReactiveEnergyMultiplier?: number;
-            /** ID=0x4403 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=16777215 */
-            schneiderReactiveEnergyDivisor?: number;
-            /** ID=0x4404 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=16777215 */
-            schneiderApparentEnergyMultiplier?: number;
-            /** ID=0x4405 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=16777215 */
-            schneiderApparentEnergyDivisor?: number;
-            /** ID=0x4501 | type=UTC | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=4294967295 */
-            schneiderEnergyResetDateTime?: number;
-            /** ID=0x4600 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=65535 */
-            schneiderEnergyCountersReportingPeriod?: number;
         };
         commands: {
             /** ID=0x00 | response=0 */
