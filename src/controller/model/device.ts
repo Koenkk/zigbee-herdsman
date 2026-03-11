@@ -373,6 +373,8 @@ export class Device extends Entity<ControllerEventMap> {
             // Response to read requests
             switch (command.name) {
                 case "read": {
+                    // NOTE: `sendDefaultResponse` always false from `command.response === 0x01`
+
                     if (this._customReadResponse?.(frame, endpoint)) {
                         break;
                     }
@@ -405,11 +407,9 @@ export class Device extends Entity<ControllerEventMap> {
                             });
                         } catch (error) {
                             logger.error(`Read response to ${this.ieeeAddr} failed (${(error as Error).message})`, NS);
+                            // XXX: technically, if `readResponse` fails before reaching the network (internal to ZH), we should send a default response
+                            //      currently not possible due to implementation (no distinction as to "where" it failed)
                         }
-
-                        // XXX: technically, if `readResponse` fails before reaching the network (internal to ZH), we should send a default response
-                        //      currently not possible due to implementation (no distinction as to "where" it failed)
-                        sendDefaultResponse = false; // per spec, already used `transactionSequenceNumber`
                     }
 
                     break;

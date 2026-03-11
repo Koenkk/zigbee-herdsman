@@ -42,7 +42,7 @@ describe("Device", () => {
         defaultResponseSpy = vi.spyOn(endpoint, "defaultResponse").mockImplementation(vi.fn());
     });
 
-    it("replies to read response", async () => {
+    it("replies to simple read", async () => {
         endpoint.saveClusterAttributeKeyValue("genBasic", [{zclVersion: 8}]);
 
         const frame = ZclFrame.create(
@@ -76,7 +76,8 @@ describe("Device", () => {
         expect(defaultResponseSpy).toHaveBeenCalledTimes(0);
     });
 
-    it("replies to time read response", async () => {
+    it("replies to time read", async () => {
+        // time is auto-generated, no saved attrs required
         const frame = ZclFrame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, undefined, 1, "read", "genTime", [], {});
         const dataPayload: ZclPayload = {
             clusterID: frame.cluster.ID,
@@ -168,7 +169,7 @@ describe("Device", () => {
         expect(defaultResponseSpy).toHaveBeenCalledTimes(0);
     });
 
-    it("ignores default response", async () => {
+    it("does not send default response for default response", async () => {
         const frame = ZclFrame.create(
             FrameType.GLOBAL,
             Direction.CLIENT_TO_SERVER,
