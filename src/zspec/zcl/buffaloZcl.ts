@@ -519,7 +519,7 @@ export class BuffaloZcl extends Buffalo {
         return {raw: this.readBuffer(options.payload.payloadSize)};
     }
 
-    private writeStructuredSelector(value: StructuredSelector): void {
+    public writeStructuredSelector(value: StructuredSelector): void {
         if (value != null) {
             const indexes = value.indexes || [];
             const indicatorType = value.indicatorType || StructuredIndicatorType.Whole;
@@ -533,7 +533,7 @@ export class BuffaloZcl extends Buffalo {
         }
     }
 
-    private readStructuredSelector(): StructuredSelector {
+    public readStructuredSelector(): StructuredSelector {
         /** [0-15] range */
         const indicator = this.readUInt8();
 

@@ -6,6 +6,7 @@ import {BroadcastAddress} from "../../zspec/enums";
 import type {Eui64} from "../../zspec/tstypes";
 import * as Zcl from "../../zspec/zcl";
 import type {TFoundation} from "../../zspec/zcl/definition/clusters-types";
+import type {FoundationDefinition} from "../../zspec/zcl/definition/foundation";
 import type * as ZclTypes from "../../zspec/zcl/definition/tstype";
 import * as Zdo from "../../zspec/zdo";
 import Request from "../helpers/request";
@@ -1118,7 +1119,7 @@ export class Endpoint extends ZigbeeEntity {
 
     public async zclCommand<Cl extends number | string, Co extends number | string, Custom extends TCustomCluster | undefined = undefined>(
         clusterKey: Cl | ZclTypes.Cluster,
-        commandKey: Co | ZclTypes.Command,
+        commandKey: Co | ZclTypes.Command | FoundationDefinition,
         payload: ClusterOrRawPayload<Cl, Co, Custom> | FoundationOrRawPayload<Co>,
         options?: Options,
         logPayload?: KeyValue,

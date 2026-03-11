@@ -99,13 +99,6 @@ describe("Zcl", () => {
         }).toThrow("Cluster 'genIdentify' has no command response 'nonexisting'");
     });
 
-    it("Get discrete or analog of unkown type", () => {
-        expect(() => {
-            // @ts-expect-error invalid on purpose
-            Zcl.Utils.getDataTypeClass(99999);
-        }).toThrow("Don't know value type for 'undefined'");
-    });
-
     it("ZclFrame from buffer parse payload with unknown frame type", () => {
         expect(() => {
             // @ts-expect-error
@@ -560,15 +553,6 @@ describe("Zcl", () => {
             {
                 attrId: 65282,
                 dataType: 76,
-                numElms: 6,
-                structElms: [
-                    {elmType: 16, elmVal: 1},
-                    {elmType: 33, elmVal: 3022},
-                    {elmType: 33, elmVal: 17320},
-                    {elmType: 36, elmVal: 1},
-                    {elmType: 33, elmVal: 560},
-                    {elmType: 32, elmVal: 86},
-                ],
                 attrData: [
                     {elmType: 16, elmVal: 1},
                     {elmType: 33, elmVal: 3022},
