@@ -59,13 +59,17 @@ describe("ZCL Utils", () => {
         ],
         [
             "by ID with non-matching manufacturer code",
-            {key: Zcl.Clusters.manuSpecificSinope.ID, manufacturerCode: 123, customClusters: {}},
-            {cluster: Zcl.Clusters.manuSpecificSinope, name: "manuSpecificSinope"},
+            {key: Zcl.Clusters.manuSpecificAmazonWWAH.ID, manufacturerCode: 123, customClusters: {}},
+            {cluster: Zcl.Clusters.manuSpecificAmazonWWAH, name: "manuSpecificAmazonWWAH"},
         ],
         [
             "by ID with matching manufacturer code",
-            {key: Zcl.Clusters.manuSpecificSinope.ID, manufacturerCode: Zcl.Clusters.manuSpecificSinope.manufacturerCode!, customClusters: {}},
-            {cluster: Zcl.Clusters.manuSpecificSinope, name: "manuSpecificSinope"},
+            {
+                key: Zcl.Clusters.manuSpecificAmazonWWAH.ID,
+                manufacturerCode: Zcl.Clusters.manuSpecificAmazonWWAH.manufacturerCode!,
+                customClusters: {},
+            },
+            {cluster: Zcl.Clusters.manuSpecificAmazonWWAH, name: "manuSpecificAmazonWWAH"},
         ],
         [
             "custom by ID",

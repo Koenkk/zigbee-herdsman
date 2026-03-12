@@ -397,12 +397,7 @@ export type ClusterName =
     | "haElectricalMeasurement"
     | "haDiagnostic"
     | "touchlink"
-    | "manuSpecificSinope"
     | "manuSpecificTuya"
-    | "manuSpecificLumi"
     | "manuSpecificTuya2"
     | "manuSpecificTuya3"
-    | "manuSpecificSmartThingsArrivalSensor"
-    | "manuSpecificSiglisZigfred"
-    | "owonClearMetering"
     | "manuSpecificAmazonWWAH";
