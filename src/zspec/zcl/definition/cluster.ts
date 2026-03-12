@@ -8992,16 +8992,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
         },
         commandsResponse: {},
     },
-    owonClearMetering: {
-        name: "owonClearMetering",
-        ID: 0xffe0,
-        manufacturerCode: ManufacturerCode.OWON_TECHNOLOGY_INC,
-        attributes: {},
-        commands: {
-            owonClearMeasurementData: {name: "owonClearMeasurementData", ID: 0x00, parameters: []},
-        },
-        commandsResponse: {},
-    },
     zosungIRTransmit: {
         name: "zosungIRTransmit",
         ID: 0xed00,

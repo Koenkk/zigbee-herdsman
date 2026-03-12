@@ -7581,14 +7581,6 @@ export interface TClusters {
         };
         commandResponses: never;
     };
-    owonClearMetering: {
-        attributes: never;
-        commands: {
-            /** ID=0x00 */
-            owonClearMeasurementData: Record<string, never>;
-        };
-        commandResponses: never;
-    };
     zosungIRTransmit: {
         attributes: never;
         commands: {
