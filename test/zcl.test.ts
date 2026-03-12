@@ -251,7 +251,7 @@ describe("Zcl", () => {
     });
 
     it("ZclFrame from buffer configReportRsp - long", () => {
-        const buffer = Buffer.from([0x08, 0x01, 0x07, 0x00, 0x01, 0x34, 0x12, 0x01, 0x01, 0x35, 0x12]);
+        const buffer = Buffer.from([0x08, 0x01, 0x07, 0x02, 0x01, 0x34, 0x12, 0x01, 0x01, 0x35, 0x12]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genPowerCfg.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
             {
@@ -267,7 +267,7 @@ describe("Zcl", () => {
         );
 
         const payload = [
-            {status: 0, direction: 1, attrId: 0x1234},
+            {status: 2, direction: 1, attrId: 0x1234},
             {status: 1, direction: 1, attrId: 0x1235},
         ];
 
@@ -276,7 +276,7 @@ describe("Zcl", () => {
     });
 
     it("ZclFrame from buffer configReportRsp (hvacThermostat)", () => {
-        const buffer = Buffer.from([0x18, 0x03, 0x07, 0x00, 0x00, 0x12, 0x00]);
+        const buffer = Buffer.from([0x18, 0x03, 0x07, 0x00]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.hvacThermostat.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
             {
@@ -291,7 +291,7 @@ describe("Zcl", () => {
             7,
         );
 
-        const payload = [{status: 0, direction: 0, attrId: 18}];
+        const payload = [{status: 0}];
 
         expect(frame.payload).toStrictEqual(payload);
         expect(frame.header).toStrictEqual(header);
