@@ -7376,102 +7376,6 @@ export interface TClusters {
             };
         };
     };
-    manuSpecificSinope: {
-        attributes: {
-            /** ID=0x0002 | type=ENUM8 | write=true | max=255 */
-            keypadLockout: number;
-            /** ID=0x0004 | type=CHAR_STR | write=true */
-            firmwareVersion: string;
-            /** ID=0x0010 | type=INT16 | write=true | max=65535 */
-            outdoorTempToDisplay: number;
-            /** ID=0x0011 | type=UINT16 | write=true | max=65535 */
-            outdoorTempToDisplayTimeout: number;
-            /** ID=0x0012 | type=ENUM8 | write=true | max=255 */
-            secondScreenBehavior: number;
-            /** ID=0x0020 | type=UINT32 | write=true | max=4294967295 */
-            currentTimeToDisplay: number;
-            /** ID=0x0052 | type=UINT8 | write=true | max=255 */
-            ledIntensityOn: number;
-            /** ID=0x0053 | type=UINT8 | write=true | max=255 */
-            ledIntensityOff: number;
-            /** ID=0x0050 | type=UINT24 | write=true | max=16777215 */
-            ledColorOn: number;
-            /** ID=0x0051 | type=UINT24 | write=true | max=16777215 */
-            ledColorOff: number;
-            /** ID=0x0052 | type=UINT8 | write=true | max=255 */
-            onLedIntensity: number;
-            /** ID=0x0053 | type=UINT8 | write=true | max=255 */
-            offLedIntensity: number;
-            /** ID=0x0054 | type=ENUM8 | write=true | max=255 */
-            actionReport: number;
-            /** ID=0x0055 | type=UINT16 | write=true | max=65535 */
-            minimumBrightness: number;
-            /** ID=0x0060 | type=UINT16 | write=true | max=65535 */
-            connectedLoadRM: number;
-            /** ID=0x0070 | type=BITMAP8 | write=true */
-            currentLoad: number;
-            /** ID=0x0071 | type=INT8 | write=true | min=-128 | max=127 | default=-128 */
-            ecoMode: number;
-            /** ID=0x0072 | type=UINT8 | write=true | max=255 | default=255 */
-            ecoMode1: number;
-            /** ID=0x0073 | type=UINT8 | write=true | max=255 | default=255 */
-            ecoMode2: number;
-            /** ID=0x0075 | type=BITMAP32 | write=true | max=4294967295 */
-            unknown: number;
-            /** ID=0x0076 | type=UINT8 | write=true | max=255 */
-            drConfigWaterTempMin: number;
-            /** ID=0x0077 | type=UINT8 | write=true | max=255 | default=2 */
-            drConfigWaterTempTime: number;
-            /** ID=0x0078 | type=UINT16 | write=true | max=65535 */
-            drWTTimeOn: number;
-            /** ID=0x0080 | type=UINT32 | max=4294967295 */
-            unknown1: number;
-            /** ID=0x00a0 | type=UINT32 | write=true | max=4294967295 */
-            dimmerTimmer: number;
-            /** ID=0x0100 | type=UINT8 | max=255 */
-            unknown2: number;
-            /** ID=0x0105 | type=ENUM8 | write=true | max=255 */
-            floorControlMode: number;
-            /** ID=0x0106 | type=ENUM8 | write=true | max=255 */
-            auxOutputMode: number;
-            /** ID=0x0107 | type=INT16 | write=true | max=65535 */
-            floorTemperature: number;
-            /** ID=0x0108 | type=INT16 | write=true | max=65535 */
-            ambiantMaxHeatSetpointLimit: number;
-            /** ID=0x0109 | type=INT16 | write=true | max=65535 */
-            floorMinHeatSetpointLimit: number;
-            /** ID=0x010a | type=INT16 | write=true | max=65535 */
-            floorMaxHeatSetpointLimit: number;
-            /** ID=0x010b | type=ENUM8 | write=true | max=255 */
-            temperatureSensor: number;
-            /** ID=0x010c | type=ENUM8 | write=true | max=255 */
-            floorLimitStatus: number;
-            /** ID=0x010d | type=INT16 | write=true | max=65535 */
-            roomTemperature: number;
-            /** ID=0x0114 | type=ENUM8 | write=true | max=255 */
-            timeFormatToDisplay: number;
-            /** ID=0x0115 | type=ENUM8 | write=true | max=255 */
-            GFCiStatus: number;
-            /** ID=0x0118 | type=UINT16 | write=true | max=255 */
-            auxConnectedLoad: number;
-            /** ID=0x0119 | type=UINT16 | write=true | max=65535 */
-            connectedLoad: number;
-            /** ID=0x0128 | type=UINT8 | write=true | max=255 */
-            pumpProtection: number;
-            /** ID=0x012a | type=ENUM8 | write=true | max=255 | default=60 */
-            unknown3: number;
-            /** ID=0x012b | type=INT16 | write=true | max=65535 */
-            currentSetpoint: number;
-            /** ID=0x012d | type=INT16 | write=true | min=-32768 | max=32767 */
-            reportLocalTemperature: number;
-            /** ID=0x0240 | type=ARRAY | write=true */
-            flowMeterConfig: ZclArray | unknown[];
-            /** ID=0x0283 | type=UINT8 | write=true | max=255 */
-            coldLoadPickupStatus: number;
-        };
-        commands: never;
-        commandResponses: never;
-    };
     manuSpecificTuya: {
         attributes: never;
         commands: {
@@ -7697,14 +7601,6 @@ export interface TClusters {
         };
         commandResponses: never;
     };
-    manuSpecificSmartThingsArrivalSensor: {
-        attributes: never;
-        commands: never;
-        commandResponses: {
-            /** ID=0x01 */
-            arrivalSensorNotify: Record<string, never>;
-        };
-    };
     owonClearMetering: {
         attributes: never;
         commands: {
@@ -7823,14 +7719,6 @@ export interface TClusters {
                 data: Buffer;
             };
         };
-        commandResponses: never;
-    };
-    manuSpecificProfalux1: {
-        attributes: {
-            /** ID=0x0000 | type=UINT8 | write=true | max=255 */
-            motorCoverType: number;
-        };
-        commands: never;
         commandResponses: never;
     };
     manuSpecificAmazonWWAH: {
