@@ -576,12 +576,6 @@ export interface TClusters {
             moesStartUpOnOff: number;
             /** ID=0x8004 | type=ENUM8 | write=true | max=255 */
             tuyaOperationMode: number;
-            /** ID=0xe000 | type=UINT16 | manufacturerCode=ADEO(0x1277) | write=true | max=65535 */
-            elkoPreWarningTime?: number;
-            /** ID=0xe001 | type=UINT32 | manufacturerCode=ADEO(0x1277) | write=true | max=4294967295 */
-            elkoOnTimeReload?: number;
-            /** ID=0xe002 | type=BITMAP8 | manufacturerCode=ADEO(0x1277) | write=true */
-            elkoOnTimeReloadOptions?: number;
         };
         commands: {
             /** ID=0x00 | required=true */
@@ -663,8 +657,6 @@ export interface TClusters {
             defaultMoveRate: number;
             /** ID=0x4000 | type=UINT8 | write=true | max=255 | special=MinimumDeviceValuePermitted,00,SetToPreviousValue,ff */
             startUpCurrentLevel: number;
-            /** ID=0x4000 | type=UINT8 | manufacturerCode=ADEO(0x1277) | write=true | max=255 */
-            elkoStartUpCurrentLevel?: number;
         };
         commands: {
             /** ID=0x00 | required=true */
@@ -2919,22 +2911,6 @@ export interface TClusters {
             intermediateSetpointsTilt: Buffer;
             /** ID=0x000a | type=BITMAP8 */
             operationalStatus: number;
-            /** ID=0xe000 | type=UINT16 | manufacturerCode=ADEO(0x1277) | write=true | max=65535 */
-            elkoDriveCloseDuration?: number;
-            /** ID=0xe010 | type=BITMAP8 | manufacturerCode=ADEO(0x1277) | write=true */
-            elkoProtectionStatus?: number;
-            /** ID=0xe012 | type=UINT16 | manufacturerCode=ADEO(0x1277) | write=true | max=65535 */
-            elkoSunProtectionIlluminanceThreshold?: number;
-            /** ID=0xe013 | type=BITMAP8 | manufacturerCode=ADEO(0x1277) | write=true */
-            elkoProtectionSensor?: number;
-            /** ID=0xe014 | type=UINT16 | manufacturerCode=ADEO(0x1277) | write=true | max=65535 */
-            elkoLiftDriveUpTime?: number;
-            /** ID=0xe015 | type=UINT16 | manufacturerCode=ADEO(0x1277) | write=true | max=65535 */
-            elkoLiftDriveDownTime?: number;
-            /** ID=0xe016 | type=UINT16 | manufacturerCode=ADEO(0x1277) | write=true | max=65535 */
-            elkoTiltOpenCloseAndStepTime?: number;
-            /** ID=0xe017 | type=UINT8 | manufacturerCode=ADEO(0x1277) | write=true | max=255 */
-            elkoTiltPositionPercentageAfterMoveToLevel?: number;
             /** ID=0xf000 | type=ENUM8 | write=true | max=255 */
             tuyaMovingState: number;
             /** ID=0xf001 | type=ENUM8 | write=true | max=255 */
@@ -2982,13 +2958,6 @@ export interface TClusters {
             goToTiltPercentage: {
                 /** type=UINT8 | max=100 */
                 percentagetiltvalue: number;
-            };
-            /** ID=0x80 */
-            elkoStopOrStepLiftPercentage: {
-                /** type=UINT16 | max=65535 */
-                direction: number;
-                /** type=UINT16 | max=65535 */
-                stepvalue: number;
             };
         };
         commandResponses: never;
@@ -3191,8 +3160,6 @@ export interface TClusters {
             SinopeOccupancy?: number;
             /** ID=0x0401 | type=UINT16 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=65535 */
             SinopeMainCycleOutput?: number;
-            /** ID=0x0402 | type=CHAR_STR | write=true */
-            elkoDisplayText: string;
             /** ID=0x0402 | type=ENUM8 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=255 */
             SinopeBacklight?: number;
             /** ID=0x0404 | type=UINT16 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=65535 */
@@ -3857,8 +3824,6 @@ export interface TClusters {
             lampAlarmMode: number;
             /** ID=0x0035 | type=UINT24 | write=true | max=16777214 | default=16777215 */
             lampBurnHoursTripPoint: number;
-            /** ID=0xe000 | type=ENUM8 | manufacturerCode=ADEO(0x1277) | write=true | max=255 */
-            elkoControlMode?: number;
             /** ID=0xe000 | type=ENUM8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=255 */
             wiserControlMode?: number;
         };
@@ -3997,14 +3962,6 @@ export interface TClusters {
             sprutOccupancyLevel?: number;
             /** ID=0x6601 | type=UINT16 | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true | max=65535 */
             sprutOccupancySensitivity?: number;
-            /** ID=0xe000 | type=ENUM8 | manufacturerCode=ADEO(0x1277) | write=true | max=255 */
-            elkoOccupancyDfltOperationMode?: number;
-            /** ID=0xe001 | type=ENUM8 | manufacturerCode=ADEO(0x1277) | write=true | max=255 */
-            elkoOccupancyOperationMode?: number;
-            /** ID=0xe002 | type=UINT16 | manufacturerCode=ADEO(0x1277) | write=true | max=65535 */
-            elkoForceOffTimeout?: number;
-            /** ID=0xe003 | type=UINT8 | manufacturerCode=ADEO(0x1277) | write=true | max=255 */
-            elkoOccupancySensitivity?: number;
         };
         commands: never;
         commandResponses: never;
@@ -5789,69 +5746,6 @@ export interface TClusters {
             /** ID=0x5008 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=255 */
             owonPercentChangeInPower?: number;
             /** ID=0x4010 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderActiveEnergyTotal?: number;
-            /** ID=0x4011 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderReactiveEnergyTotal?: number;
-            /** ID=0x4012 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderApparentEnergyTotal?: number;
-            /** ID=0x4014 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialActiveEnergyTotal?: number;
-            /** ID=0x4015 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialReactiveEnergyTotal?: number;
-            /** ID=0x4016 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialApparentEnergyTotal?: number;
-            /** ID=0x4100 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialActiveEnergyL1Phase?: number;
-            /** ID=0x4101 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialReactiveEnergyL1Phase?: number;
-            /** ID=0x4102 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialApparentEnergyL1Phase?: number;
-            /** ID=0x4103 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderActiveEnergyL1Phase?: number;
-            /** ID=0x4104 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderReactiveEnergyL1Phase?: number;
-            /** ID=0x4105 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderApparentEnergyL1Phase?: number;
-            /** ID=0x4200 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialActiveEnergyL2Phase?: number;
-            /** ID=0x4201 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialReactiveEnergyL2Phase?: number;
-            /** ID=0x4202 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialApparentEnergyL2Phase?: number;
-            /** ID=0x4203 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderActiveEnergyL2Phase?: number;
-            /** ID=0x4204 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderReactiveEnergyL2Phase?: number;
-            /** ID=0x4205 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderApparentEnergyL2Phase?: number;
-            /** ID=0x4300 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialActiveEnergyL3Phase?: number;
-            /** ID=0x4301 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialReactiveEnergyL3Phase?: number;
-            /** ID=0x4302 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderPartialApparentEnergyL3Phase?: number;
-            /** ID=0x4303 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderActiveEnergyL3Phase?: number;
-            /** ID=0x4304 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderReactiveEnergyL3Phase?: number;
-            /** ID=0x4305 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
-            schneiderApparentEnergyL3Phase?: number;
-            /** ID=0x4400 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=16777215 */
-            schneiderActiveEnergyMultiplier?: number;
-            /** ID=0x4401 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=16777215 */
-            schneiderActiveEnergyDivisor?: number;
-            /** ID=0x4402 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=16777215 */
-            schneiderReactiveEnergyMultiplier?: number;
-            /** ID=0x4403 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=16777215 */
-            schneiderReactiveEnergyDivisor?: number;
-            /** ID=0x4404 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=16777215 */
-            schneiderApparentEnergyMultiplier?: number;
-            /** ID=0x4405 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=16777215 */
-            schneiderApparentEnergyDivisor?: number;
-            /** ID=0x4501 | type=UTC | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=4294967295 */
-            schneiderEnergyResetDateTime?: number;
-            /** ID=0x4600 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=65535 */
-            schneiderEnergyCountersReportingPeriod?: number;
         };
         commands: {
             /** ID=0x00 | response=0 */
@@ -7491,26 +7385,6 @@ export interface TClusters {
             };
         };
     };
-    manuSpecificLumi: {
-        attributes: {
-            /** ID=0x0009 | type=UINT8 | write=true | max=255 */
-            mode: number;
-            /** ID=0x0112 | type=UINT32 | write=true | max=4294967295 */
-            illuminance: number;
-            /** ID=0x0114 | type=UINT8 | write=true | max=255 */
-            displayUnit: number;
-            /** ID=0x0129 | type=UINT8 | write=true | max=255 */
-            airQuality: number;
-            /** ID=0x0400 | type=BOOLEAN | write=true */
-            curtainReverse: number;
-            /** ID=0x0401 | type=BOOLEAN | write=true */
-            curtainHandOpen: number;
-            /** ID=0x0402 | type=BOOLEAN | write=true */
-            curtainCalibrated: number;
-        };
-        commands: never;
-        commandResponses: never;
-    };
     manuSpecificTuya2: {
         attributes: {
             /** ID=0xd00a | type=INT16 | write=true | min=-32768 | max=32767 */
@@ -7553,152 +7427,6 @@ export interface TClusters {
             };
             /** ID=0xe7 */
             setOptions3: {
-                /** type=BUFFER */
-                data: Buffer;
-            };
-        };
-        commandResponses: never;
-    };
-    manuSpecificSmartThingsArrivalSensor: {
-        attributes: never;
-        commands: never;
-        commandResponses: {
-            /** ID=0x01 */
-            arrivalSensorNotify: Record<string, never>;
-        };
-    };
-    manuSpecificSiglisZigfred: {
-        attributes: {
-            /** ID=0x0008 | type=UINT32 | write=true | max=4294967295 */
-            buttonEvent: number;
-        };
-        commands: {
-            /** ID=0x02 */
-            siglisZigfredButtonEvent: {
-                /** type=UINT8 | max=255 */
-                button: number;
-                /** type=UINT8 | max=255 */
-                type: number;
-                /** type=UINT16 | max=65535 */
-                duration: number;
-            };
-        };
-        commandResponses: never;
-    };
-    owonClearMetering: {
-        attributes: never;
-        commands: {
-            /** ID=0x00 */
-            owonClearMeasurementData: Record<string, never>;
-        };
-        commandResponses: never;
-    };
-    zosungIRTransmit: {
-        attributes: never;
-        commands: {
-            /** ID=0x00 */
-            zosungSendIRCode00: {
-                /** type=UINT16 | max=65535 */
-                seq: number;
-                /** type=UINT32 | max=4294967295 */
-                length: number;
-                /** type=UINT32 | max=4294967295 */
-                unk1: number;
-                /** type=UINT16 | max=65535 */
-                unk2: number;
-                /** type=UINT8 | max=255 */
-                unk3: number;
-                /** type=UINT8 | max=255 */
-                cmd: number;
-                /** type=UINT16 | max=65535 */
-                unk4: number;
-            };
-            /** ID=0x01 */
-            zosungSendIRCode01: {
-                /** type=UINT8 | max=255 */
-                zero: number;
-                /** type=UINT16 | max=65535 */
-                seq: number;
-                /** type=UINT32 | max=4294967295 */
-                length: number;
-                /** type=UINT32 | max=4294967295 */
-                unk1: number;
-                /** type=UINT16 | max=65535 */
-                unk2: number;
-                /** type=UINT8 | max=255 */
-                unk3: number;
-                /** type=UINT8 | max=255 */
-                cmd: number;
-                /** type=UINT16 | max=65535 */
-                unk4: number;
-            };
-            /** ID=0x02 */
-            zosungSendIRCode02: {
-                /** type=UINT16 | max=65535 */
-                seq: number;
-                /** type=UINT32 | max=4294967295 */
-                position: number;
-                /** type=UINT8 | max=255 */
-                maxlen: number;
-            };
-            /** ID=0x03 */
-            zosungSendIRCode03: {
-                /** type=UINT8 | max=255 */
-                zero: number;
-                /** type=UINT16 | max=65535 */
-                seq: number;
-                /** type=UINT32 | max=4294967295 */
-                position: number;
-                /** type=OCTET_STR */
-                msgpart: Buffer;
-                /** type=UINT8 | max=255 */
-                msgpartcrc: number;
-            };
-            /** ID=0x04 */
-            zosungSendIRCode04: {
-                /** type=UINT8 | max=255 */
-                zero0: number;
-                /** type=UINT16 | max=65535 */
-                seq: number;
-                /** type=UINT16 | max=65535 */
-                zero1: number;
-            };
-            /** ID=0x05 */
-            zosungSendIRCode05: {
-                /** type=UINT16 | max=65535 */
-                seq: number;
-                /** type=UINT16 | max=65535 */
-                zero: number;
-            };
-        };
-        commandResponses: {
-            /** ID=0x03 */
-            zosungSendIRCode03Resp: {
-                /** type=UINT8 | max=255 */
-                zero: number;
-                /** type=UINT16 | max=65535 */
-                seq: number;
-                /** type=UINT32 | max=4294967295 */
-                position: number;
-                /** type=OCTET_STR */
-                msgpart: Buffer;
-                /** type=UINT8 | max=255 */
-                msgpartcrc: number;
-            };
-            /** ID=0x05 */
-            zosungSendIRCode05Resp: {
-                /** type=UINT16 | max=65535 */
-                seq: number;
-                /** type=UINT16 | max=65535 */
-                zero: number;
-            };
-        };
-    };
-    zosungIRControl: {
-        attributes: never;
-        commands: {
-            /** ID=0x00 */
-            zosungControlIRCommand00: {
                 /** type=BUFFER */
                 data: Buffer;
             };

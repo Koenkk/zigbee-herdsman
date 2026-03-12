@@ -398,12 +398,6 @@ export type ClusterName =
     | "haDiagnostic"
     | "touchlink"
     | "manuSpecificTuya"
-    | "manuSpecificLumi"
     | "manuSpecificTuya2"
     | "manuSpecificTuya3"
-    | "manuSpecificSmartThingsArrivalSensor"
-    | "manuSpecificSiglisZigfred"
-    | "owonClearMetering"
-    | "zosungIRTransmit"
-    | "zosungIRControl"
     | "manuSpecificAmazonWWAH";
