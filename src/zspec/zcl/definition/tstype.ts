@@ -400,6 +400,4 @@ export type ClusterName =
     | "manuSpecificTuya"
     | "manuSpecificTuya2"
     | "manuSpecificTuya3"
-    | "zosungIRTransmit"
-    | "zosungIRControl"
     | "manuSpecificAmazonWWAH";
