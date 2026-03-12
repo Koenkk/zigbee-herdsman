@@ -6934,48 +6934,6 @@ export interface TClusters {
             rmsVoltageSagPeriodPhC: number;
             /** ID=0x0a17 | type=UINT16 | write=true | default=0 */
             rmsVoltageSwellPeriodPhC: number;
-            /** ID=0x4300 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
-            schneiderActivePowerDemandTotal?: number;
-            /** ID=0x4303 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
-            schneiderReactivePowerDemandTotal?: number;
-            /** ID=0x4318 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
-            schneiderApparentPowerDemandTotal?: number;
-            /** ID=0x4319 | type=UINT24 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=16777215 */
-            schneiderDemandIntervalDuration?: number;
-            /** ID=0x4320 | type=UTC | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=4294967295 */
-            schneiderDemandDateTime?: number;
-            /** ID=0x4509 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
-            schneiderActivePowerDemandPhase1?: number;
-            /** ID=0x450a | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
-            schneiderReactivePowerDemandPhase1?: number;
-            /** ID=0x450b | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
-            schneiderApparentPowerDemandPhase1?: number;
-            /** ID=0x4510 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=65535 */
-            schneiderDemandIntervalMinimalVoltageL1?: number;
-            /** ID=0x4513 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=65535 */
-            schneiderDemandIntervalMaximalCurrentI1?: number;
-            /** ID=0x4909 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
-            schneiderActivePowerDemandPhase2?: number;
-            /** ID=0x490a | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
-            schneiderReactivePowerDemandPhase2?: number;
-            /** ID=0x490b | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
-            schneiderApparentPowerDemandPhase2?: number;
-            /** ID=0x4910 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=65535 */
-            schneiderDemandIntervalMinimalVoltageL2?: number;
-            /** ID=0x4913 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=65535 */
-            schneiderDemandIntervalMaximalCurrentI2?: number;
-            /** ID=0x4a09 | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
-            schneiderActivePowerDemandPhase3?: number;
-            /** ID=0x4a0a | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
-            schneiderReactivePowerDemandPhase3?: number;
-            /** ID=0x4a0b | type=INT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-2147483648 | max=2147483647 */
-            schneiderApparentPowerDemandPhase3?: number;
-            /** ID=0x4a10 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=65535 */
-            schneiderDemandIntervalMinimalVoltageL3?: number;
-            /** ID=0x4a13 | type=UINT16 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=65535 */
-            schneiderDemandIntervalMaximalCurrentI3?: number;
-            /** ID=0x4e00 | type=UINT8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=255 */
-            schneiderCurrentSensorMultiplier?: number;
         };
         commands: {
             /** ID=0x00 */
