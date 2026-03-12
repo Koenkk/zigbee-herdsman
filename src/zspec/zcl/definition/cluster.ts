@@ -9008,16 +9008,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
         },
         commandsResponse: {},
     },
-    manuSpecificSmartThingsArrivalSensor: {
-        name: "manuSpecificSmartThingsArrivalSensor",
-        ID: 0xfc05,
-        manufacturerCode: ManufacturerCode.SMARTTHINGS_INC,
-        attributes: {},
-        commands: {},
-        commandsResponse: {
-            arrivalSensorNotify: {name: "arrivalSensorNotify", ID: 0x01, parameters: []},
-        },
-    },
     manuSpecificSiglisZigfred: {
         name: "manuSpecificSiglisZigfred",
         ID: 0xfc42,
