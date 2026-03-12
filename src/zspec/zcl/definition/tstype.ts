@@ -401,7 +401,6 @@ export type ClusterName =
     | "manuSpecificLumi"
     | "manuSpecificTuya2"
     | "manuSpecificTuya3"
-    | "manuSpecificSiglisZigfred"
     | "owonClearMetering"
     | "zosungIRTransmit"
     | "zosungIRControl"
