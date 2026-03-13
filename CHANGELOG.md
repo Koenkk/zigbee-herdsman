@@ -1,5 +1,22 @@
 # Changelog
 
+## [10.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.0...v10.0.1) (2026-03-13)
+
+
+### Bug Fixes
+
+* **ignore:** bump the minor-patch group with 2 updates ([#1695](https://github.com/Koenkk/zigbee-herdsman/issues/1695)) ([f1160e4](https://github.com/Koenkk/zigbee-herdsman/commit/f1160e4ff340df9b47c2e36747e80c0f7e6fabb1))
+* Move cluster manuSpecificProfalux1 from ZH to ZHC ([#1683](https://github.com/Koenkk/zigbee-herdsman/issues/1683)) ([bf3b1e3](https://github.com/Koenkk/zigbee-herdsman/commit/bf3b1e3f72e00b197741d622c50858b2194277f2))
+* Move cluster manuSpecificSiglisZigfred from ZH to ZHC ([#1688](https://github.com/Koenkk/zigbee-herdsman/issues/1688)) ([7e89d22](https://github.com/Koenkk/zigbee-herdsman/commit/7e89d22f3703798acee01cda40fc965a8ad05db5))
+* Move cluster manuSpecificSmartThingsArrivalSensor from ZH to ZHC ([#1690](https://github.com/Koenkk/zigbee-herdsman/issues/1690)) ([4519f2b](https://github.com/Koenkk/zigbee-herdsman/commit/4519f2b51be7881f600b0756091a6cd4df240c67))
+* Move cluster zosungIRTransmit and cluster zosungIRControl from ZH to ZHC ([#1691](https://github.com/Koenkk/zigbee-herdsman/issues/1691)) ([00ef097](https://github.com/Koenkk/zigbee-herdsman/commit/00ef09785a530bfe8fb2b3388e624af7dd7b2f7b))
+* Move manuSpecificLumi from ZH to ZHC ([#1687](https://github.com/Koenkk/zigbee-herdsman/issues/1687)) ([3b63933](https://github.com/Koenkk/zigbee-herdsman/commit/3b6393318fea7b5247763c0e44bd45ff1c2350c7))
+* Move manuSpecificSinope from ZH to ZHC ([#1686](https://github.com/Koenkk/zigbee-herdsman/issues/1686)) ([8a4ce87](https://github.com/Koenkk/zigbee-herdsman/commit/8a4ce87e4f129be6f7c777ad010605e789473084))
+* Move owonClearMetering from ZH to ZHC ([#1689](https://github.com/Koenkk/zigbee-herdsman/issues/1689)) ([8b918f7](https://github.com/Koenkk/zigbee-herdsman/commit/8b918f7a64e51317aede7581131ece9b8e03ff3f))
+* Remove "schneiderHaElectrical" from ZH, attributes are not used in ZHC ([#1698](https://github.com/Koenkk/zigbee-herdsman/issues/1698)) ([d8aa1ab](https://github.com/Koenkk/zigbee-herdsman/commit/d8aa1ab54091dc9a671c8535f43b0412d1502fa5))
+* Remove "schneiderSeMetering" from ZH, attributes are not used in ZHC ([#1697](https://github.com/Koenkk/zigbee-herdsman/issues/1697)) ([8d99fd2](https://github.com/Koenkk/zigbee-herdsman/commit/8d99fd2c020f679f268f2a9fae1c4bf4631d3eef))
+* Remove Elko specific attributes from ZH (not used in ZHC) ([#1696](https://github.com/Koenkk/zigbee-herdsman/issues/1696)) ([647d0f9](https://github.com/Koenkk/zigbee-herdsman/commit/647d0f969183359f86462e2e89ce5b319b5f5671))
+
 ## [10.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.11...v10.0.0) (2026-03-09)
 
 
