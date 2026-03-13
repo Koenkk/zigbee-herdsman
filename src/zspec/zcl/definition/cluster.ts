@@ -4073,7 +4073,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                 ],
             },
             plugwiseCalibrateValve: {name: "plugwiseCalibrateValve", ID: 0xa0, parameters: []},
-            wiserSmartCalibrateValve: {name: "wiserSmartCalibrateValve", ID: 0xe2, parameters: []},
         },
         commandsResponse: {
             getWeeklyScheduleRsp: {
