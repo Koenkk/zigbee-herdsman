@@ -1,72 +1,8 @@
 import {Clusters} from "./definition/cluster";
 import {ZCL_TYPE_INVALID_BY_TYPE} from "./definition/datatypes";
-import {DataType, DataTypeClass} from "./definition/enums";
+import {DataType} from "./definition/enums";
 import {Foundation, type FoundationCommandName, type FoundationDefinition} from "./definition/foundation";
 import type {Attribute, Cluster, ClusterName, Command, CustomClusters, Parameter} from "./definition/tstype";
-
-const DATA_TYPE_CLASS_DISCRETE = [
-    DataType.DATA8,
-    DataType.DATA16,
-    DataType.DATA24,
-    DataType.DATA32,
-    DataType.DATA40,
-    DataType.DATA48,
-    DataType.DATA56,
-    DataType.DATA64,
-    DataType.BOOLEAN,
-    DataType.BITMAP8,
-    DataType.BITMAP16,
-    DataType.BITMAP24,
-    DataType.BITMAP32,
-    DataType.BITMAP40,
-    DataType.BITMAP48,
-    DataType.BITMAP56,
-    DataType.BITMAP64,
-    DataType.ENUM8,
-    DataType.ENUM16,
-    DataType.OCTET_STR,
-    DataType.CHAR_STR,
-    DataType.LONG_OCTET_STR,
-    DataType.LONG_CHAR_STR,
-    DataType.ARRAY,
-    DataType.STRUCT,
-    DataType.SET,
-    DataType.BAG,
-    DataType.CLUSTER_ID,
-    DataType.ATTR_ID,
-    DataType.BAC_OID,
-    DataType.IEEE_ADDR,
-    DataType.SEC_KEY,
-];
-const DATA_TYPE_CLASS_ANALOG = [
-    DataType.UINT8,
-    DataType.UINT16,
-    DataType.UINT24,
-    DataType.UINT32,
-    DataType.UINT40,
-    DataType.UINT48,
-    DataType.UINT56,
-    DataType.INT8,
-    DataType.INT16,
-    DataType.INT24,
-    DataType.INT32,
-    DataType.INT40,
-    DataType.INT48,
-    DataType.INT56,
-    DataType.SEMI_PREC,
-    DataType.SINGLE_PREC,
-    DataType.DOUBLE_PREC,
-    DataType.TOD,
-    DataType.DATE,
-    DataType.UTC,
-];
-
-const FOUNDATION_DISCOVER_RSP_IDS = [
-    Foundation.discoverRsp.ID,
-    Foundation.discoverCommandsRsp.ID,
-    Foundation.discoverCommandsGenRsp.ID,
-    Foundation.discoverExtRsp.ID,
-];
 
 /** Runtime fast lookup */
 const ZCL_CLUSTERS_ID_TO_NAMES = (() => {
@@ -81,16 +17,29 @@ const ZCL_CLUSTERS_ID_TO_NAMES = (() => {
     return map;
 })();
 
-export function getDataTypeClass(dataType: DataType): DataTypeClass {
-    if (DATA_TYPE_CLASS_DISCRETE.includes(dataType)) {
-        return DataTypeClass.DISCRETE;
-    }
-
-    if (DATA_TYPE_CLASS_ANALOG.includes(dataType)) {
-        return DataTypeClass.ANALOG;
-    }
-
-    throw new Error(`Don't know value type for '${DataType[dataType]}'`);
+export function isAnalogDataType(dataType: DataType): boolean {
+    return (
+        dataType === DataType.UINT8 ||
+        dataType === DataType.UINT16 ||
+        dataType === DataType.UINT24 ||
+        dataType === DataType.UINT32 ||
+        dataType === DataType.UINT40 ||
+        dataType === DataType.UINT48 ||
+        dataType === DataType.UINT56 ||
+        dataType === DataType.INT8 ||
+        dataType === DataType.INT16 ||
+        dataType === DataType.INT24 ||
+        dataType === DataType.INT32 ||
+        dataType === DataType.INT40 ||
+        dataType === DataType.INT48 ||
+        dataType === DataType.INT56 ||
+        dataType === DataType.SEMI_PREC ||
+        dataType === DataType.SINGLE_PREC ||
+        dataType === DataType.DOUBLE_PREC ||
+        dataType === DataType.TOD ||
+        dataType === DataType.DATE ||
+        dataType === DataType.UTC
+    );
 }
 
 export function getCluster(key: string | number, manufacturerCode: number | undefined = undefined, customClusters: CustomClusters = {}): Cluster {
@@ -236,7 +185,7 @@ function getGlobalCommandNameById(id: number): FoundationCommandName {
     throw new Error(`Global command with id '${id}' does not exist.`);
 }
 
-export function getGlobalCommand(key: number | string): Command {
+export function getGlobalCommand(key: number | string): FoundationDefinition {
     const name = typeof key === "number" ? getGlobalCommandNameById(key) : (key as FoundationCommandName);
     const command = Foundation[name];
 
@@ -244,18 +193,7 @@ export function getGlobalCommand(key: number | string): Command {
         throw new Error(`Global command with key '${key}' does not exist`);
     }
 
-    return command.response !== undefined
-        ? {
-              ID: command.ID,
-              name,
-              parameters: command.parameters,
-              response: command.response,
-          }
-        : {
-              ID: command.ID,
-              name,
-              parameters: command.parameters,
-          };
+    return command;
 }
 
 export function isClusterName(name: string): name is ClusterName {
@@ -274,8 +212,14 @@ export function getFoundationCommand(id: number): FoundationDefinition {
     throw new Error(`Foundation command '${id}' does not exist.`);
 }
 
-export function isFoundationDiscoverRsp(id: number): boolean {
-    return FOUNDATION_DISCOVER_RSP_IDS.includes(id);
+export function getFoundationCommandByName(name: string): FoundationDefinition {
+    const command = Foundation[name as FoundationCommandName];
+
+    if (command === undefined) {
+        throw new Error(`Foundation command '${name}' does not exist.`);
+    }
+
+    return command;
 }
 
 /** Check if value is equal to either min, max, minRef or maxRef */

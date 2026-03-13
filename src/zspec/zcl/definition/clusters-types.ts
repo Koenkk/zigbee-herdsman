@@ -1,3 +1,4 @@
+import type {Foundation} from "./foundation";
 import type {
     ExtensionFieldSet,
     Gpd,
@@ -8,7 +9,6 @@ import type {
     GpdCustomReply,
     MiboxerZone,
     Struct,
-    StructuredSelector,
     ThermoTransition,
     TuyaDataPointValue,
     ZclArray,
@@ -7484,239 +7484,52 @@ export interface TClusters {
 
 export interface TFoundation {
     /** ID: 0 */
-    read: {
-        /** Type: DATA16 */
-        attrId: number;
-    }[];
+    read: ReturnType<typeof Foundation.read.parse>;
     /** ID: 1 */
-    readRsp: {
-        /** Type: DATA16 */
-        attrId: number;
-        /** Type: DATA8 */
-        status: number;
-        /** Type: DATA8 conditions=[{fieldEquals field=status value=0}] */
-        dataType?: number;
-        /** Type: USE_DATA_TYPE conditions=[{fieldEquals field=status value=0}] */
-        attrData?: unknown;
-    }[];
+    readRsp: ReturnType<typeof Foundation.readRsp.parse>;
     /** ID: 2 */
-    write: {
-        /** Type: DATA16 */
-        attrId: number;
-        /** Type: DATA8 */
-        dataType: number;
-        /** Type: USE_DATA_TYPE */
-        attrData: unknown;
-    }[];
+    write: ReturnType<typeof Foundation.write.parse>;
     /** ID: 3 */
-    writeUndiv: {
-        /** Type: DATA16 */
-        attrId: number;
-        /** Type: DATA8 */
-        dataType: number;
-        /** Type: USE_DATA_TYPE */
-        attrData: unknown;
-    }[];
+    writeUndiv: ReturnType<typeof Foundation.writeUndiv.parse>;
     /** ID: 4 */
-    writeRsp: {
-        /** Type: ENUM8 */
-        status: number;
-        /** Type: DATA16 conditions=[{fieldEquals field=status reversed=true value=0}] */
-        attrId?: number;
-    }[];
+    writeRsp: ReturnType<typeof Foundation.writeRsp.parse>;
     /** ID: 5 */
-    writeNoRsp: {
-        /** Type: DATA16 */
-        attrId: number;
-        /** Type: DATA8 */
-        dataType: number;
-        /** Type: USE_DATA_TYPE */
-        attrData: unknown;
-    }[];
+    writeNoRsp: ReturnType<typeof Foundation.writeNoRsp.parse>;
     /** ID: 6 */
-    configReport: {
-        /** Type: DATA8 */
-        direction: number;
-        /** Type: DATA16 */
-        attrId: number;
-        /** Type: DATA8 conditions=[{fieldEquals field=direction value=0}] */
-        dataType?: number;
-        /** Type: DATA16 conditions=[{fieldEquals field=direction value=0}] */
-        minRepIntval?: number;
-        /** Type: DATA16 conditions=[{fieldEquals field=direction value=0}] */
-        maxRepIntval?: number;
-        /** Type: USE_DATA_TYPE conditions=[{fieldEquals field=direction value=0}{dataTypeValueTypeEquals value=ANALOG}] */
-        repChange?: unknown;
-        /** Type: DATA16 conditions=[{fieldEquals field=direction value=1}] */
-        timeout?: number;
-    }[];
+    configReport: ReturnType<typeof Foundation.configReport.parse>;
     /** ID: 7 */
-    configReportRsp: {
-        /** Type: ENUM8 */
-        status: number;
-        /** Type: DATA8 conditions=[{minimumRemainingBufferBytes value=3}] */
-        direction?: number;
-        /** Type: DATA16 conditions=[{minimumRemainingBufferBytes value=2}] */
-        attrId?: number;
-    }[];
+    configReportRsp: ReturnType<typeof Foundation.configReportRsp.parse>;
     /** ID: 8 */
-    readReportConfig: {
-        /** Type: DATA8 */
-        direction: number;
-        /** Type: DATA16 */
-        attrId: number;
-    }[];
+    readReportConfig: ReturnType<typeof Foundation.readReportConfig.parse>;
     /** ID: 9 */
-    readReportConfigRsp: {
-        /** Type: ENUM8 */
-        status: number;
-        /** Type: DATA8 */
-        direction: number;
-        /** Type: DATA16 */
-        attrId: number;
-        /** Type: DATA8 conditions=[{fieldEquals field=status value=0}{fieldEquals field=direction value=0}] */
-        dataType?: number;
-        /** Type: DATA16 conditions=[{fieldEquals field=status value=0}{fieldEquals field=direction value=0}] */
-        minRepIntval?: number;
-        /** Type: DATA16 conditions=[{fieldEquals field=status value=0}{fieldEquals field=direction value=0}] */
-        maxRepIntval?: number;
-        /** Type: USE_DATA_TYPE conditions=[{fieldEquals field=status value=0}{fieldEquals field=direction value=0}{dataTypeValueTypeEquals value=ANALOG}] */
-        repChange?: unknown;
-        /** Type: DATA16 conditions=[{fieldEquals field=status value=0}{fieldEquals field=direction value=1}] */
-        timeout?: number;
-    }[];
+    readReportConfigRsp: ReturnType<typeof Foundation.readReportConfigRsp.parse>;
     /** ID: 10 */
-    report: {
-        /** Type: DATA16 */
-        attrId: number;
-        /** Type: DATA8 */
-        dataType: number;
-        /** Type: USE_DATA_TYPE */
-        attrData: unknown;
-    }[];
+    report: ReturnType<typeof Foundation.report.parse>;
     /** ID: 11 */
-    defaultRsp: {
-        /** Type: DATA8 */
-        cmdId: number;
-        /** Type: ENUM8 */
-        statusCode: number;
-    };
+    defaultRsp: ReturnType<typeof Foundation.defaultRsp.parse>;
     /** ID: 12 */
-    discover: {
-        /** Type: DATA16 */
-        startAttrId: number;
-        /** Type: DATA8 */
-        maxAttrIds: number;
-    };
+    discover: ReturnType<typeof Foundation.discover.parse>;
     /** ID: 13 */
-    discoverRsp: {
-        /** Type: UINT8 */
-        discComplete: number;
-        attrInfos: {
-            /** Type: DATA16 */
-            attrId: number;
-            /** Type: DATA8 */
-            dataType: number;
-        }[];
-    };
+    discoverRsp: ReturnType<typeof Foundation.discoverRsp.parse>;
     /** ID: 14 */
-    readStructured: {
-        /** Type: DATA16 */
-        attrId: number;
-        /** Type: STRUCTURED_SELECTOR */
-        selector: StructuredSelector;
-    }[];
+    readStructured: ReturnType<typeof Foundation.readStructured.parse>;
     /** ID: 15 */
-    writeStructured: {
-        /** Type: DATA16 */
-        attrId: number;
-        /** Type: STRUCTURED_SELECTOR */
-        selector: StructuredSelector;
-        /** Type: DATA8 */
-        dataType: number;
-        /** Type: USE_DATA_TYPE */
-        elementData: unknown;
-    }[];
+    writeStructured: ReturnType<typeof Foundation.writeStructured.parse>;
     /** ID: 16 */
-    writeStructuredRsp: {
-        /** Type: ENUM8 */
-        status: number;
-        /** Type: DATA16 conditions=[{fieldEquals field=status reversed=true value=0}] */
-        attrId?: number;
-        /** Type: STRUCTURED_SELECTOR conditions=[{fieldEquals field=status reversed=true value=0}] */
-        selector?: StructuredSelector;
-    }[];
+    writeStructuredRsp: ReturnType<typeof Foundation.writeStructuredRsp.parse>;
     /** ID: 17 */
-    discoverCommands: {
-        /** Type: DATA8 */
-        startCmdId: number;
-        /** Type: DATA8 */
-        maxCmdIds: number;
-    };
+    discoverCommands: ReturnType<typeof Foundation.discoverCommands.parse>;
     /** ID: 18 */
-    discoverCommandsRsp: {
-        /** Type: UINT8 */
-        discComplete: number;
-        attrInfos: {
-            /** Type: DATA8 */
-            cmdId: number;
-        }[];
-    };
+    discoverCommandsRsp: ReturnType<typeof Foundation.discoverCommandsRsp.parse>;
     /** ID: 19 */
-    discoverCommandsGen: {
-        /** Type: DATA8 */
-        startCmdId: number;
-        /** Type: DATA8 */
-        maxCmdIds: number;
-    };
+    discoverCommandsGen: ReturnType<typeof Foundation.discoverCommandsGen.parse>;
     /** ID: 20 */
-    discoverCommandsGenRsp: {
-        /** Type: UINT8 */
-        discComplete: number;
-        attrInfos: {
-            /** Type: DATA8 */
-            cmdId: number;
-        }[];
-    };
+    discoverCommandsGenRsp: ReturnType<typeof Foundation.discoverCommandsGenRsp.parse>;
     /** ID: 21 */
-    discoverExt: {
-        /** Type: DATA16 */
-        startAttrId: number;
-        /** Type: DATA8 */
-        maxAttrIds: number;
-    };
+    discoverExt: ReturnType<typeof Foundation.discoverExt.parse>;
     /** ID: 22 */
-    discoverExtRsp: {
-        /** Type: UINT8 */
-        discComplete: number;
-        attrInfos: {
-            /** Type: DATA16 */
-            attrId: number;
-            /** Type: DATA8 */
-            dataType: number;
-            /** Type: DATA8 */
-            access: number;
-        }[];
-    };
+    discoverExtRsp: ReturnType<typeof Foundation.discoverExtRsp.parse>;
 }
-
-export type TFoundationRepetitive =
-    | "read"
-    | "readRsp"
-    | "write"
-    | "writeUndiv"
-    | "writeRsp"
-    | "writeNoRsp"
-    | "configReport"
-    | "configReportRsp"
-    | "readReportConfig"
-    | "readReportConfigRsp"
-    | "report"
-    | "readStructured"
-    | "writeStructured"
-    | "writeStructuredRsp";
-export type TFoundationFlat = "defaultRsp" | "discover" | "discoverCommands" | "discoverCommandsGen" | "discoverExt";
-export type TFoundationOneOf = "discoverRsp" | "discoverCommandsRsp" | "discoverCommandsGenRsp" | "discoverExtRsp";
 
 // Clusters
 export type TClusterAttributeKeys<Cl extends number | string> = Cl extends keyof TClusters
@@ -7765,8 +7578,5 @@ export type TClusterPayload<Cl extends number | string, Co extends number | stri
 
 // Foundation
 export type TFoundationGenericPayload = TFoundation[keyof TFoundation];
-export type TFoundationRepetitivePayload = TFoundation[TFoundationRepetitive];
-export type TFoundationFlatPayload = TFoundation[TFoundationFlat];
-export type TFoundationOneOfPayload = TFoundation[TFoundationOneOf];
 
 export type TFoundationPayload<Co extends number | string> = Co extends keyof TFoundation ? TFoundation[Co] : TFoundationGenericPayload;
