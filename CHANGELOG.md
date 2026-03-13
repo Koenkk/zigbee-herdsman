@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.1...v10.0.2) (2026-03-13)
+
+
+### Bug Fixes
+
+* ZStack: don't require preconfigured key match on Z-Stack 3.x ([#1692](https://github.com/Koenkk/zigbee-herdsman/issues/1692)) ([1738575](https://github.com/Koenkk/zigbee-herdsman/commit/173857523d4a2cfb94692c2f4cc5f24c30bc7bf3))
+
 ## [10.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.0...v10.0.1) (2026-03-13)
 
 
