@@ -5669,12 +5669,6 @@ export interface TClusters {
             projectedBillTimeStampReceived: number;
             /** ID=0x0a14 | type=BITMAP8 */
             billReceivedTrailingDigit: number;
-            /** ID=0x0300 | type=UINT16 | manufacturerCode=DEVELCO(0x1015) | write=true | max=65535 */
-            develcoPulseConfiguration?: number;
-            /** ID=0x0301 | type=UINT48 | manufacturerCode=DEVELCO(0x1015) | write=true | max=281474976710655 */
-            develcoCurrentSummation?: number;
-            /** ID=0x0302 | type=ENUM16 | manufacturerCode=DEVELCO(0x1015) | write=true | max=65535 */
-            develcoInterfaceMode?: number;
             /** ID=0x2000 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
             owonL1PhasePower?: number;
             /** ID=0x2001 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
