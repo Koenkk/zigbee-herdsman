@@ -3156,14 +3156,6 @@ export interface TClusters {
             fourNoksHysteresisHigh?: number;
             /** ID=0x0102 | type=UINT16 | manufacturerCode=ASTREL_GROUP_SRL(0x1071) | write=true | max=65535 */
             fourNoksHysteresisLow?: number;
-            /** ID=0x0400 | type=ENUM8 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=255 */
-            SinopeOccupancy?: number;
-            /** ID=0x0401 | type=UINT16 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=65535 */
-            SinopeMainCycleOutput?: number;
-            /** ID=0x0402 | type=ENUM8 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=255 */
-            SinopeBacklight?: number;
-            /** ID=0x0404 | type=UINT16 | manufacturerCode=SINOPE_TECHNOLOGIES(0x119c) | write=true | max=65535 */
-            SinopeAuxCycleOutput?: number;
             /** ID=0x4000 | type=ENUM8 | manufacturerCode=VIESSMANN_ELEKTRONIK_GMBH(0x1221) | write=true | max=255 */
             viessmannWindowOpenInternal?: number;
             /** ID=0x4000 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
