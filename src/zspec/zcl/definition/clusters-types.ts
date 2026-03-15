@@ -60,8 +60,6 @@ export interface TClusters {
             disableLocalConfig: number;
             /** ID=0x4000 | type=CHAR_STR | default= | maxLen=16 */
             swBuildId: string;
-            /** ID=0xe200 | type=INT8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-128 | max=127 */
-            schneiderMeterRadioPower?: number;
         };
         commands: {
             /** ID=0x00 */
@@ -5745,7 +5743,6 @@ export interface TClusters {
             owonReportMode?: number;
             /** ID=0x5008 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=255 */
             owonPercentChangeInPower?: number;
-            /** ID=0x4010 | type=INT48 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | min=-140737488355328 | max=140737488355327 */
         };
         commands: {
             /** ID=0x00 | response=0 */
@@ -6941,8 +6938,6 @@ export interface TClusters {
             lastMessageRssi: number;
             /** ID=0x4000 | type=BITMAP16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
             danfossSystemStatusCode?: number;
-            /** ID=0x4000 | type=UINT8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=255 */
-            schneiderCommunicationQuality?: number;
             /** ID=0x4031 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
             danfossHeatSupplyRequest?: number;
             /** ID=0x4200 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
@@ -6953,10 +6948,6 @@ export interface TClusters {
             danfossIconApplication?: number;
             /** ID=0x4220 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
             danfossIconForcedHeatingCooling?: number;
-            /** ID=0xff01 | type=UINT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=4294967295 */
-            schneiderMeterStatus?: number;
-            /** ID=0xff02 | type=UINT32 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=4294967295 */
-            schneiderDiagnosticRegister1?: number;
         };
         commands: never;
         commandResponses: never;
