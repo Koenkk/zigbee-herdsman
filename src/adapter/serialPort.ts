@@ -1,5 +1,6 @@
 /* v8 ignore start */
 
+import {platform} from "node:os";
 import {type AutoDetectTypes, autoDetect, type OpenOptionsFromBinding, type SetOptions} from "@serialport/bindings-cpp";
 // This file was copied from https://github.com/serialport/node-serialport/blob/master/packages/serialport/lib/serialport.ts.
 import {type ErrorCallback, type OpenOptions, SerialPortStream, type StreamOptions} from "@serialport/stream";
@@ -17,6 +18,14 @@ export class SerialPort<T extends AutoDetectTypes = AutoDetectTypes> extends Ser
             binding: DetectedBinding as T,
             ...options,
         };
+
+        if (platform() === "win32") {
+            // this controls `DTR` on "open", whereas on Unix, it's on "close"
+            // https://github.com/serialport/bindings-cpp/blob/19820c39fbbedc1b5f09d6508b5ef1268df3d455/src/serialport_win.cpp#L123-L127
+            // https://github.com/serialport/bindings-cpp/blob/19820c39fbbedc1b5f09d6508b5ef1268df3d455/src/serialport_unix.cpp#L254-L256
+            opts.hupcl = false;
+        }
+
         super(opts, openCallback);
     }
 
