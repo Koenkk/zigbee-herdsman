@@ -6364,30 +6364,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             // TODO: Alternative Historical Consumption Attribute Set (0x0c00..)
             // TODO: Noti fication At tribute Set (0x0000.., client=true)
             // custom
-            develcoPulseConfiguration: {
-                name: "develcoPulseConfiguration",
-                ID: 0x0300,
-                type: DataType.UINT16,
-                manufacturerCode: ManufacturerCode.DEVELCO,
-                write: true,
-                max: 0xffff,
-            },
-            develcoCurrentSummation: {
-                name: "develcoCurrentSummation",
-                ID: 0x0301,
-                type: DataType.UINT48,
-                manufacturerCode: ManufacturerCode.DEVELCO,
-                write: true,
-                max: 0xffffffffffff,
-            },
-            develcoInterfaceMode: {
-                name: "develcoInterfaceMode",
-                ID: 0x0302,
-                type: DataType.ENUM16,
-                manufacturerCode: ManufacturerCode.DEVELCO,
-                write: true,
-                max: 0xffff,
-            },
             owonL1PhasePower: {
                 name: "owonL1PhasePower",
                 ID: 0x2000,
