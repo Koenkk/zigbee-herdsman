@@ -1,5 +1,16 @@
 # Changelog
 
+## [10.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.1...v10.0.2) (2026-03-16)
+
+
+### Bug Fixes
+
+* Move "Develco metering cluster" to ZHC  ([#1701](https://github.com/Koenkk/zigbee-herdsman/issues/1701)) ([d182569](https://github.com/Koenkk/zigbee-herdsman/commit/d1825698ee4c748cdeea18addda0b5f4138e159f))
+* Move SchneiderWiser attributes from ZH to ZHC ([#1702](https://github.com/Koenkk/zigbee-herdsman/issues/1702)) ([7262b85](https://github.com/Koenkk/zigbee-herdsman/commit/7262b85671fad81f4ccba51d3a4fa968e722542b))
+* Move SinopeHvacThermostat attributes from ZH to ZHC ([#1704](https://github.com/Koenkk/zigbee-herdsman/issues/1704)) ([ffa0691](https://github.com/Koenkk/zigbee-herdsman/commit/ffa06911e8db236d6c6d57cb8fd1f50ed2003019))
+* Set serialport DTR_CONTROL_DISABLE on Windows ([#1674](https://github.com/Koenkk/zigbee-herdsman/issues/1674)) ([1f8f968](https://github.com/Koenkk/zigbee-herdsman/commit/1f8f968423d7b633588533a5f8f891b1e3ea8844))
+* ZStack: don't require preconfigured key match on Z-Stack 3.x ([#1692](https://github.com/Koenkk/zigbee-herdsman/issues/1692)) ([1738575](https://github.com/Koenkk/zigbee-herdsman/commit/173857523d4a2cfb94692c2f4cc5f24c30bc7bf3))
+
 ## [10.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.0...v10.0.1) (2026-03-13)
 
 
