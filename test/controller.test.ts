@@ -4980,15 +4980,15 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
-        const genBasic = Zcl.Utils.getCluster("genBasic", undefined, {});
+        const manuSpecificAmazonWWAH = Zcl.Utils.getCluster("manuSpecificAmazonWWAH", undefined, {});
         const saveClusterAttributeReportConfigSpy = vi.spyOn(endpoint, "saveClusterAttributeReportConfig");
 
-        endpoint.saveClusterAttributeReportConfig(genBasic.ID, Zcl.ManufacturerCode.SCHNEIDER_ELECTRIC, [
+        endpoint.saveClusterAttributeReportConfig(manuSpecificAmazonWWAH.ID, Zcl.ManufacturerCode.AMAZON_LAB126, [
             {
                 status: Zcl.Status.SUCCESS,
                 direction: Zcl.Direction.CLIENT_TO_SERVER,
-                attrId: genBasic.attributes.schneiderMeterRadioPower.ID,
-                dataType: Zcl.DataType.INT8,
+                attrId: manuSpecificAmazonWWAH.attributes.nwkRetryCount.ID,
+                dataType: Zcl.DataType.UINT8,
                 minRepIntval: 80,
                 maxRepIntval: 300,
                 repChange: 10,
@@ -5002,8 +5002,8 @@ describe("Controller", () => {
                 {
                     status: Zcl.Status.SUCCESS,
                     direction: Zcl.Direction.CLIENT_TO_SERVER,
-                    attrId: genBasic.attributes.schneiderMeterRadioPower.ID,
-                    dataType: Zcl.DataType.INT8,
+                    attrId: manuSpecificAmazonWWAH.attributes.nwkRetryCount.ID,
+                    dataType: Zcl.DataType.UINT8,
                     minRepIntval: 15,
                     maxRepIntval: 213,
                     repChange: 3,
@@ -5013,7 +5013,7 @@ describe("Controller", () => {
                 Zcl.FrameType.GLOBAL,
                 Zcl.Direction.CLIENT_TO_SERVER,
                 true,
-                Zcl.ManufacturerCode.SCHNEIDER_ELECTRIC,
+                Zcl.ManufacturerCode.AMAZON_LAB126,
                 9,
                 "readReportConfigRsp",
                 frame.cluster.ID,
@@ -5025,12 +5025,12 @@ describe("Controller", () => {
 
         expect(deepClone(endpoint.configuredReportings)).toStrictEqual([
             {
-                cluster: deepClone(genBasic),
+                cluster: deepClone(manuSpecificAmazonWWAH),
                 attribute: expect.objectContaining({
-                    ID: genBasic.attributes.schneiderMeterRadioPower.ID,
-                    name: "schneiderMeterRadioPower",
-                    type: Zcl.DataType.INT8,
-                    manufacturerCode: Zcl.ManufacturerCode.SCHNEIDER_ELECTRIC,
+                    ID: manuSpecificAmazonWWAH.attributes.nwkRetryCount.ID,
+                    name: "nwkRetryCount",
+                    type: Zcl.DataType.UINT8,
+                    manufacturerCode: Zcl.ManufacturerCode.AMAZON_LAB126,
                 }),
                 minimumReportInterval: 80,
                 maximumReportInterval: 300,
@@ -5038,8 +5038,8 @@ describe("Controller", () => {
             },
         ]);
 
-        await endpoint.readReportingConfig("genBasic", [{attribute: "schneiderMeterRadioPower"}], {
-            manufacturerCode: Zcl.ManufacturerCode.SCHNEIDER_ELECTRIC,
+        await endpoint.readReportingConfig("manuSpecificAmazonWWAH", [{attribute: "nwkRetryCount"}], {
+            manufacturerCode: Zcl.ManufacturerCode.AMAZON_LAB126,
         });
 
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
@@ -5052,11 +5052,11 @@ describe("Controller", () => {
                     Zcl.FrameType.GLOBAL,
                     Zcl.Direction.CLIENT_TO_SERVER,
                     true,
-                    Zcl.ManufacturerCode.SCHNEIDER_ELECTRIC,
+                    Zcl.ManufacturerCode.AMAZON_LAB126,
                     9,
                     "readReportConfig",
-                    genBasic.ID,
-                    [{direction: Zcl.Direction.CLIENT_TO_SERVER, attrId: genBasic.attributes.schneiderMeterRadioPower.ID}],
+                    manuSpecificAmazonWWAH.ID,
+                    [{direction: Zcl.Direction.CLIENT_TO_SERVER, attrId: manuSpecificAmazonWWAH.attributes.nwkRetryCount.ID}],
                     {},
                 ),
             ),
@@ -5065,12 +5065,12 @@ describe("Controller", () => {
 
         expect(deepClone(endpoint.configuredReportings)).toStrictEqual([
             {
-                cluster: deepClone(genBasic),
+                cluster: deepClone(manuSpecificAmazonWWAH),
                 attribute: expect.objectContaining({
-                    ID: genBasic.attributes.schneiderMeterRadioPower.ID,
-                    name: "schneiderMeterRadioPower",
-                    type: Zcl.DataType.INT8,
-                    manufacturerCode: Zcl.ManufacturerCode.SCHNEIDER_ELECTRIC,
+                    ID: manuSpecificAmazonWWAH.attributes.nwkRetryCount.ID,
+                    name: "nwkRetryCount",
+                    type: Zcl.DataType.UINT8,
+                    manufacturerCode: Zcl.ManufacturerCode.AMAZON_LAB126,
                 }),
                 minimumReportInterval: 15,
                 maximumReportInterval: 213,
