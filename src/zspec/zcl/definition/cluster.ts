@@ -3997,14 +3997,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                 write: true,
                 max: 0xff,
             },
-            schneiderWiserSpecific: {
-                name: "schneiderWiserSpecific",
-                ID: 0xe110,
-                type: DataType.ENUM8,
-                manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC,
-                write: true,
-                max: 0xff,
-            },
         },
         commands: {
             setpointRaiseLower: {
@@ -4046,37 +4038,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                     {name: "setpoint", type: DataType.INT16, min: -32768, max: 32767},
                 ],
             },
-            schneiderWiserThermostatBoost: {
-                name: "schneiderWiserThermostatBoost",
-                ID: 0x80,
-                parameters: [
-                    {name: "command", type: DataType.ENUM8, max: 0xff},
-                    {name: "enable", type: DataType.ENUM8, max: 0xff},
-                    {name: "temperature", type: DataType.UINT16, max: 0xffff},
-                    {name: "duration", type: DataType.UINT16, max: 0xffff},
-                ],
-            },
             plugwiseCalibrateValve: {name: "plugwiseCalibrateValve", ID: 0xa0, parameters: []},
-            wiserSmartSetSetpoint: {
-                name: "wiserSmartSetSetpoint",
-                ID: 0xe0,
-                parameters: [
-                    {name: "operatingmode", type: DataType.UINT8, max: 0xff},
-                    {name: "zonemode", type: DataType.UINT8, max: 0xff},
-                    {name: "setpoint", type: DataType.INT16, min: -32768, max: 32767},
-                    {name: "reserved", type: DataType.UINT8, max: 0xff},
-                ],
-            },
-            wiserSmartSetFipMode: {
-                name: "wiserSmartSetFipMode",
-                ID: 0xe1,
-                parameters: [
-                    {name: "zonemode", type: DataType.UINT8, max: 0xff},
-                    {name: "fipmode", type: DataType.ENUM8, max: 0xff},
-                    {name: "reserved", type: DataType.UINT8, max: 0xff},
-                ],
-            },
-            wiserSmartCalibrateValve: {name: "wiserSmartCalibrateValve", ID: 0xe2, parameters: []},
         },
         commandsResponse: {
             getWeeklyScheduleRsp: {
@@ -4671,15 +4633,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                 write: true,
                 max: 0xfffffe,
                 default: 0xffffff,
-            },
-            // custom
-            wiserControlMode: {
-                name: "wiserControlMode",
-                ID: 0xe000,
-                type: DataType.ENUM8,
-                manufacturerCode: ManufacturerCode.SCHNEIDER_ELECTRIC,
-                write: true,
-                max: 0xff,
             },
         },
         commands: {},
@@ -6401,30 +6354,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             // TODO: Alternative Historical Consumption Attribute Set (0x0c00..)
             // TODO: Noti fication At tribute Set (0x0000.., client=true)
             // custom
-            develcoPulseConfiguration: {
-                name: "develcoPulseConfiguration",
-                ID: 0x0300,
-                type: DataType.UINT16,
-                manufacturerCode: ManufacturerCode.DEVELCO,
-                write: true,
-                max: 0xffff,
-            },
-            develcoCurrentSummation: {
-                name: "develcoCurrentSummation",
-                ID: 0x0301,
-                type: DataType.UINT48,
-                manufacturerCode: ManufacturerCode.DEVELCO,
-                write: true,
-                max: 0xffffffffffff,
-            },
-            develcoInterfaceMode: {
-                name: "develcoInterfaceMode",
-                ID: 0x0302,
-                type: DataType.ENUM16,
-                manufacturerCode: ManufacturerCode.DEVELCO,
-                write: true,
-                max: 0xffff,
-            },
             owonL1PhasePower: {
                 name: "owonL1PhasePower",
                 ID: 0x2000,
