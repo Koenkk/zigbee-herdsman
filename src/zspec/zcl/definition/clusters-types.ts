@@ -3226,8 +3226,6 @@ export interface TClusters {
             danfossIcon2PreHeat?: number;
             /** ID=0x414f | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
             danfossIcon2PreHeatStatus?: number;
-            /** ID=0xe110 | type=ENUM8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=255 */
-            schneiderWiserSpecific?: number;
         };
         commands: {
             /** ID=0x00 | required=true */
@@ -3266,41 +3264,8 @@ export interface TClusters {
                 /** type=INT16 | min=-32768 | max=32767 */
                 setpoint: number;
             };
-            /** ID=0x80 */
-            schneiderWiserThermostatBoost: {
-                /** type=ENUM8 | max=255 */
-                command: number;
-                /** type=ENUM8 | max=255 */
-                enable: number;
-                /** type=UINT16 | max=65535 */
-                temperature: number;
-                /** type=UINT16 | max=65535 */
-                duration: number;
-            };
             /** ID=0xa0 */
             plugwiseCalibrateValve: Record<string, never>;
-            /** ID=0xe0 */
-            wiserSmartSetSetpoint: {
-                /** type=UINT8 | max=255 */
-                operatingmode: number;
-                /** type=UINT8 | max=255 */
-                zonemode: number;
-                /** type=INT16 | min=-32768 | max=32767 */
-                setpoint: number;
-                /** type=UINT8 | max=255 */
-                reserved: number;
-            };
-            /** ID=0xe1 */
-            wiserSmartSetFipMode: {
-                /** type=UINT8 | max=255 */
-                zonemode: number;
-                /** type=ENUM8 | max=255 */
-                fipmode: number;
-                /** type=UINT8 | max=255 */
-                reserved: number;
-            };
-            /** ID=0xe2 */
-            wiserSmartCalibrateValve: Record<string, never>;
         };
         commandResponses: {
             /** ID=0x00 */
@@ -3816,8 +3781,6 @@ export interface TClusters {
             lampAlarmMode: number;
             /** ID=0x0035 | type=UINT24 | write=true | max=16777214 | default=16777215 */
             lampBurnHoursTripPoint: number;
-            /** ID=0xe000 | type=ENUM8 | manufacturerCode=SCHNEIDER_ELECTRIC(0x105e) | write=true | max=255 */
-            wiserControlMode?: number;
         };
         commands: never;
         commandResponses: never;
