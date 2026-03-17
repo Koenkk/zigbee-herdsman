@@ -5622,76 +5622,6 @@ export interface TClusters {
             projectedBillTimeStampReceived: number;
             /** ID=0x0a14 | type=BITMAP8 */
             billReceivedTrailingDigit: number;
-            /** ID=0x2000 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
-            owonL1PhasePower?: number;
-            /** ID=0x2001 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
-            owonL2PhasePower?: number;
-            /** ID=0x2002 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
-            owonL3PhasePower?: number;
-            /** ID=0x2100 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
-            owonL1PhaseReactivePower?: number;
-            /** ID=0x2101 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
-            owonL2PhaseReactivePower?: number;
-            /** ID=0x2102 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
-            owonL3PhaseReactivePower?: number;
-            /** ID=0x2103 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
-            owonReactivePowerSum?: number;
-            /** ID=0x3000 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
-            owonL1PhaseVoltage?: number;
-            /** ID=0x3001 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
-            owonL2PhaseVoltage?: number;
-            /** ID=0x3002 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
-            owonL3PhaseVoltage?: number;
-            /** ID=0x3100 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
-            owonL1PhaseCurrent?: number;
-            /** ID=0x3101 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
-            owonL2PhaseCurrent?: number;
-            /** ID=0x3102 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
-            owonL3PhaseCurrent?: number;
-            /** ID=0x3103 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
-            owonCurrentSum?: number;
-            /** ID=0x3104 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
-            owonLeakageCurrent?: number;
-            /** ID=0x4000 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=281474976710655 */
-            owonL1Energy?: number;
-            /** ID=0x4001 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=281474976710655 */
-            owonL2Energy?: number;
-            /** ID=0x4002 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=281474976710655 */
-            owonL3Energy?: number;
-            /** ID=0x4100 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=281474976710655 */
-            owonL1ReactiveEnergy?: number;
-            /** ID=0x4101 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=281474976710655 */
-            owonL2ReactiveEnergy?: number;
-            /** ID=0x4102 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=281474976710655 */
-            owonL3ReactiveEnergy?: number;
-            /** ID=0x4103 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=281474976710655 */
-            owonReactiveEnergySum?: number;
-            /** ID=0x4104 | type=INT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-128 | max=127 */
-            owonL1PowerFactor?: number;
-            /** ID=0x4105 | type=INT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-128 | max=127 */
-            owonL2PowerFactor?: number;
-            /** ID=0x4106 | type=INT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-128 | max=127 */
-            owonL3PowerFactor?: number;
-            /** ID=0x5005 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=255 */
-            owonFrequency?: number;
-            /** ID=0x1000 | type=BITMAP8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true */
-            owonReportMap?: number;
-            /** ID=0x5000 | type=UINT32 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=4294967295 */
-            owonLastHistoricalRecordTime?: number;
-            /** ID=0x5001 | type=UINT32 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=4294967295 */
-            owonOldestHistoricalRecordTime?: number;
-            /** ID=0x5002 | type=UINT32 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=4294967295 */
-            owonMinimumReportCycle?: number;
-            /** ID=0x5003 | type=UINT32 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=4294967295 */
-            owonMaximumReportCycle?: number;
-            /** ID=0x5004 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=255 */
-            owonSentHistoricalRecordState?: number;
-            /** ID=0x5006 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=255 */
-            owonAccumulativeEnergyThreshold?: number;
-            /** ID=0x5007 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=255 */
-            owonReportMode?: number;
-            /** ID=0x5008 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=255 */
-            owonPercentChangeInPower?: number;
         };
         commands: {
             /** ID=0x00 | response=0 */
@@ -5835,10 +5765,6 @@ export interface TClusters {
                 /** type=UINT16 */
                 measurementPeriod: number;
             };
-            /** ID=0x20 */
-            owonGetHistoryRecord: Record<string, never>;
-            /** ID=0x21 */
-            owonStopSendingHistoricalRecord: Record<string, never>;
         };
         commandResponses: {
             /** ID=0x00 */
@@ -5971,8 +5897,6 @@ export interface TClusters {
                 /** type=UINT16 */
                 sampleId: number;
             };
-            /** ID=0x20 */
-            owonGetHistoryRecordRsp: Record<string, never>;
         };
     };
     seTunneling: {
