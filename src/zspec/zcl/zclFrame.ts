@@ -5,6 +5,7 @@ import {BuffaloZcl} from "./buffaloZcl";
 import type {TClusterPayload, TFoundationPayload} from "./definition/clusters-types";
 import {BuffaloZclDataType, type DataType, Direction, FrameType, ParameterCondition} from "./definition/enums";
 import type {FoundationCommandName, FoundationDefinition} from "./definition/foundation";
+import {Status} from "./definition/status";
 import type {BuffaloZclOptions, Cluster, ClusterName, Command, CustomClusters, Parameter} from "./definition/tstype";
 import * as Utils from "./utils";
 import {ZclHeader} from "./zclHeader";

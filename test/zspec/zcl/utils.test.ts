@@ -269,10 +269,10 @@ describe("ZCL Utils", () => {
     it("Throws when getting invalid Foundation command ID", () => {
         expect(() => {
             Zcl.Utils.getFoundationCommand(9999);
-        }).toThrow(`Foundation command '9999' does not exist.`);
+        }).toThrow(`Status 'UNSUP_COMMAND' foundation:9999`);
         expect(() => {
             Zcl.Utils.getFoundationCommandByName("doesnotexist");
-        }).toThrow(`Foundation command 'doesnotexist' does not exist.`);
+        }).toThrow(`Status 'UNSUP_COMMAND' foundation:doesnotexist`);
     });
 
     function createAttribute(overrides: Partial<Attribute> = {}): Attribute {

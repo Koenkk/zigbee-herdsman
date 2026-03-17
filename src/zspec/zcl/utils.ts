@@ -222,7 +222,7 @@ export function getFoundationCommandByName(name: string): FoundationDefinition {
     const command = Foundation[name as FoundationCommandName];
 
     if (command === undefined) {
-        throw new Error(`Foundation command '${name}' does not exist.`);
+        throw new ZclStatusError(Status.UNSUP_COMMAND, `foundation:${name}`);
     }
 
     return command;
