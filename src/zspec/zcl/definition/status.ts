@@ -15,9 +15,12 @@ export enum Status {
     // UNSUP_CLUSTER_COMMAND = 0x81, DEPRECATED in favor of UNSUP_COMMAND
     /** The specified command is not supported on the device. Command not carried out. */
     UNSUP_COMMAND = 0x81,
-    UNSUP_GENERAL_COMMAND = 0x82, // DEPRECATED in favor of UNSUP_COMMAND
-    UNSUP_MANUF_CLUSTER_COMMAND = 0x83, // DEPRECATED in favor of UNSUP_COMMAND
-    UNSUP_MANUF_GENERAL_COMMAND = 0x84, // DEPRECATED in favor of UNSUP_COMMAND
+    /** @deprecated use UNSUP_COMMAND */
+    UNSUP_GENERAL_COMMAND = 0x82,
+    /** @deprecated use UNSUP_COMMAND */
+    UNSUP_MANUF_CLUSTER_COMMAND = 0x83,
+    /** @deprecated use UNSUP_COMMAND */
+    UNSUP_MANUF_GENERAL_COMMAND = 0x84,
     /** At least one field of the command contains an incorrect value, according to the specification the device is implemented to. */
     INVALID_FIELD = 0x85,
     /** The specified attribute does not exist on the device. */
@@ -32,7 +35,8 @@ export enum Status {
     READ_ONLY = 0x88,
     /** An operation failed due to an insufficient amount of free space available. */
     INSUFFICIENT_SPACE = 0x89,
-    DUPLICATE_EXISTS = 0x8a, // DEPRECATED in favor of SUCCESS
+    /** @deprecated use SUCCESS */
+    DUPLICATE_EXISTS = 0x8a,
     /** The requested information (e.g., table entry) could not be found. */
     NOT_FOUND = 0x8b,
     /** Periodic reports cannot be issued for this attribute.*/
@@ -41,11 +45,15 @@ export enum Status {
     INVALID_DATA_TYPE = 0x8d,
     /** The selector for an attribute is incorrect. */
     INVALID_SELECTOR = 0x8e,
-    WRITE_ONLY = 0x8f, // DEPRECATED in favor of NOT_AUTHORIZED
-    INCONSISTENT_STARTUP_STATE = 0x90, // DEPRECATED in favor of FAILURE
-    DEFINED_OUT_OF_BAND = 0x91, // DEPRECATED in favor of FAILURE
+    /** @deprecated use NOT_AUTHORIZED */
+    WRITE_ONLY = 0x8f,
+    /** @deprecated use FAILURE */
+    INCONSISTENT_STARTUP_STATE = 0x90,
+    /** @deprecated use FAILURE */
+    DEFINED_OUT_OF_BAND = 0x91,
     RESERVED14 = 0x92,
-    ACTION_DENIED = 0x93, // DEPRECATED in favor of FAILURE
+    /** @deprecated use FAILURE */
+    ACTION_DENIED = 0x93,
     /** The exchange was aborted due to excessive response time. */
     TIMEOUT = 0x94,
     /** Failed case when a client or a server decides to abort the upgrade process. */
@@ -60,10 +68,13 @@ export enum Status {
     REQUIRE_MORE_IMAGE = 0x99,
     /** The command has been received and is being processed. */
     NOTIFICATION_PENDING = 0x9a,
-    HARDWARE_FAILURE = 0xc0, // DEPRECATED in favor of FAILURE
-    SOFTWARE_FAILURE = 0xc1, // DEPRECATED in favor of FAILURE
+    /** @deprecated use FAILURE */
+    HARDWARE_FAILURE = 0xc0,
+    /** @deprecated use FAILURE */
+    SOFTWARE_FAILURE = 0xc1,
     RESERVED15 = 0xc2,
     /** The cluster is not supported. */
     UNSUPPORTED_CLUSTER = 0xc3,
-    LIMIT_REACHED = 0xc4, // DEPRECATED in favor of SUCCESS
+    /** @deprecated use SUCCESS */
+    LIMIT_REACHED = 0xc4,
 }

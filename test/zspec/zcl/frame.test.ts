@@ -954,7 +954,7 @@ describe("ZCL Frame", () => {
         expect(() => {
             Zcl.Frame.fromBuffer(Zcl.Clusters.genOta.ID, Zcl.Header.fromBuffer(b), b, {});
         }).toThrow(
-            `Cannot parse 'imageBlockRequest:maximumDataSize' (The value of "offset" is out of range. It must be >= 0 and <= 15. Received 16)`,
+            `Status 'INVALID_FIELD' genOta:imageBlockRequest:maximumDataSize (The value of "offset" is out of range. It must be >= 0 and <= 15. Received 16)`,
         );
     });
 

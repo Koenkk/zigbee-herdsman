@@ -2,7 +2,9 @@ import {Clusters} from "./definition/cluster";
 import {ZCL_TYPE_INVALID_BY_TYPE} from "./definition/datatypes";
 import {DataType} from "./definition/enums";
 import {Foundation, type FoundationCommandName, type FoundationDefinition} from "./definition/foundation";
+import {Status} from "./definition/status";
 import type {Attribute, Cluster, ClusterName, Command, CustomClusters, Parameter} from "./definition/tstype";
+import {ZclStatusError} from "./zclStatusError";
 
 /** Runtime fast lookup */
 const ZCL_CLUSTERS_ID_TO_NAMES = (() => {
@@ -92,13 +94,15 @@ export function getCluster(key: string | number, manufacturerCode: number | unde
         // TODO: cluster.ID can't be undefined?
         if (!cluster || cluster.ID === undefined) {
             cluster = {name: `${key}`, ID: key, attributes: {}, commands: {}, commandsResponse: {}};
+            // XXX: align behavior with string key?
+            // throw new ZclStatusError(Status.UNSUPPORTED_CLUSTER, `${key}`);
         }
     } else {
         cluster = key in customClusters ? customClusters[key] : Clusters[key as ClusterName];
 
         // TODO: cluster.ID can't be undefined?
         if (!cluster || cluster.ID === undefined) {
-            throw new Error(`Cluster '${key}' does not exist`);
+            throw new ZclStatusError(Status.UNSUPPORTED_CLUSTER, key);
         }
     }
 
@@ -129,6 +133,8 @@ export function getClusterAttribute(cluster: Cluster, key: number | string, manu
     }
 
     return attributes[key];
+    // XXX: align behavior with cmds?
+    // throw new ZclStatusError(Status.UNSUPPORTED_ATTRIBUTE, `${cluster.name}:${key}`);
 }
 
 export function getClusterCommand(cluster: Cluster, key: number | string): Command {
@@ -150,7 +156,7 @@ export function getClusterCommand(cluster: Cluster, key: number | string): Comma
         }
     }
 
-    throw new Error(`Cluster '${cluster.name}' has no command '${key}'`);
+    throw new ZclStatusError(Status.UNSUP_COMMAND, `${cluster.name}:${key}`);
 }
 
 export function getClusterCommandResponse(cluster: Cluster, key: number | string): Command {
@@ -172,7 +178,7 @@ export function getClusterCommandResponse(cluster: Cluster, key: number | string
         }
     }
 
-    throw new Error(`Cluster '${cluster.name}' has no command response '${key}'`);
+    throw new ZclStatusError(Status.UNSUP_COMMAND, `response ${cluster.name}:${key}`);
 }
 
 function getGlobalCommandNameById(id: number): FoundationCommandName {
@@ -182,7 +188,7 @@ function getGlobalCommandNameById(id: number): FoundationCommandName {
         }
     }
 
-    throw new Error(`Global command with id '${id}' does not exist.`);
+    throw new ZclStatusError(Status.UNSUP_COMMAND, `foundation:${id}`);
 }
 
 export function getGlobalCommand(key: number | string): FoundationDefinition {
@@ -190,7 +196,7 @@ export function getGlobalCommand(key: number | string): FoundationDefinition {
     const command = Foundation[name];
 
     if (!command) {
-        throw new Error(`Global command with key '${key}' does not exist`);
+        throw new ZclStatusError(Status.UNSUP_COMMAND, `foundation:${key}`);
     }
 
     return command;
@@ -209,7 +215,7 @@ export function getFoundationCommand(id: number): FoundationDefinition {
         }
     }
 
-    throw new Error(`Foundation command '${id}' does not exist.`);
+    throw new ZclStatusError(Status.UNSUP_COMMAND, `foundation:${id}`);
 }
 
 export function getFoundationCommandByName(name: string): FoundationDefinition {
@@ -233,37 +239,37 @@ function isMinOrMax<T>(entry: Attribute | Parameter, value: T): boolean {
 
 function processRestrictions<T>(entry: Attribute | Parameter, value: T): void {
     if (entry.min !== undefined && (value as number) < entry.min) {
-        throw new Error(`${entry.name} requires min of ${entry.min}`);
+        throw new ZclStatusError(Status.INVALID_VALUE, `${entry.name} requires min of ${entry.min}`);
     }
 
     if (entry.minExcl !== undefined && (value as number) <= entry.minExcl) {
-        throw new Error(`${entry.name} requires min exclusive of ${entry.minExcl}`);
+        throw new ZclStatusError(Status.INVALID_VALUE, `${entry.name} requires min exclusive of ${entry.minExcl}`);
     }
 
     if (entry.max !== undefined && (value as number) > entry.max) {
-        throw new Error(`${entry.name} requires max of ${entry.max}`);
+        throw new ZclStatusError(Status.INVALID_VALUE, `${entry.name} requires max of ${entry.max}`);
     }
 
     if (entry.maxExcl !== undefined && (value as number) >= entry.maxExcl) {
-        throw new Error(`${entry.name} requires max exclusive of ${entry.maxExcl}`);
+        throw new ZclStatusError(Status.INVALID_VALUE, `${entry.name} requires max exclusive of ${entry.maxExcl}`);
     }
 
     if (entry.length !== undefined && (value as string | unknown[] | Buffer).length !== entry.length) {
-        throw new Error(`${entry.name} requires length of ${entry.length}`);
+        throw new ZclStatusError(Status.INVALID_VALUE, `${entry.name} requires length of ${entry.length}`);
     }
 
     if (entry.minLen !== undefined && (value as string | unknown[] | Buffer).length < entry.minLen) {
-        throw new Error(`${entry.name} requires min length of ${entry.minLen}`);
+        throw new ZclStatusError(Status.INVALID_VALUE, `${entry.name} requires min length of ${entry.minLen}`);
     }
 
     if (entry.maxLen !== undefined && (value as string | unknown[] | Buffer).length > entry.maxLen) {
-        throw new Error(`${entry.name} requires max length of ${entry.maxLen}`);
+        throw new ZclStatusError(Status.INVALID_VALUE, `${entry.name} requires max length of ${entry.maxLen}`);
     }
 }
 
 export function processAttributeWrite<T>(attribute: Attribute, value: T): T {
     if (attribute.write !== true) {
-        throw new Error(`Attribute ${attribute.name} (${attribute.ID}) is not writable`);
+        throw new ZclStatusError(Status.NOT_AUTHORIZED, `${attribute.name} (${attribute.ID}) is not writable`);
     }
 
     if (value == null) {
@@ -280,7 +286,7 @@ export function processAttributeWrite<T>(attribute: Attribute, value: T): T {
             const nonValue = ZCL_TYPE_INVALID_BY_TYPE[attribute.type];
 
             if (nonValue === undefined) {
-                throw new Error(`Attribute ${attribute.name} (${attribute.ID}) does not have a default nor a non-value`);
+                throw new ZclStatusError(Status.INVALID_FIELD, `${attribute.name} (${attribute.ID}) does not have a default nor a non-value`);
             }
 
             return nonValue as T;
@@ -296,7 +302,7 @@ export function processAttributeWrite<T>(attribute: Attribute, value: T): T {
 
 export function processAttributePreRead(attribute: Attribute): void {
     if (attribute.read === false) {
-        throw new Error(`Attribute ${attribute.name} (${attribute.ID}) is not readable`);
+        throw new ZclStatusError(Status.NOT_AUTHORIZED, `${attribute.name} (${attribute.ID}) is not readable`);
     }
 }
 
@@ -337,7 +343,7 @@ export function processParameterWrite<T>(parameter: Parameter, value: T): T {
         const nonValue = ZCL_TYPE_INVALID_BY_TYPE[parameter.type];
 
         if (nonValue === undefined) {
-            throw new Error(`Parameter ${parameter.name} does not have a non-value`);
+            throw new ZclStatusError(Status.INVALID_FIELD, `${parameter.name} does not have a non-value`);
         }
 
         return nonValue as T;

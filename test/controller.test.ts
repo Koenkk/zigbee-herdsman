@@ -207,6 +207,7 @@ const mockAdapterSendZdo = vi
 
 let iasZoneReadState170Count = 0;
 let enroll170 = true;
+let enrollRspThrow = false;
 let configureReportStatus = 0;
 let configureReportDefaultRsp = false;
 let lastSentZclFrameToEndpoint: Buffer | undefined;
@@ -272,6 +273,10 @@ const restoreMocksendZclFrameToEndpoint = () => {
                 {},
             );
             return {clusterID: frame.cluster.ID, header: responseFrame.header, data: responseFrame.toBuffer()};
+        }
+
+        if (frame.header.isSpecific && frame.command.name === "enrollRsp" && frame.cluster.name === "ssIasZone" && enrollRspThrow) {
+            throw new Error("ias-zone-failure");
         }
 
         if (
@@ -499,6 +504,7 @@ describe("Controller", () => {
         configureReportStatus = 0;
         configureReportDefaultRsp = false;
         enroll170 = true;
+        enrollRspThrow = false;
         options.network.channelList = [15];
 
         for (const event in events) {
@@ -2306,8 +2312,7 @@ describe("Controller", () => {
 
     it("Device joins and interview iAs enrollment succeeds", async () => {
         await controller.start();
-        const event = mockAdapterEvents.deviceJoined({networkAddress: 170, ieeeAddr: "0x170"});
-        await event;
+        await mockAdapterEvents.deviceJoined({networkAddress: 170, ieeeAddr: "0x170"});
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe("started");
         // @ts-expect-error private but deep cloned
@@ -2367,6 +2372,20 @@ describe("Controller", () => {
         enroll170 = false;
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 170, ieeeAddr: "0x170"});
+        expect(events.deviceInterview.length).toBe(2);
+        expect(events.deviceInterview[0].status).toBe("started");
+        // @ts-expect-error private but deep cloned
+        expect(events.deviceInterview[0].device._ieeeAddr).toBe("0x170");
+        expect(events.deviceInterview[1].status).toBe("failed");
+        // @ts-expect-error private but deep cloned
+        expect(events.deviceInterview[1].device._ieeeAddr).toBe("0x170");
+    });
+
+    it("Device joins and interview iAs enrollment throws", async () => {
+        await controller.start();
+        enrollRspThrow = true;
+        await mockAdapterEvents.deviceJoined({networkAddress: 170, ieeeAddr: "0x170"});
+
         expect(events.deviceInterview.length).toBe(2);
         expect(events.deviceInterview[0].status).toBe("started");
         // @ts-expect-error private but deep cloned
@@ -2540,9 +2559,9 @@ describe("Controller", () => {
         const endpointReadSpy = vi.spyOn(endpoint, "read");
         const endpointDefaultResponseSpy = vi.spyOn(endpoint, "defaultResponse");
 
-        deviceOnZclDataSpy.mockImplementationOnce(async (a, b, c) => {
+        deviceOnZclDataSpy.mockImplementationOnce(async (a, b, c, d) => {
             await mockAdapterEvents.deviceLeave({networkAddress: 129, ieeeAddr: undefined});
-            await device.onZclData(a, b, c);
+            await device.onZclData(a, b, c, d);
         });
 
         await mockAdapterEvents.zclPayload({
@@ -2688,21 +2707,14 @@ describe("Controller", () => {
 
     it("Receive zclData send default response", async () => {
         const frame = Zcl.Frame.create(
-            1,
-            1,
+            Zcl.FrameType.SPECIFIC,
+            Zcl.Direction.SERVER_TO_CLIENT,
             false,
-            4476,
+            Zcl.ManufacturerCode.IKEA_OF_SWEDEN,
             29,
-            1,
-            5,
-            {
-                groupid: 1,
-                sceneid: 1,
-                status: 0,
-                transtime: 0,
-                scenename: "",
-                extensionfieldsets: [],
-            },
+            "viewRsp",
+            "genScenes",
+            {groupid: 1, sceneid: 1, status: 0, transtime: 0, scenename: "", extensionfieldsets: []},
             {},
         );
         await controller.start();
@@ -4986,15 +4998,38 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
-        const manuSpecificAmazonWWAH = Zcl.Utils.getCluster("manuSpecificAmazonWWAH", undefined, {});
         const saveClusterAttributeReportConfigSpy = vi.spyOn(endpoint, "saveClusterAttributeReportConfig");
 
-        endpoint.saveClusterAttributeReportConfig(manuSpecificAmazonWWAH.ID, Zcl.ManufacturerCode.AMAZON_LAB126, [
+        interface SchneiderGenBasic {
+            attributes: {schneiderMeterRadioPower: number};
+            commands: Record<string, never>;
+            commandResponses: Record<string, never>;
+        }
+
+        device.addCustomCluster("genBasic", {
+            name: "genBasic",
+            ID: 0x0000,
+            attributes: {
+                schneiderMeterRadioPower: {
+                    name: "schneiderMeterRadioPower",
+                    ID: 0xe200,
+                    type: Zcl.DataType.INT8,
+                    manufacturerCode: Zcl.ManufacturerCode.SCHNEIDER_ELECTRIC,
+                    write: true,
+                    min: -128,
+                    max: 127,
+                },
+            },
+            commands: {},
+            commandsResponse: {},
+        });
+
+        endpoint.saveClusterAttributeReportConfig(Zcl.Clusters.genBasic.ID, Zcl.ManufacturerCode.SCHNEIDER_ELECTRIC, [
             {
                 status: Zcl.Status.SUCCESS,
                 direction: Zcl.Direction.CLIENT_TO_SERVER,
-                attrId: manuSpecificAmazonWWAH.attributes.nwkRetryCount.ID,
-                dataType: Zcl.DataType.UINT8,
+                attrId: 0xe200,
+                dataType: Zcl.DataType.INT8,
                 minRepIntval: 80,
                 maxRepIntval: 300,
                 repChange: 10,
@@ -5008,8 +5043,8 @@ describe("Controller", () => {
                 {
                     status: Zcl.Status.SUCCESS,
                     direction: Zcl.Direction.CLIENT_TO_SERVER,
-                    attrId: manuSpecificAmazonWWAH.attributes.nwkRetryCount.ID,
-                    dataType: Zcl.DataType.UINT8,
+                    attrId: 0xe200,
+                    dataType: Zcl.DataType.INT8,
                     minRepIntval: 15,
                     maxRepIntval: 213,
                     repChange: 3,
@@ -5019,7 +5054,7 @@ describe("Controller", () => {
                 Zcl.FrameType.GLOBAL,
                 Zcl.Direction.CLIENT_TO_SERVER,
                 true,
-                Zcl.ManufacturerCode.AMAZON_LAB126,
+                Zcl.ManufacturerCode.SCHNEIDER_ELECTRIC,
                 9,
                 "readReportConfigRsp",
                 frame.cluster.ID,
@@ -5031,11 +5066,19 @@ describe("Controller", () => {
 
         expect(deepClone(endpoint.configuredReportings)).toStrictEqual([
             {
-                cluster: deepClone(manuSpecificAmazonWWAH),
+                cluster: expect.objectContaining({
+                    ID: 0x0000,
+                    name: "genBasic",
+                    attributes: expect.objectContaining({
+                        zclVersion: expect.objectContaining({ID: 0x0000}),
+                        schneiderMeterRadioPower: expect.objectContaining({ID: 0xe200}),
+                    }),
+                }),
                 attribute: expect.objectContaining({
-                    ID: manuSpecificAmazonWWAH.attributes.nwkRetryCount.ID,
-                    name: "nwkRetryCount",
-                    type: Zcl.DataType.UINT8,
+                    ID: 0xe200,
+                    name: "schneiderMeterRadioPower",
+                    type: Zcl.DataType.INT8,
+                    manufacturerCode: Zcl.ManufacturerCode.SCHNEIDER_ELECTRIC,
                 }),
                 minimumReportInterval: 80,
                 maximumReportInterval: 300,
@@ -5043,8 +5086,8 @@ describe("Controller", () => {
             },
         ]);
 
-        await endpoint.readReportingConfig("manuSpecificAmazonWWAH", [{attribute: "nwkRetryCount"}], {
-            manufacturerCode: Zcl.ManufacturerCode.AMAZON_LAB126,
+        await endpoint.readReportingConfig<"genBasic", SchneiderGenBasic>("genBasic", [{attribute: "schneiderMeterRadioPower"}], {
+            manufacturerCode: Zcl.ManufacturerCode.SCHNEIDER_ELECTRIC,
         });
 
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
@@ -5057,12 +5100,12 @@ describe("Controller", () => {
                     Zcl.FrameType.GLOBAL,
                     Zcl.Direction.CLIENT_TO_SERVER,
                     true,
-                    Zcl.ManufacturerCode.AMAZON_LAB126,
+                    Zcl.ManufacturerCode.SCHNEIDER_ELECTRIC,
                     9,
                     "readReportConfig",
-                    manuSpecificAmazonWWAH.ID,
-                    [{direction: Zcl.Direction.CLIENT_TO_SERVER, attrId: manuSpecificAmazonWWAH.attributes.nwkRetryCount.ID}],
-                    {},
+                    Zcl.Clusters.genBasic.ID,
+                    [{direction: Zcl.Direction.CLIENT_TO_SERVER, attrId: 0xe200}],
+                    device.customClusters,
                 ),
             ),
         );
@@ -5070,11 +5113,19 @@ describe("Controller", () => {
 
         expect(deepClone(endpoint.configuredReportings)).toStrictEqual([
             {
-                cluster: deepClone(manuSpecificAmazonWWAH),
+                cluster: expect.objectContaining({
+                    ID: 0x0000,
+                    name: "genBasic",
+                    attributes: expect.objectContaining({
+                        zclVersion: expect.objectContaining({ID: 0x0000}),
+                        schneiderMeterRadioPower: expect.objectContaining({ID: 0xe200}),
+                    }),
+                }),
                 attribute: expect.objectContaining({
-                    ID: manuSpecificAmazonWWAH.attributes.nwkRetryCount.ID,
-                    name: "nwkRetryCount",
-                    type: Zcl.DataType.UINT8,
+                    ID: 0xe200,
+                    name: "schneiderMeterRadioPower",
+                    type: Zcl.DataType.INT8,
+                    manufacturerCode: Zcl.ManufacturerCode.SCHNEIDER_ELECTRIC,
                 }),
                 minimumReportInterval: 15,
                 maximumReportInterval: 213,
@@ -8404,13 +8455,6 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
 
-        // onZclData is called via mockAdapterEvents, but we need to wait until it has finished
-        const origOnZclData = device.onZclData;
-        device.onZclData = (a, b, c) => {
-            const f = origOnZclData.call(device, a, b, c);
-            vi.advanceTimersByTime(10);
-            return f;
-        };
         const nextTick = new Promise(process.nextTick);
 
         const result = endpoint.write("genOnOff", {onTime: 1}, {disableResponse: true, sendPolicy: "bulk"});
@@ -9577,11 +9621,11 @@ describe("Controller", () => {
 
         await expect(async () => {
             await group.write("manuHerdsman", {customAttr: 14}, {});
-        }).rejects.toThrow(new Error(`Cluster 'manuHerdsman' does not exist`));
+        }).rejects.toThrow(new Zcl.StatusError(Zcl.Status.UNSUPPORTED_CLUSTER, "manuHerdsman"));
 
         await expect(async () => {
             await group.read("manuHerdsman", ["customAttr"], {});
-        }).rejects.toThrow(new Error(`Cluster 'manuHerdsman' does not exist`));
+        }).rejects.toThrow(new Zcl.StatusError(Zcl.Status.UNSUPPORTED_CLUSTER, "manuHerdsman"));
 
         await group.write<"manuHerdsman", CustomManuHerdsman>("manuHerdsman", {customAttr: 14}, {direction: Zcl.Direction.SERVER_TO_CLIENT});
         await group.read<"manuHerdsman", CustomManuHerdsman>("manuHerdsman", ["customAttr"], {direction: Zcl.Direction.SERVER_TO_CLIENT});
@@ -9617,11 +9661,11 @@ describe("Controller", () => {
 
         await expect(async () => {
             await group.write("manuHerdsman", {customAttr: 56}, {});
-        }).rejects.toThrow(new Error(`Cluster 'manuHerdsman' does not exist`));
+        }).rejects.toThrow(new Zcl.StatusError(Zcl.Status.UNSUPPORTED_CLUSTER, "manuHerdsman"));
 
         await expect(async () => {
             await group.read("manuHerdsman", ["customAttr"], {});
-        }).rejects.toThrow(new Error(`Cluster 'manuHerdsman' does not exist`));
+        }).rejects.toThrow(new Zcl.StatusError(Zcl.Status.UNSUPPORTED_CLUSTER, "manuHerdsman"));
     });
 
     it("does not read/write to group with non-common custom clusters", async () => {
@@ -9649,11 +9693,11 @@ describe("Controller", () => {
 
         await expect(async () => {
             await group.write("manuHerdsman", {customAttr: 34}, {});
-        }).rejects.toThrow(new Error(`Cluster 'manuHerdsman' does not exist`));
+        }).rejects.toThrow(new Zcl.StatusError(Zcl.Status.UNSUPPORTED_CLUSTER, "manuHerdsman"));
 
         await expect(async () => {
             await group.read("manuHerdsman", ["customAttr"], {});
-        }).rejects.toThrow(new Error(`Cluster 'manuHerdsman' does not exist`));
+        }).rejects.toThrow(new Zcl.StatusError(Zcl.Status.UNSUPPORTED_CLUSTER, "manuHerdsman"));
     });
 
     it("sends & receives command to group with custom cluster when common to all members", async () => {
@@ -9785,7 +9829,7 @@ describe("Controller", () => {
                 level: 200,
                 duration: 15,
             });
-        }).rejects.toThrow(new Error(`Cluster 'manuSpecificInovelli' does not exist`));
+        }).rejects.toThrow(new Zcl.StatusError(Zcl.Status.UNSUPPORTED_CLUSTER, "manuSpecificInovelli"));
     });
 
     it("Updates a device genBasic properties", async () => {
@@ -10119,7 +10163,7 @@ describe("Controller", () => {
 
         // coverage: prevent crash in onZclPayload when ZCL metadata validation fails
         expect(mockLogger.debug).toHaveBeenCalledWith(
-            "Ignoring attribute modelId from response: Error: modelId requires max length of 32",
+            "Ignoring attribute modelId from response: Error: Status 'INVALID_VALUE' modelId requires max length of 32",
             "zh:controller:zcl",
         );
         expect(device.genBasic.modelId).toStrictEqual(" other multi-endpoint device");
