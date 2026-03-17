@@ -1,7 +1,7 @@
 import type {BuffaloZcl} from "../buffaloZcl";
 import {isAnalogDataType} from "../utils";
 import {ZclStatusError} from "../zclStatusError";
-import {Direction} from "./enums";
+import {BuffaloZclDataType, DataType, Direction} from "./enums";
 import {Status} from "./status";
 import type {Command, StructuredSelector} from "./tstype";
 
@@ -80,7 +80,8 @@ export const Foundation = {
                 if (status === Status.SUCCESS) {
                     const dataType = buffalo.readUInt8();
                     rec.dataType = dataType;
-                    rec.attrData = buffalo.read(dataType, {});
+                    // [workaround] parse char str as Xiaomi struct for attribute 0xff01 (65281)
+                    rec.attrData = buffalo.read(dataType === DataType.CHAR_STR && attrId === 0xff01 ? BuffaloZclDataType.MI_STRUCT : dataType, {});
                 }
 
                 payload.push(rec);
@@ -479,7 +480,8 @@ export const Foundation = {
             do {
                 const attrId = buffalo.readUInt16();
                 const dataType = buffalo.readUInt8();
-                const attrData = buffalo.read(dataType, {});
+                // [workaround] parse char str as Xiaomi struct for attribute 0xff01 (65281)
+                const attrData = buffalo.read(dataType === DataType.CHAR_STR && attrId === 0xff01 ? BuffaloZclDataType.MI_STRUCT : dataType, {});
 
                 payload.push({attrId, dataType, attrData});
             } while (buffalo.isMore());
