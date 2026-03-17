@@ -26,6 +26,21 @@ const CUSTOM_CLUSTERS: CustomClusters = {
         commandsResponse: {},
         attributes: {myCustomAttr: {name: "myCustomAttr", ID: 65533, type: Zcl.DataType.UINT8}},
     },
+    myCustomWithManufAttr: {
+        name: "haDiagnostic",
+        ID: 0x0b05,
+        manufacturerCode: Zcl.ManufacturerCode.DANFOSS_A_S,
+        commands: {},
+        commandsResponse: {},
+        attributes: {
+            danfossSystemStatusCode: {
+                name: "danfossSystemStatusCode",
+                ID: 65530,
+                type: Zcl.DataType.UINT8,
+                manufacturerCode: Zcl.ManufacturerCode.DANFOSS_A_S,
+            },
+        },
+    },
 };
 
 describe("ZCL Utils", () => {
@@ -150,9 +165,9 @@ describe("ZCL Utils", () => {
         [
             "by ID with matching manufacturer code",
             {
-                key: Zcl.Clusters.haDiagnostic.attributes.danfossSystemStatusCode.ID,
+                key: CUSTOM_CLUSTERS.myCustomWithManufAttr.attributes.danfossSystemStatusCode.ID,
                 manufacturerCode: Zcl.ManufacturerCode.DANFOSS_A_S,
-                customClusters: CUSTOM_CLUSTERS.myCustomCluster,
+                customClusters: CUSTOM_CLUSTERS,
             },
             {cluster: Zcl.Clusters.haDiagnostic, name: "danfossSystemStatusCode"},
         ],
@@ -180,8 +195,10 @@ describe("ZCL Utils", () => {
     });
 
     it("Returns undefined when getting attribute with invalid manufacturer code", () => {
-        const cluster = Zcl.Utils.getCluster(Zcl.Clusters.haDiagnostic.ID, 123, {});
-        expect(Zcl.Utils.getClusterAttribute(cluster, Zcl.Clusters.haDiagnostic.attributes.danfossSystemStatusCode.ID, 123)).toBeUndefined();
+        const cluster = Zcl.Utils.getCluster(Zcl.Clusters.haDiagnostic.ID, 123, CUSTOM_CLUSTERS);
+        expect(
+            Zcl.Utils.getClusterAttribute(cluster, CUSTOM_CLUSTERS.myCustomWithManufAttr.attributes.danfossSystemStatusCode.ID, 123),
+        ).toBeUndefined();
     });
 
     it.each([
