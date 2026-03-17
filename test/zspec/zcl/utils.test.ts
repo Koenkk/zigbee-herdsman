@@ -152,7 +152,7 @@ describe("ZCL Utils", () => {
             {
                 key: Zcl.Clusters.haDiagnostic.attributes.danfossSystemStatusCode.ID,
                 manufacturerCode: Zcl.ManufacturerCode.DANFOSS_A_S,
-                customClusters: {},
+                customClusters: CUSTOM_CLUSTERS.myCustomCluster,
             },
             {cluster: Zcl.Clusters.haDiagnostic, name: "danfossSystemStatusCode"},
         ],
