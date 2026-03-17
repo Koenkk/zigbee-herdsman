@@ -81,7 +81,7 @@ export const Foundation = {
                     const dataType = buffalo.readUInt8();
                     rec.dataType = dataType;
                     // [workaround] parse char str as Xiaomi struct for attribute 0xff01 (65281)
-                    rec.attrData = buffalo.read(dataType === DataType.CHAR_STR && attrId === 0xff01 ? BuffaloZclDataType.MI_STRUCT : dataType, {});
+                    rec.attrData = buffalo.read(attrId === 0xff01 && dataType === DataType.CHAR_STR ? BuffaloZclDataType.MI_STRUCT : dataType, {});
                 }
 
                 payload.push(rec);
@@ -481,7 +481,7 @@ export const Foundation = {
                 const attrId = buffalo.readUInt16();
                 const dataType = buffalo.readUInt8();
                 // [workaround] parse char str as Xiaomi struct for attribute 0xff01 (65281)
-                const attrData = buffalo.read(dataType === DataType.CHAR_STR && attrId === 0xff01 ? BuffaloZclDataType.MI_STRUCT : dataType, {});
+                const attrData = buffalo.read(attrId === 0xff01 && dataType === DataType.CHAR_STR ? BuffaloZclDataType.MI_STRUCT : dataType, {});
 
                 payload.push({attrId, dataType, attrData});
             } while (buffalo.isMore());
@@ -721,8 +721,8 @@ export const Foundation = {
 
             buffalo.writeUInt8(payload.discComplete);
 
-            for (const entry of payload.attrInfos) {
-                buffalo.writeUInt8(entry.cmdId);
+            for (const commandId of payload.commandIds) {
+                buffalo.writeUInt8(commandId);
             }
         },
     },
@@ -769,8 +769,8 @@ export const Foundation = {
 
             buffalo.writeUInt8(payload.discComplete);
 
-            for (const entry of payload.attrInfos) {
-                buffalo.writeUInt8(entry.cmdId);
+            for (const commandId of payload.commandIds) {
+                buffalo.writeUInt8(commandId);
             }
         },
     },
