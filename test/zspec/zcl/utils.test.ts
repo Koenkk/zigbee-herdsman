@@ -263,12 +263,16 @@ describe("ZCL Utils", () => {
 
     it("Gets Foundation command", () => {
         expect(Zcl.Utils.getFoundationCommand(0)).toStrictEqual(Zcl.Foundation.read);
+        expect(Zcl.Utils.getFoundationCommandByName("read")).toStrictEqual(Zcl.Foundation.read);
     });
 
     it("Throws when getting invalid Foundation command ID", () => {
         expect(() => {
             Zcl.Utils.getFoundationCommand(9999);
         }).toThrow(`Foundation command '9999' does not exist.`);
+        expect(() => {
+            Zcl.Utils.getFoundationCommandByName("doesnotexist");
+        }).toThrow(`Foundation command 'doesnotexist' does not exist.`);
     });
 
     function createAttribute(overrides: Partial<Attribute> = {}): Attribute {

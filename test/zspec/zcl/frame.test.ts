@@ -357,6 +357,28 @@ describe("ZCL Frame", () => {
                 ),
             ).toBeFalsy();
             expect(
+                Zcl.Frame.conditionsValid(
+                    {
+                        name: "dataType",
+                        type: Zcl.DataType.DATA8,
+                        conditions: [{type: Zcl.ParameterCondition.FIELD_EQUAL, field: "status", value: Zcl.Status.SUCCESS, reversed: true}],
+                    },
+                    {status: 0},
+                    undefined,
+                ),
+            ).toBeFalsy();
+            expect(
+                Zcl.Frame.conditionsValid(
+                    {
+                        name: "dataType",
+                        type: Zcl.DataType.DATA8,
+                        conditions: [{type: Zcl.ParameterCondition.FIELD_EQUAL, field: "status", value: Zcl.Status.SUCCESS, reversed: true}],
+                    },
+                    {status: 1},
+                    undefined,
+                ),
+            ).toBeTruthy();
+            expect(
                 Zcl.Frame.conditionsValid(Zcl.Clusters.touchlink.commandsResponse.scanResponse.parameters[13], {numberOfSubDevices: 1}, undefined),
             ).toBeTruthy();
             expect(
