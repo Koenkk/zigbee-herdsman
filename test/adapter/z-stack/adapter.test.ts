@@ -922,6 +922,10 @@ const commissioned3x0AlignedRequestMock = empty3x0AlignedRequestMock
     )
     .nvExtended(NvSystemIds.ZSTACK, NvItemsIds.ZCD_NV_EX_ADDRMGR, 0, Buffer.from("01ff4f3a0800000000000000", "hex"));
 
+const commissioned3x0AlignedPrecfgKeyMismatchRequestMock = commissioned3x0AlignedRequestMock
+    .clone()
+    .nv(NvItemsIds.PRECFGKEY, Buffer.from("aabbccddeeff00112233445566778899", "hex"));
+
 const empty12UnalignedRequestMock = baseZnpRequestMock
     .clone()
     .handle(Subsystem.SYS, "version", (payload) => (equals(payload, {}) ? {payload: {product: ZnpVersion.ZStack12}} : undefined))
@@ -1969,6 +1973,18 @@ describe("zstack-adapter", () => {
         const result = await adapter.start();
         expect(result).toBe("resumed");
         expect(mockLogger.warning.mock.calls[0][0]).toBe("Extended PAN ID is reversed (expected=00124b0009d69f77, actual=779fd609004b1200)");
+    });
+
+    it("should start with 3.x.0 adapter - warn when preconfigured key doesn't match network key", async () => {
+        // https://github.com/Koenkk/zigbee-herdsman/pull/1692
+        mockZnpRequestWith(commissioned3x0AlignedPrecfgKeyMismatchRequestMock);
+        const result = await adapter.start();
+        expect(result).toBe("resumed");
+        expect(mockLogger.warning.mock.calls[0][0]).toBe(
+            "Adapter preconfigured (transport) key does not match configured network key " +
+                "(preconfigured=aabbccddeeff00112233445566778899, configured=01030507090b0d0f00020406080a0c0d). " +
+                "This is typically harmless on Z-Stack 3.x adapters where only the active key matters.",
+        );
     });
 
     it("should restore unified backup with 3.0.x adapter - commissioned, mismatched adapter-config, matching config-backup", async () => {

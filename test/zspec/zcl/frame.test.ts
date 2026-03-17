@@ -228,7 +228,7 @@ const SPECIFIC_FRAME = Zcl.Frame.create(
     SPECIFIC_HEADER.frameControl.reservedBits,
 );
 const SPECIFIC_FRAME_BUFFER = Buffer.concat([SPECIFIC_HEADER_BUFFER]);
-const SPECIFIC_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":44,"commandIdentifier":2},"payload":{},"command":{"ID":2,"parameters":[],"name":"getAlarm"}}`;
+const SPECIFIC_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":44,"commandIdentifier":2},"payload":{},"command":{"name":"getAlarm","ID":2,"parameters":[]}}`;
 
 /** Frame of Specific type and response command */
 const SPECIFIC_RSP_FRAME = Zcl.Frame.create(
@@ -244,7 +244,7 @@ const SPECIFIC_RSP_FRAME = Zcl.Frame.create(
     SPECIFIC_RSP_HEADER.frameControl.reservedBits,
 );
 const SPECIFIC_RSP_FRAME_BUFFER = Buffer.concat([SPECIFIC_RSP_HEADER_BUFFER, Buffer.from([246, ...uint16To8Array(3456)])]);
-const SPECIFIC_RSP_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":1,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":53,"commandIdentifier":0},"payload":{"alarmcode":246,"clusterid":3456},"command":{"ID":0,"parameters":[{"name":"alarmcode","type":48},{"name":"clusterid","type":232}],"required":true,"name":"alarm"}}`;
+const SPECIFIC_RSP_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":1,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":53,"commandIdentifier":0},"payload":{"alarmcode":246,"clusterid":3456},"command":{"name":"alarm","ID":0,"parameters":[{"name":"alarmcode","type":48},{"name":"clusterid","type":232}],"required":true}}`;
 
 /** Frame of Specific type with condition-based parameters */
 const SPECIFIC_CONDITION_FRAME = Zcl.Frame.create(
@@ -260,7 +260,7 @@ const SPECIFIC_CONDITION_FRAME = Zcl.Frame.create(
     SPECIFIC_CONDITION_HEADER.frameControl.reservedBits,
 );
 const SPECIFIC_CONDITION_FRAME_BUFFER = Buffer.concat([SPECIFIC_CONDITION_HEADER_BUFFER, Buffer.from([149])]);
-const SPECIFIC_CONDITION_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":1,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":45,"commandIdentifier":2},"payload":{"status":149},"command":{"ID":2,"parameters":[{"name":"status","type":48},{"name":"manufacturerCode","type":33,"conditions":[{"type":"fieldEquals","field":"status","value":0}]},{"name":"imageType","type":33,"conditions":[{"type":"fieldEquals","field":"status","value":0}],"max":65471},{"name":"fileVersion","type":35,"conditions":[{"type":"fieldEquals","field":"status","value":0}]},{"name":"imageSize","type":35,"conditions":[{"type":"fieldEquals","field":"status","value":0}]}],"required":true,"name":"queryNextImageResponse"}}`;
+const SPECIFIC_CONDITION_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":1,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":45,"commandIdentifier":2},"payload":{"status":149},"command":{"name":"queryNextImageResponse","ID":2,"parameters":[{"name":"status","type":48},{"name":"manufacturerCode","type":33,"conditions":[{"type":"fieldEquals","field":"status","value":0}]},{"name":"imageType","type":33,"conditions":[{"type":"fieldEquals","field":"status","value":0}],"max":65471},{"name":"fileVersion","type":35,"conditions":[{"type":"fieldEquals","field":"status","value":0}]},{"name":"imageSize","type":35,"conditions":[{"type":"fieldEquals","field":"status","value":0}]}],"required":true}}`;
 
 /** Frame manufacturer-specific */
 const MANUF_SPE_FRAME = Zcl.Frame.create(
@@ -277,6 +277,33 @@ const MANUF_SPE_FRAME = Zcl.Frame.create(
 );
 const MANUF_SPE_FRAME_BUFFER = Buffer.concat([MANUF_SPE_HEADER_BUFFER, Buffer.from(uint16To8Array(256))]);
 const MANUF_SPE_FRAME_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":0,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":true},"manufacturerCode":4344,"transactionSequenceNumber":234,"commandIdentifier":0},"payload":[{"attrId":256}],"command":{"ID":0,"name":"read","parameters":[{"name":"attrId","type":9}],"response":1}}`;
+
+const LIST_HEADER = new Zcl.Header(
+    {
+        frameType: Zcl.FrameType.SPECIFIC,
+        manufacturerSpecific: false,
+        direction: Zcl.Direction.CLIENT_TO_SERVER,
+        disableDefaultResponse: false,
+        reservedBits: 0,
+    },
+    undefined,
+    43,
+    Zcl.Clusters.genGroups.commands.getMembership.ID,
+);
+const LIST_BUFFER = Buffer.from([1, 43, Zcl.Clusters.genGroups.commands.getMembership.ID, 2, 10, 0, 20, 0]);
+const LIST_FRAME = Zcl.Frame.create(
+    LIST_HEADER.frameControl.frameType,
+    LIST_HEADER.frameControl.direction,
+    LIST_HEADER.frameControl.disableDefaultResponse,
+    LIST_HEADER.manufacturerCode,
+    LIST_HEADER.transactionSequenceNumber,
+    LIST_HEADER.commandIdentifier,
+    Zcl.Clusters.genGroups.ID,
+    {groupcount: 2, grouplist: [10, 20]} /*payload*/,
+    {} /*custom clusters*/,
+    LIST_HEADER.frameControl.reservedBits,
+);
+const LIST_STRING = `{"header":{"frameControl":{"reservedBits":0,"frameType":1,"direction":0,"disableDefaultResponse":false,"manufacturerSpecific":false},"transactionSequenceNumber":43,"commandIdentifier":2},"payload":{"groupcount":2,"grouplist":[10,20]},"command":{"name":"getMembership","ID":2,"response":2,"parameters":[{"name":"groupcount","type":32},{"name":"grouplist","type":1002}],"required":true}}`;
 
 describe("ZCL Frame", () => {
     describe("Validates Parameter Condition", () => {
@@ -552,6 +579,7 @@ describe("ZCL Frame", () => {
             {string: SPECIFIC_CONDITION_FRAME_STRING, header: SPECIFIC_CONDITION_HEADER, written: SPECIFIC_CONDITION_FRAME_BUFFER},
         ],
         ["manufacturer-specific", MANUF_SPE_FRAME, {string: MANUF_SPE_FRAME_STRING, header: MANUF_SPE_HEADER, written: MANUF_SPE_FRAME_BUFFER}],
+        ["list", LIST_FRAME, {string: LIST_STRING, header: LIST_HEADER, written: LIST_BUFFER}],
     ])("Writes & Reads frame %s", (_name, frame, expected) => {
         expect(frame).toBeDefined();
         expect(frame.toString()).toStrictEqual(expected.string);
@@ -939,7 +967,7 @@ describe("ZCL Frame", () => {
         expect(() => {
             Zcl.Frame.fromBuffer(Zcl.Clusters.genOta.ID, Zcl.Header.fromBuffer(b), b, {});
         }).toThrow(
-            `Cannot parse 'imageBlockRequest:maximumDataSize' (The value of "offset" is out of range. It must be >= 0 and <= 15. Received 16)`,
+            `Status 'INVALID_FIELD' genOta:imageBlockRequest:maximumDataSize (The value of "offset" is out of range. It must be >= 0 and <= 15. Received 16)`,
         );
     });
 

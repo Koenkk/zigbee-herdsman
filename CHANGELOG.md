@@ -1,5 +1,83 @@
 # Changelog
 
+## [10.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.1...v10.0.2) (2026-03-16)
+
+
+### Bug Fixes
+
+* Move "Develco metering cluster" to ZHC  ([#1701](https://github.com/Koenkk/zigbee-herdsman/issues/1701)) ([d182569](https://github.com/Koenkk/zigbee-herdsman/commit/d1825698ee4c748cdeea18addda0b5f4138e159f))
+* Move SchneiderWiser attributes from ZH to ZHC ([#1702](https://github.com/Koenkk/zigbee-herdsman/issues/1702)) ([7262b85](https://github.com/Koenkk/zigbee-herdsman/commit/7262b85671fad81f4ccba51d3a4fa968e722542b))
+* Move SinopeHvacThermostat attributes from ZH to ZHC ([#1704](https://github.com/Koenkk/zigbee-herdsman/issues/1704)) ([ffa0691](https://github.com/Koenkk/zigbee-herdsman/commit/ffa06911e8db236d6c6d57cb8fd1f50ed2003019))
+* Set serialport DTR_CONTROL_DISABLE on Windows ([#1674](https://github.com/Koenkk/zigbee-herdsman/issues/1674)) ([1f8f968](https://github.com/Koenkk/zigbee-herdsman/commit/1f8f968423d7b633588533a5f8f891b1e3ea8844))
+* ZStack: don't require preconfigured key match on Z-Stack 3.x ([#1692](https://github.com/Koenkk/zigbee-herdsman/issues/1692)) ([1738575](https://github.com/Koenkk/zigbee-herdsman/commit/173857523d4a2cfb94692c2f4cc5f24c30bc7bf3))
+
+## [10.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.0...v10.0.1) (2026-03-13)
+
+
+### Bug Fixes
+
+* **ignore:** bump the minor-patch group with 2 updates ([#1695](https://github.com/Koenkk/zigbee-herdsman/issues/1695)) ([f1160e4](https://github.com/Koenkk/zigbee-herdsman/commit/f1160e4ff340df9b47c2e36747e80c0f7e6fabb1))
+* Move cluster manuSpecificProfalux1 from ZH to ZHC ([#1683](https://github.com/Koenkk/zigbee-herdsman/issues/1683)) ([bf3b1e3](https://github.com/Koenkk/zigbee-herdsman/commit/bf3b1e3f72e00b197741d622c50858b2194277f2))
+* Move cluster manuSpecificSiglisZigfred from ZH to ZHC ([#1688](https://github.com/Koenkk/zigbee-herdsman/issues/1688)) ([7e89d22](https://github.com/Koenkk/zigbee-herdsman/commit/7e89d22f3703798acee01cda40fc965a8ad05db5))
+* Move cluster manuSpecificSmartThingsArrivalSensor from ZH to ZHC ([#1690](https://github.com/Koenkk/zigbee-herdsman/issues/1690)) ([4519f2b](https://github.com/Koenkk/zigbee-herdsman/commit/4519f2b51be7881f600b0756091a6cd4df240c67))
+* Move cluster zosungIRTransmit and cluster zosungIRControl from ZH to ZHC ([#1691](https://github.com/Koenkk/zigbee-herdsman/issues/1691)) ([00ef097](https://github.com/Koenkk/zigbee-herdsman/commit/00ef09785a530bfe8fb2b3388e624af7dd7b2f7b))
+* Move manuSpecificLumi from ZH to ZHC ([#1687](https://github.com/Koenkk/zigbee-herdsman/issues/1687)) ([3b63933](https://github.com/Koenkk/zigbee-herdsman/commit/3b6393318fea7b5247763c0e44bd45ff1c2350c7))
+* Move manuSpecificSinope from ZH to ZHC ([#1686](https://github.com/Koenkk/zigbee-herdsman/issues/1686)) ([8a4ce87](https://github.com/Koenkk/zigbee-herdsman/commit/8a4ce87e4f129be6f7c777ad010605e789473084))
+* Move owonClearMetering from ZH to ZHC ([#1689](https://github.com/Koenkk/zigbee-herdsman/issues/1689)) ([8b918f7](https://github.com/Koenkk/zigbee-herdsman/commit/8b918f7a64e51317aede7581131ece9b8e03ff3f))
+* Remove "schneiderHaElectrical" from ZH, attributes are not used in ZHC ([#1698](https://github.com/Koenkk/zigbee-herdsman/issues/1698)) ([d8aa1ab](https://github.com/Koenkk/zigbee-herdsman/commit/d8aa1ab54091dc9a671c8535f43b0412d1502fa5))
+* Remove "schneiderSeMetering" from ZH, attributes are not used in ZHC ([#1697](https://github.com/Koenkk/zigbee-herdsman/issues/1697)) ([8d99fd2](https://github.com/Koenkk/zigbee-herdsman/commit/8d99fd2c020f679f268f2a9fae1c4bf4631d3eef))
+* Remove Elko specific attributes from ZH (not used in ZHC) ([#1696](https://github.com/Koenkk/zigbee-herdsman/issues/1696)) ([647d0f9](https://github.com/Koenkk/zigbee-herdsman/commit/647d0f969183359f86462e2e89ce5b319b5f5671))
+
+## [10.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.11...v10.0.0) (2026-03-09)
+
+
+### ⚠ BREAKING CHANGES
+
+* improve performance with ZCL clusters handling ([#1663](https://github.com/Koenkk/zigbee-herdsman/issues/1663))
+
+### Bug Fixes
+
+* improve performance with ZCL clusters handling ([#1663](https://github.com/Koenkk/zigbee-herdsman/issues/1663)) ([8356e5d](https://github.com/Koenkk/zigbee-herdsman/commit/8356e5d2c5efd9eb75a03e881ceeefeda8c93cb5))
+* Move manuSpecificPhilips and manuSpecificPhilips2 from ZH to ZHC ([#1682](https://github.com/Koenkk/zigbee-herdsman/issues/1682)) ([e6f67ef](https://github.com/Koenkk/zigbee-herdsman/commit/e6f67ef5e5247c80cd6902011e6064b76cf888d9))
+
+## [9.0.11](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.10...v9.0.11) (2026-03-03)
+
+
+### Bug Fixes
+
+* Move manuSpecificSamsungAccelerometer from ZH to ZHC ([#1680](https://github.com/Koenkk/zigbee-herdsman/issues/1680)) ([7ab5e70](https://github.com/Koenkk/zigbee-herdsman/commit/7ab5e708a490c6a18f9f27da3fbfaa3d83e7f925))
+
+## [9.0.10](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.9...v9.0.10) (2026-03-03)
+
+
+### Bug Fixes
+
+* **ignore:** bump the minor-patch group with 2 updates ([#1677](https://github.com/Koenkk/zigbee-herdsman/issues/1677)) ([1aceee5](https://github.com/Koenkk/zigbee-herdsman/commit/1aceee5f3eac1f4e39f02c3116da5424f73d2ca2))
+* Move manuSpecificClusterAduroSmart to ZHC ([#1671](https://github.com/Koenkk/zigbee-herdsman/issues/1671)) ([8749e5d](https://github.com/Koenkk/zigbee-herdsman/commit/8749e5d6a0aefbacb6abf4c6cb2b74188aa1728a))
+* Move manuSpecificOsram from ZH to ZHC ([#1678](https://github.com/Koenkk/zigbee-herdsman/issues/1678)) ([91302cd](https://github.com/Koenkk/zigbee-herdsman/commit/91302cd48aa65e830ed618de4e7bc85e8959cda4))
+* Move sprutVoc, sprutNoise and sprutIrBlaster from ZH to ZHC ([#1679](https://github.com/Koenkk/zigbee-herdsman/issues/1679)) ([605962c](https://github.com/Koenkk/zigbee-herdsman/commit/605962cb03ae3714ee4540d02679c41f6e45221a))
+* Moved cluster manuSpecificCentraliteHumidity from ZH to ZHC ([#1675](https://github.com/Koenkk/zigbee-herdsman/issues/1675)) ([5bac250](https://github.com/Koenkk/zigbee-herdsman/commit/5bac2504501fb3d9ca1f7e13a99b3c1b7d69c60c))
+
+## [9.0.9](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.8...v9.0.9) (2026-02-28)
+
+
+### Bug Fixes
+
+* Fix for Dresden Elektronik OTA updates ([#1664](https://github.com/Koenkk/zigbee-herdsman/issues/1664)) ([8d96a5c](https://github.com/Koenkk/zigbee-herdsman/commit/8d96a5c4f4601f4753315a7db35627620f99a196))
+
+## [9.0.8](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.7...v9.0.8) (2026-02-28)
+
+
+### Bug Fixes
+
+* Missing `write` on some closuresWindowCovering attrs ([#1669](https://github.com/Koenkk/zigbee-herdsman/issues/1669)) ([41f2121](https://github.com/Koenkk/zigbee-herdsman/commit/41f2121d804bc3685bd3518cc29ec38e062560da))
+* Move cluster manuSpecificSchneiderFanSwitchConfiguration from ZH to ZHC. ([#1662](https://github.com/Koenkk/zigbee-herdsman/issues/1662)) ([fd4d585](https://github.com/Koenkk/zigbee-herdsman/commit/fd4d58526d685fd75bc1425df4f2d05ba234fd9d))
+* Move cluster tradfriButton to ZHC ([#1666](https://github.com/Koenkk/zigbee-herdsman/issues/1666)) ([79709b1](https://github.com/Koenkk/zigbee-herdsman/commit/79709b15f7e57ddb16e5def951148771ec5e337b))
+* Move Elko attributes in hvacThermostat cluster to ZHC ([#1658](https://github.com/Koenkk/zigbee-herdsman/issues/1658)) ([71646d2](https://github.com/Koenkk/zigbee-herdsman/commit/71646d2a41e1dae8bfe6d410b2b64b8eb7d94e65))
+* Move legrand clusters to ZHC ([#1665](https://github.com/Koenkk/zigbee-herdsman/issues/1665)) ([ecca834](https://github.com/Koenkk/zigbee-herdsman/commit/ecca83464541b98ced1eed62cf87309a80e467bf))
+* Move manuSpecificAssaDoorLock cluster to ZHC ([#1667](https://github.com/Koenkk/zigbee-herdsman/issues/1667)) ([00b95a0](https://github.com/Koenkk/zigbee-herdsman/commit/00b95a00eb9db8061b6c2240f847cdebeaef7e28))
+* Remove schneiderSpecificPilotMode from ZH ([#1659](https://github.com/Koenkk/zigbee-herdsman/issues/1659)) ([7394cf7](https://github.com/Koenkk/zigbee-herdsman/commit/7394cf7073b24f6d1c917afbb3fdbb180386faf7))
+
 ## [9.0.7](https://github.com/Koenkk/zigbee-herdsman/compare/v9.0.6...v9.0.7) (2026-02-24)
 
 

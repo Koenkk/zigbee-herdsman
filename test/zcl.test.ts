@@ -3,6 +3,16 @@ import * as Zcl from "../src/zspec/zcl";
 import {BuffaloZcl} from "../src/zspec/zcl/buffaloZcl";
 import {BuffaloZclDataType, DataType, Direction, FrameType, StructuredIndicatorType} from "../src/zspec/zcl/definition/enums";
 
+const MANU_SPE_CUSTOM_CLUSTERS = {
+    manuSpecificAssaDoorLock: {
+        name: "manuSpecificAssaDoorLock",
+        ID: 0xfc00,
+        attributes: {},
+        commands: {},
+        commandsResponse: {},
+    },
+};
+
 describe("Zcl", () => {
     it("Get cluster by name", () => {
         const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
@@ -16,39 +26,27 @@ describe("Zcl", () => {
 
     it("Get cluster by ID", () => {
         const cluster1 = Zcl.Utils.getCluster(0, undefined, {});
-        // @ts-expect-error testing
-        delete cluster1.getAttribute;
-        // @ts-expect-error testing
-        delete cluster1.getCommand;
-        // @ts-expect-error testing
-        delete cluster1.getCommandResponse;
         const cluster2 = Zcl.Utils.getCluster("genBasic", undefined, {});
-        // @ts-expect-error testing
-        delete cluster2.getAttribute;
-        // @ts-expect-error testing
-        delete cluster2.getCommand;
-        // @ts-expect-error testing
-        delete cluster2.getCommandResponse;
         expect(cluster1).toStrictEqual(cluster2);
     });
 
     it("Get cluster attribute by ID", () => {
         const cluster = Zcl.Utils.getCluster(0, undefined, {});
-        const attribute = cluster.getAttribute(1);
+        const attribute = Zcl.Utils.getClusterAttribute(cluster, 1, undefined);
         expect(attribute).toStrictEqual({ID: 1, type: DataType.UINT8, name: "appVersion", default: 0, max: 255});
     });
 
     it("Cluster has attribute", () => {
         const cluster = Zcl.Utils.getCluster(0, undefined, {});
-        expect(cluster.getAttribute("zclVersion")).not.toBeUndefined();
-        expect(cluster.getAttribute("NOTEXISTING")).toBeUndefined();
-        expect(cluster.getAttribute(0)).not.toBeUndefined();
-        expect(cluster.getAttribute(910293)).toBeUndefined();
+        expect(Zcl.Utils.getClusterAttribute(cluster, "zclVersion", undefined)).not.toBeUndefined();
+        expect(Zcl.Utils.getClusterAttribute(cluster, "NOTEXISTING", undefined)).toBeUndefined();
+        expect(Zcl.Utils.getClusterAttribute(cluster, 0, undefined)).not.toBeUndefined();
+        expect(Zcl.Utils.getClusterAttribute(cluster, 910293, undefined)).toBeUndefined();
     });
 
     it("Get specific command by name", () => {
         const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
-        const command = cluster.getCommand("ezmodeInvoke");
+        const command = Zcl.Utils.getClusterCommand(cluster, "ezmodeInvoke");
         expect(command.ID).toBe(2);
         expect(command.name).toBe("ezmodeInvoke");
     });
@@ -62,13 +60,13 @@ describe("Zcl", () => {
     it("Get global command non existing", () => {
         expect(() => {
             Zcl.Utils.getGlobalCommand("nonexisting");
-        }).toThrow("Global command with key 'nonexisting' does not exist");
+        }).toThrow("Status 'UNSUP_COMMAND' foundation:nonexisting");
     });
 
     it("Get cluster by name non-existing", () => {
         expect(() => {
             Zcl.Utils.getCluster("notExisting", undefined, {});
-        }).toThrow("Cluster with name 'notExisting' does not exist");
+        }).toThrow("Status 'UNSUPPORTED_CLUSTER' notExisting");
     });
 
     it("Get cluster by id non-existing", () => {
@@ -83,13 +81,13 @@ describe("Zcl", () => {
 
     it("Get specific command by ID", () => {
         const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
-        const command = cluster.getCommand(2);
-        expect(command).toStrictEqual(cluster.getCommand("ezmodeInvoke"));
+        const command = Zcl.Utils.getClusterCommand(cluster, 2);
+        expect(command).toStrictEqual(Zcl.Utils.getClusterCommand(cluster, "ezmodeInvoke"));
     });
 
     it("Get specific command by name server to client", () => {
         const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
-        const command = cluster.getCommandResponse(0);
+        const command = Zcl.Utils.getClusterCommandResponse(cluster, 0);
         expect(command.ID).toBe(0);
         expect(command.name).toBe("identifyQueryRsp");
     });
@@ -97,15 +95,15 @@ describe("Zcl", () => {
     it("Get specific command by name non existing", () => {
         expect(() => {
             const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
-            cluster.getCommandResponse("nonexisting");
-        }).toThrow("Cluster 'genIdentify' has no command response 'nonexisting'");
+            Zcl.Utils.getClusterCommandResponse(cluster, "nonexisting");
+        }).toThrow("Status 'UNSUP_COMMAND' response genIdentify:nonexisting");
     });
 
     it("Get discrete or analog of unkown type", () => {
         expect(() => {
             // @ts-expect-error invalid on purpose
             Zcl.Utils.getDataTypeClass(99999);
-        }).toThrow("Don't know value type for 'undefined'");
+        }).toThrow("Status 'INVALID_DATA_TYPE' 9999");
     });
 
     it("ZclFrame from buffer parse payload with unknown frame type", () => {
@@ -932,21 +930,41 @@ describe("Zcl", () => {
 
     it("ZclFrame with Assa (manufacturer specific) cluster create", () => {
         const payload = [{attrId: 0x0012, status: 0, attrData: 1, dataType: 32}];
-        const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, 0x101d, 8, "readRsp", 0xfc00, payload, {});
+        const frame = Zcl.Frame.create(
+            FrameType.GLOBAL,
+            Direction.CLIENT_TO_SERVER,
+            false,
+            0x101d,
+            8,
+            "readRsp",
+            0xfc00,
+            payload,
+            MANU_SPE_CUSTOM_CLUSTERS,
+        );
 
         expect(frame.cluster.name).toBe("manuSpecificAssaDoorLock");
     });
 
     it("ZclFrame with Assa (manufacturer specific) cluster create with non Assamanufcode", () => {
         const payload = [{attrId: 0x0012, status: 0, attrData: 1, dataType: 32}];
-        const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.CLIENT_TO_SERVER, false, 0x10f3, 8, "readRsp", 0xfc00, payload, {});
+        const frame = Zcl.Frame.create(
+            FrameType.GLOBAL,
+            Direction.CLIENT_TO_SERVER,
+            false,
+            0x10f3,
+            8,
+            "readRsp",
+            0xfc00,
+            payload,
+            MANU_SPE_CUSTOM_CLUSTERS,
+        );
 
         expect(frame.cluster.name).toBe("manuSpecificAssaDoorLock");
     });
 
     it("ZclFrame with Assa (manufacturer specific) cluster fromBuffer", () => {
         const buffer = Buffer.from([0x04, 0xf2, 0x10, 0x08, 0x01, 0x00, 0x00, 0x00, 0x20, 0x01]);
-        const frame = Zcl.Frame.fromBuffer(0xfc00, Zcl.Header.fromBuffer(buffer)!, buffer, {});
+        const frame = Zcl.Frame.fromBuffer(0xfc00, Zcl.Header.fromBuffer(buffer)!, buffer, MANU_SPE_CUSTOM_CLUSTERS);
         expect(frame.cluster.name).toBe("manuSpecificAssaDoorLock");
     });
 
@@ -1910,62 +1928,62 @@ describe("Zcl", () => {
     });
 
     it("Zcl utils get cluster without manufacturerCode", () => {
-        const cluster = Zcl.Utils.getCluster(0xfc00, undefined, {});
+        const cluster = Zcl.Utils.getCluster(0xfc00, undefined, MANU_SPE_CUSTOM_CLUSTERS);
         expect(cluster.ID).toBe(0xfc00);
         expect(cluster.name).toBe("manuSpecificAssaDoorLock");
     });
 
     it("Zcl utils get cluster with manufacturerCode", () => {
-        const cluster = Zcl.Utils.getCluster(0xfc00, 0x100b, {});
-        expect(cluster.ID).toBe(0xfc00);
-        expect(cluster.name).toBe("manuSpecificPhilips");
+        const cluster = Zcl.Utils.getCluster(0xfc57, 0x1217, MANU_SPE_CUSTOM_CLUSTERS);
+        expect(cluster.ID).toBe(0xfc57);
+        expect(cluster.name).toBe("manuSpecificAmazonWWAH");
     });
 
     it("Zcl utils get cluster manufacturerCode", () => {
-        const cluster = Zcl.Utils.getCluster(0xfc00, 0x10f2, {});
+        const cluster = Zcl.Utils.getCluster(0xfc00, Zcl.ManufacturerCode.UBISYS_TECHNOLOGIES_GMBH, MANU_SPE_CUSTOM_CLUSTERS);
         expect(cluster.ID).toBe(0xfc00);
         expect(cluster.name).toBe("manuSpecificAssaDoorLock");
     });
 
     it("Zcl utils get cluster manufacturerCode wrong", () => {
-        const cluster = Zcl.Utils.getCluster(0xfc00, 123, {});
+        const cluster = Zcl.Utils.getCluster(0xfc00, 123, MANU_SPE_CUSTOM_CLUSTERS);
         expect(cluster.ID).toBe(0xfc00);
         expect(cluster.name).toBe("manuSpecificAssaDoorLock");
     });
 
     it("Zcl utils get cluster attributes manufacturerCode", () => {
         const cluster = Zcl.Utils.getCluster("closuresWindowCovering", 0x1021, {});
-        const attribute = cluster.getAttribute(0xf004);
+        const attribute = Zcl.Utils.getClusterAttribute(cluster, 0xf004, 0x1021);
         expect(attribute).toStrictEqual(expect.objectContaining({ID: 0xf004, manufacturerCode: 0x1021, name: "stepPositionTilt", type: 48}));
     });
 
     it("Zcl utils get cluster attributes manufacturerCode wrong", () => {
         const cluster = Zcl.Utils.getCluster("closuresWindowCovering", 123, {});
-        expect(cluster.getAttribute(0x1000)).toBeUndefined();
+        expect(Zcl.Utils.getClusterAttribute(cluster, 0x1000, 123)).toBeUndefined();
     });
 
     it("Zcl utils get command", () => {
         const cluster = Zcl.Utils.getCluster("genOnOff", undefined, {});
-        const command = cluster.getCommand(0);
+        const command = Zcl.Utils.getClusterCommand(cluster, 0);
         expect(command.name).toStrictEqual("off");
-        expect(cluster.getCommand("off")).toStrictEqual(command);
+        expect(Zcl.Utils.getClusterCommand(cluster, "off")).toStrictEqual(command);
     });
 
     it("Zcl utils get attribute", () => {
         const cluster = Zcl.Utils.getCluster("genOnOff", undefined, {});
-        const attribute = cluster.getAttribute(16385);
+        const attribute = Zcl.Utils.getClusterAttribute(cluster, 16385, undefined);
         expect(attribute?.name).toStrictEqual("onTime");
-        expect(cluster.getAttribute("onTime")).toStrictEqual(attribute);
+        expect(Zcl.Utils.getClusterAttribute(cluster, "onTime", undefined)).toStrictEqual(attribute);
     });
 
     it("Zcl utils get attribute non-existing", () => {
         const cluster = Zcl.Utils.getCluster("genOnOff", undefined, {});
-        expect(cluster.getAttribute("notExisting")).toBeUndefined();
+        expect(Zcl.Utils.getClusterAttribute(cluster, "notExisting", undefined)).toBeUndefined();
     });
 
     it("Zcl utils get command non-existing", () => {
         const cluster = Zcl.Utils.getCluster("genOnOff", undefined, {});
-        expect(() => cluster.getCommand("notExisting")).toThrow("Cluster 'genOnOff' has no command 'notExisting'");
+        expect(() => Zcl.Utils.getClusterCommand(cluster, "notExisting")).toThrow("Status 'UNSUP_COMMAND' genOnOff:notExisting");
     });
 
     it("Zcl green power readGpd commissioning", () => {

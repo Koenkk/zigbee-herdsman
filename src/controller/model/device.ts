@@ -8,7 +8,7 @@ import {BroadcastAddress} from "../../zspec/enums";
 import type {Eui64} from "../../zspec/tstypes";
 import * as Zcl from "../../zspec/zcl";
 import type {TClusterCommandPayload, TClusterPayload, TPartialClusterAttributes} from "../../zspec/zcl/definition/clusters-types";
-import type {ClusterDefinition, CustomClusters} from "../../zspec/zcl/definition/tstype";
+import type {Cluster, CustomClusters} from "../../zspec/zcl/definition/tstype";
 import type {TZclFrame} from "../../zspec/zcl/zclFrame";
 import * as Zdo from "../../zspec/zdo";
 import type {BindingTableEntry, LQITableEntry, RoutingTableEntry} from "../../zspec/zdo/definition/tstypes";
@@ -42,6 +42,11 @@ const INTERVIEW_GENBASIC_ATTRIBUTES = [
     "dateCode",
     "swBuildId",
 ] as const;
+
+const GEN_BASIC_CLUSTER_ID = Zcl.Clusters.genBasic.ID;
+const GEN_TIME_CLUSTER_ID = Zcl.Clusters.genTime.ID;
+const GEN_POLL_CTRL_CLUSTER_ID = Zcl.Clusters.genPollCtrl.ID;
+const GEN_OTA_CLUSTER_ID = Zcl.Clusters.genOta.ID;
 
 type CustomReadResponse = (frame: Zcl.Frame, endpoint: Endpoint) => boolean;
 
@@ -344,61 +349,102 @@ export class Device extends Entity<ControllerEventMap> {
         return this.endpoints.find((e) => e.hasPendingRequests()) !== undefined;
     }
 
-    public async onZclData(dataPayload: AdapterEvents.ZclPayload, frame: Zcl.Frame, endpoint: Endpoint): Promise<void> {
+    public async onZclData(
+        dataPayload: AdapterEvents.ZclPayload,
+        frame: Zcl.Frame,
+        endpoint: Endpoint,
+        defaultResponse: Zcl.Status | undefined,
+    ): Promise<void> {
         if (!Device.devices.has(this.ieeeAddr)) {
             // prevent race conditions where device gets deleted during processing
             return;
         }
 
-        if (frame.header.isGlobal) {
+        if (this.type === "GreenPower") {
+            // nothing below applies
+            return;
+        }
+
+        const {header, command, cluster, payload} = frame;
+        let sendDefaultResponse = !header.frameControl.disableDefaultResponse && !dataPayload.wasBroadcast && command.response === undefined;
+        let defaultResponseStatus = defaultResponse ?? Zcl.Status.SUCCESS;
+
+        if (header.isGlobal) {
             // Response to read requests
-            if (frame.command.name === "read" && !this._customReadResponse?.(frame, endpoint)) {
-                const cluster: Clusters[string] =
-                    dataPayload.clusterID === Zcl.Clusters.genTime.ID
-                        ? {
-                              attributes: timeService.getTimeClusterAttributes(),
-                          }
-                        : endpoint.clusters[frame.cluster.name];
+            switch (command.name) {
+                case "read": {
+                    // NOTE: `sendDefaultResponse` always false from `command.response === 0x01`
 
-                if (cluster) {
-                    const response: KeyValue = {};
+                    if (this._customReadResponse?.(frame, endpoint)) {
+                        break;
+                    }
 
-                    for (const entry of frame.payload) {
-                        const name = frame.cluster.getAttribute(entry.attrId)?.name;
+                    const attributes: {[s: string]: KeyValue} = {
+                        ...endpoint.clusters,
+                    };
 
-                        if (name && name in cluster.attributes) {
-                            response[name] = cluster.attributes[name];
+                    if (dataPayload.clusterID === GEN_TIME_CLUSTER_ID) {
+                        attributes.genTime = {
+                            attributes: timeService.getTimeClusterAttributes(),
+                        };
+                    }
+
+                    if (cluster.name in attributes) {
+                        const response: KeyValue = {};
+
+                        for (const entry of payload) {
+                            // TODO: this.manufacturerID or frame.header.manufacturerCode
+                            const name = Zcl.Utils.getClusterAttribute(cluster, entry.attrId, this.manufacturerID)?.name;
+
+                            if (name && name in attributes[cluster.name].attributes) {
+                                response[name] = attributes[cluster.name].attributes[name];
+                            }
+                        }
+
+                        try {
+                            await endpoint.readResponse(cluster.ID, header.transactionSequenceNumber, response, {
+                                srcEndpoint: dataPayload.destinationEndpoint,
+                            });
+                        } catch (error) {
+                            logger.error(`Read response to ${this.ieeeAddr} failed (${(error as Error).message})`, NS);
+                            // XXX: technically, if `readResponse` fails before reaching the network (internal to ZH), we should send a default response
+                            //      currently not possible due to implementation (no distinction as to "where" it failed)
                         }
                     }
 
-                    try {
-                        await endpoint.readResponse(frame.cluster.ID, frame.header.transactionSequenceNumber, response, {
-                            srcEndpoint: dataPayload.destinationEndpoint,
-                        });
-                    } catch (error) {
-                        logger.error(`Read response to ${this.ieeeAddr} failed (${(error as Error).message})`, NS);
-                    }
+                    break;
+                }
+                case "defaultRsp": {
+                    sendDefaultResponse = false; // per spec
+                    break;
                 }
             }
-        } else if (frame.header.isSpecific) {
-            switch (frame.cluster.name) {
+        } else if (header.isSpecific) {
+            switch (cluster.name) {
                 case "ssIasZone": {
-                    if (frame.command.name === "enrollReq") {
+                    if (command.name === "enrollReq") {
                         // Respond to enroll requests
                         logger.debug(`IAS - '${this.ieeeAddr}' responding to enroll response`, NS);
 
-                        await endpoint.command("ssIasZone", "enrollRsp", {enrollrspcode: 0, zoneid: 23}, {disableDefaultResponse: true});
+                        try {
+                            await endpoint.command("ssIasZone", "enrollRsp", {enrollrspcode: 0, zoneid: 23}, {disableDefaultResponse: true});
+
+                            sendDefaultResponse = false; // per spec, sending a specific response TODO: no "Effect on receipt" in spec, is this correct?
+                        } catch (error) {
+                            logger.error(`Handling of IAS zone enroll for ${this.ieeeAddr} failed (${(error as Error).message})`, NS);
+                            defaultResponseStatus = Zcl.Status.FAILURE;
+                        }
                     }
                     break;
                 }
                 case "genPollCtrl": {
-                    if (frame.command.name === "checkin") {
+                    if (command.name === "checkin") {
                         // Handle check-in from sleeping end devices
                         try {
                             if (this.hasPendingRequests() || this._checkinInterval === undefined) {
                                 logger.debug(`check-in from ${this.ieeeAddr}: accepting fast-poll`, NS);
                                 await endpoint.command(
-                                    frame.cluster.name as "genPollCtrl",
+                                    cluster.name as "genPollCtrl",
                                     "checkinRsp",
                                     {
                                         startFastPolling: 1,
@@ -422,11 +468,11 @@ export class Device extends Entity<ControllerEventMap> {
                                 // We *must* end fast-poll when we're done sending things. Otherwise
                                 // we cause undue power-drain.
                                 logger.debug(`check-in from ${this.ieeeAddr}: stopping fast-poll`, NS);
-                                await endpoint.command(frame.cluster.name as "genPollCtrl", "fastPollStop", {}, {sendPolicy: "immediate"});
+                                await endpoint.command(cluster.name as "genPollCtrl", "fastPollStop", {}, {sendPolicy: "immediate"});
                             } else {
                                 logger.debug(`check-in from ${this.ieeeAddr}: declining fast-poll`, NS);
                                 await endpoint.command(
-                                    frame.cluster.name as "genPollCtrl",
+                                    cluster.name as "genPollCtrl",
                                     "checkinRsp",
                                     {
                                         startFastPolling: 0,
@@ -435,8 +481,11 @@ export class Device extends Entity<ControllerEventMap> {
                                     {sendPolicy: "immediate"},
                                 );
                             }
+
+                            sendDefaultResponse = false; // per spec, sending a specific response
                         } catch (error) {
                             logger.error(`Handling of poll check-in from ${this.ieeeAddr} failed (${(error as Error).message})`, NS);
+                            defaultResponseStatus = Zcl.Status.FAILURE;
                         }
                     }
                     break;
@@ -445,38 +494,28 @@ export class Device extends Entity<ControllerEventMap> {
         }
 
         // Send a default response if necessary.
-        const isDefaultResponse = frame.header.isGlobal && frame.command.name === "defaultRsp";
-        const commandHasResponse = frame.command.response !== undefined;
-        const disableDefaultResponse = frame.header.frameControl.disableDefaultResponse;
         /* v8 ignore next */
         const disableTuyaDefaultResponse = this.manufacturerName?.startsWith("_TZ") && process.env.DISABLE_TUYA_DEFAULT_RESPONSE;
         // Sometimes messages are received twice, prevent responding twice
-        const alreadyResponded = this._lastDefaultResponseSequenceNumber === frame.header.transactionSequenceNumber;
+        const alreadyResponded = this._lastDefaultResponseSequenceNumber === header.transactionSequenceNumber;
 
-        if (
-            this.type !== "GreenPower" &&
-            !dataPayload.wasBroadcast &&
-            !disableDefaultResponse &&
-            !isDefaultResponse &&
-            !commandHasResponse &&
-            !this._skipDefaultResponse &&
-            !alreadyResponded &&
-            !disableTuyaDefaultResponse
-        ) {
+        if (!this._skipDefaultResponse && sendDefaultResponse && !alreadyResponded && !disableTuyaDefaultResponse) {
             try {
-                this._lastDefaultResponseSequenceNumber = frame.header.transactionSequenceNumber;
+                this._lastDefaultResponseSequenceNumber = header.transactionSequenceNumber;
                 // In the ZCL it is not documented what the direction of the default response should be
                 // In https://github.com/Koenkk/zigbee2mqtt/issues/18096 a commandResponse (SERVER_TO_CLIENT)
                 // is send and the device expects a CLIENT_TO_SERVER back.
                 // Previously SERVER_TO_CLIENT was always used.
                 // Therefore for non-global commands we inverse the direction.
-                const direction = frame.header.isGlobal
+                const direction = header.isGlobal
                     ? Zcl.Direction.SERVER_TO_CLIENT
-                    : frame.header.frameControl.direction === Zcl.Direction.CLIENT_TO_SERVER
+                    : header.frameControl.direction === Zcl.Direction.CLIENT_TO_SERVER
                       ? Zcl.Direction.SERVER_TO_CLIENT
                       : Zcl.Direction.CLIENT_TO_SERVER;
 
-                await endpoint.defaultResponse(frame.command.ID, 0, frame.cluster.ID, frame.header.transactionSequenceNumber, {direction});
+                await endpoint.defaultResponse(command.ID, defaultResponseStatus, cluster.ID, header.transactionSequenceNumber, {
+                    direction,
+                });
             } catch (error) {
                 logger.debug(`Default response to ${this.ieeeAddr} failed (${error})`, NS);
             }
@@ -514,7 +553,7 @@ export class Device extends Entity<ControllerEventMap> {
 
         // default: no timeout (messages expire immediately after first send attempt)
         let pendingRequestTimeout = 0;
-        if (endpoints.filter((e): boolean => e.inputClusters.includes(Zcl.Clusters.genPollCtrl.ID)).length > 0) {
+        if (endpoints.filter((e): boolean => e.inputClusters.includes(GEN_POLL_CTRL_CLUSTER_ID)).length > 0) {
             // default for devices that support genPollCtrl cluster (RX off when idle): 1 day
             pendingRequestTimeout = 86400000;
         }
@@ -1315,29 +1354,34 @@ export class Device extends Entity<ControllerEventMap> {
         // Zigbee does not have an official pinging mechanism. Use a read request
         // of a mandatory basic cluster attribute to keep it as lightweight as
         // possible.
-        const endpoint = this.endpoints.find((ep) => ep.inputClusters.includes(0)) ?? this.endpoints[0];
+        const endpoint = this.endpoints.find((ep) => ep.inputClusters.includes(GEN_BASIC_CLUSTER_ID)) ?? this.endpoints[0];
         await endpoint.read("genBasic", ["zclVersion"], {disableRecovery, sendPolicy: "immediate"});
     }
 
-    public addCustomCluster(name: string, cluster: ClusterDefinition): void {
+    public addCustomCluster(name: string, cluster: Cluster): void {
         assert(
-            ![Zcl.Clusters.touchlink.ID, Zcl.Clusters.greenPower.ID].includes(cluster.ID),
+            cluster.ID !== Zcl.Clusters.touchlink.ID && cluster.ID !== Zcl.Clusters.greenPower.ID,
             "Overriding of greenPower or touchlink cluster is not supported",
         );
-        if (Zcl.Utils.isClusterName(name)) {
-            const existingCluster = this._customClusters[name] ?? Zcl.Clusters[name];
 
+        if (Zcl.Utils.isClusterName(name)) {
             // Extend existing cluster
+            const existingCluster = this._customClusters[name] ?? Zcl.Clusters[name];
             assert(existingCluster.ID === cluster.ID, `Custom cluster ID (${cluster.ID}) should match existing cluster ID (${existingCluster.ID})`);
-            cluster = {
+
+            const extendedCluster: Cluster = {
+                name: cluster.name,
                 ID: cluster.ID,
                 manufacturerCode: cluster.manufacturerCode,
                 attributes: {...existingCluster.attributes, ...cluster.attributes},
                 commands: {...existingCluster.commands, ...cluster.commands},
                 commandsResponse: {...existingCluster.commandsResponse, ...cluster.commandsResponse},
             };
+
+            this._customClusters[name] = extendedCluster;
+        } else {
+            this._customClusters[name] = cluster;
         }
-        this._customClusters[name] = cluster;
     }
 
     #waitForOtaCommand<Co extends string>(
@@ -1352,7 +1396,7 @@ export class Device extends Entity<ControllerEventMap> {
             Zcl.FrameType.SPECIFIC,
             Zcl.Direction.CLIENT_TO_SERVER,
             transactionSequenceNumber,
-            Zcl.Clusters.genOta.ID,
+            GEN_OTA_CLUSTER_ID,
             commandId,
             timeout,
         );
@@ -1695,7 +1739,7 @@ export class Device extends Entity<ControllerEventMap> {
                 await endpoint.defaultResponse(
                     Zcl.Clusters.genOta.commands.upgradeEndRequest.ID,
                     Zcl.Status.SUCCESS,
-                    Zcl.Clusters.genOta.ID,
+                    GEN_OTA_CLUSTER_ID,
                     endResult.header.transactionSequenceNumber,
                 );
             } catch (error) {

@@ -134,11 +134,34 @@ describe("ZCL Buffalo", () => {
             {value: 4294967290, types: [Zcl.DataType.DATA32, Zcl.DataType.BITMAP32, Zcl.DataType.UINT32, Zcl.DataType.UTC, Zcl.DataType.BAC_OID]},
             {position: 4, write: "writeUInt32", read: "readUInt32"},
         ],
+        [
+            "uint40-like",
+            {value: 1099511627770, types: [Zcl.DataType.DATA40, Zcl.DataType.BITMAP40, Zcl.DataType.UINT40]},
+            {position: 5, write: "writeUInt40", read: "readUInt40"},
+        ],
+        [
+            "uint48-like",
+            {value: 281474976710650, types: [Zcl.DataType.DATA48, Zcl.DataType.BITMAP48, Zcl.DataType.UINT48]},
+            {position: 6, write: "writeUInt48", read: "readUInt48"},
+        ],
+        [
+            "uint56-like",
+            {value: 72057594037927935n, types: [Zcl.DataType.DATA56, Zcl.DataType.BITMAP56, Zcl.DataType.UINT56]},
+            {position: 7, write: "writeUInt56", read: "readUInt56"},
+        ],
+        [
+            "uint64-like",
+            {value: 18446744073709551610n, types: [Zcl.DataType.DATA64, Zcl.DataType.BITMAP64, Zcl.DataType.UINT64]},
+            {position: 8, write: "writeUInt64", read: "readUInt64"},
+        ],
         ["int8-like", {value: -120, types: [Zcl.DataType.INT8]}, {position: 1, write: "writeInt8", read: "readInt8"}],
         ["int16-like", {value: -32760, types: [Zcl.DataType.INT16]}, {position: 2, write: "writeInt16", read: "readInt16"}],
         ["int24-like", {value: -8388600, types: [Zcl.DataType.INT24]}, {position: 3, write: "writeInt24", read: "readInt24"}],
         ["int32-like", {value: -2147483640, types: [Zcl.DataType.INT32]}, {position: 4, write: "writeInt32", read: "readInt32"}],
+        ["int40-like", {value: -549755813887, types: [Zcl.DataType.INT40]}, {position: 5, write: "writeInt40", read: "readInt40"}],
         ["int48-like", {value: -140737488355320, types: [Zcl.DataType.INT48]}, {position: 6, write: "writeInt48", read: "readInt48"}],
+        ["int56-like", {value: -36028797018963960n, types: [Zcl.DataType.INT56]}, {position: 7, write: "writeInt56", read: "readInt56"}],
+        ["int64-like", {value: -9223372036854775800n, types: [Zcl.DataType.INT64]}, {position: 8, write: "writeInt64", read: "readInt64"}],
         ["float-like", {value: 1.539989614439558e-36, types: [Zcl.DataType.SINGLE_PREC]}, {position: 4, write: "writeFloatLE", read: "readFloatLE"}],
         [
             "double-like",
@@ -1296,6 +1319,56 @@ describe("ZCL Buffalo", () => {
 
         expect(buffalo.read(Zcl.BuffaloZclDataType.LIST_MIBOXER_ZONES, {length: value.length})).toStrictEqual(value);
         expect(buffalo.getPosition()).toStrictEqual(expectedWritten.length);
+    });
+
+    it("Reads Mi Struct", () => {
+        const buffer = Buffer.from([
+            34, 1, 33, 213, 12, 3, 40, 33, 4, 33, 168, 19, 5, 33, 43, 0, 6, 36, 0, 0, 5, 0, 0, 8, 33, 4, 2, 10, 33, 0, 0, 100, 16, 0,
+        ]);
+        const buffalo = new BuffaloZcl(buffer);
+
+        expect(buffalo.read(Zcl.BuffaloZclDataType.MI_STRUCT, {})).toStrictEqual({
+            "1": 3285,
+            "3": 33,
+            "4": 5032,
+            "5": 43,
+            "6": 327680,
+            "8": 516,
+            "10": 0,
+            "100": 0,
+        });
+        expect(buffalo.getPosition()).toStrictEqual(buffer.byteLength);
+    });
+
+    it("Reads Mi Struct with padding", () => {
+        const buffer = Buffer.from([
+            68, 3, 40, 29, 5, 33, 190, 45, 8, 33, 47, 18, 9, 33, 2, 21, 100, 16, 1, 101, 16, 0, 110, 32, 255, 111, 32, 255, 148, 32, 4, 149, 57, 184,
+            30, 21, 62, 150, 57, 211, 249, 17, 69, 151, 57, 0, 48, 104, 59, 152, 57, 0, 0, 0, 0, 155, 33, 1, 0, 156, 32, 1, 10, 33, 56, 38, 12, 40, 0,
+            0,
+        ]);
+
+        const buffalo = new BuffaloZcl(buffer);
+
+        expect(buffalo.read(Zcl.BuffaloZclDataType.MI_STRUCT, {})).toStrictEqual({
+            "3": 29,
+            "5": 11710,
+            "8": 4655,
+            "9": 5378,
+            "10": 9784,
+            "12": 0,
+            "100": 1,
+            "101": 0,
+            "110": 255,
+            "111": 255,
+            "148": 4,
+            "149": 0.14562499523162842,
+            "150": 2335.614013671875,
+            "151": 0.0035429000854492188,
+            "152": 0,
+            "155": 1,
+            "156": 1,
+        });
+        expect(buffalo.getPosition()).toStrictEqual(buffer.byteLength);
     });
 
     it("Writes & Reads big endian uint24", () => {

@@ -150,7 +150,11 @@ export class ZnpAdapterManager {
                 /* exception for some adapters which may actually use 0xdddddddddddddddd as EPID (backward compatibility) */
                 /* v8 ignore next */
                 this.nwkOptions.hasDefaultExtendedPanId) &&
-            this.nwkOptions.networkKey.equals(preconfiguredKey.key) &&
+            /* On Z-Stack 3.x, the preconfigured (transport) key in NVRAM may retain a default
+             * firmware value that does not match the configured network key, even though the
+             * active and alternate keys are correct. Only require preconfiguredKey match on
+             * Z-Stack 1.2 where it serves as the active key (see lines 128-133 above). */
+            (this.options.version !== ZnpVersion.ZStack12 || this.nwkOptions.networkKey.equals(preconfiguredKey.key)) &&
             this.nwkOptions.networkKey.equals(activeKeyInfo.key) &&
             this.nwkOptions.networkKey.equals(alternateKeyInfo.key);
 
@@ -199,6 +203,16 @@ export class ZnpAdapterManager {
         logger.debug("(stage-1) adapter is configured", NS);
 
         if (configMatchesAdapter) {
+            /* Warn if preconfigured key doesn't match (Z-Stack 3.x only, non-fatal) */
+            if (this.options.version !== ZnpVersion.ZStack12 && !this.nwkOptions.networkKey.equals(preconfiguredKey.key)) {
+                logger.warning(
+                    "Adapter preconfigured (transport) key does not match configured network key " +
+                        `(preconfigured=${preconfiguredKey.key.toString("hex")}, configured=${this.nwkOptions.networkKey.toString("hex")}). ` +
+                        "This is typically harmless on Z-Stack 3.x adapters where only the active key matters.",
+                    NS,
+                );
+            }
+
             /* Warn if EPID is reversed (backward-compat) */
             if (isExtendedPanIdReversed) {
                 logger.debug("(stage-2) extended pan id is reversed", NS);
