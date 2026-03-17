@@ -4,9 +4,11 @@ import {BuffaloZcl} from "./buffaloZcl";
 import type {TClusterPayload, TFoundationPayload} from "./definition/clusters-types";
 import {BuffaloZclDataType, DataType, Direction, FrameType, ParameterCondition} from "./definition/enums";
 import type {FoundationCommandName} from "./definition/foundation";
+import {Status} from "./definition/status";
 import type {BuffaloZclOptions, Cluster, ClusterName, Command, CustomClusters, Parameter} from "./definition/tstype";
 import * as Utils from "./utils";
 import {ZclHeader} from "./zclHeader";
+import {ZclStatusError} from "./zclStatusError";
 
 // biome-ignore lint/suspicious/noExplicitAny: API
 type ZclPayload = any;
@@ -208,7 +210,7 @@ export class ZclFrame {
                 const valueToProcess = buffalo.read(parameter.type, options);
                 payload[parameter.name] = Utils.processParameterRead(parameter, valueToProcess);
             } catch (error) {
-                throw new Error(`Cannot parse '${command.name}:${parameter.name}' (${(error as Error).message})`);
+                throw new ZclStatusError(Status.INVALID_FIELD, `${cluster.name}:${command.name}:${parameter.name} (${(error as Error).message})`);
             }
         }
 

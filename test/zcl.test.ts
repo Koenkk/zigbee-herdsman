@@ -60,13 +60,13 @@ describe("Zcl", () => {
     it("Get global command non existing", () => {
         expect(() => {
             Zcl.Utils.getGlobalCommand("nonexisting");
-        }).toThrow("Global command with key 'nonexisting' does not exist");
+        }).toThrow("Status 'UNSUP_COMMAND' foundation:nonexisting");
     });
 
     it("Get cluster by name non-existing", () => {
         expect(() => {
             Zcl.Utils.getCluster("notExisting", undefined, {});
-        }).toThrow("Cluster 'notExisting' does not exist");
+        }).toThrow("Status 'UNSUPPORTED_CLUSTER' notExisting");
     });
 
     it("Get cluster by id non-existing", () => {
@@ -96,14 +96,14 @@ describe("Zcl", () => {
         expect(() => {
             const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
             Zcl.Utils.getClusterCommandResponse(cluster, "nonexisting");
-        }).toThrow("Cluster 'genIdentify' has no command response 'nonexisting'");
+        }).toThrow("Status 'UNSUP_COMMAND' response genIdentify:nonexisting");
     });
 
     it("Get discrete or analog of unkown type", () => {
         expect(() => {
             // @ts-expect-error invalid on purpose
             Zcl.Utils.getDataTypeClass(99999);
-        }).toThrow("Don't know value type for 'undefined'");
+        }).toThrow("Status 'INVALID_DATA_TYPE' 9999");
     });
 
     it("ZclFrame from buffer parse payload with unknown frame type", () => {
@@ -1983,7 +1983,7 @@ describe("Zcl", () => {
 
     it("Zcl utils get command non-existing", () => {
         const cluster = Zcl.Utils.getCluster("genOnOff", undefined, {});
-        expect(() => Zcl.Utils.getClusterCommand(cluster, "notExisting")).toThrow("Cluster 'genOnOff' has no command 'notExisting'");
+        expect(() => Zcl.Utils.getClusterCommand(cluster, "notExisting")).toThrow("Status 'UNSUP_COMMAND' genOnOff:notExisting");
     });
 
     it("Zcl green power readGpd commissioning", () => {
