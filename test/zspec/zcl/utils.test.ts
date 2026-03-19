@@ -1,7 +1,7 @@
 import {describe, expect, it} from "vitest";
 import * as Zcl from "../../../src/zspec/zcl";
 import {ZCL_TYPE_INVALID_BY_TYPE} from "../../../src/zspec/zcl/definition/datatypes";
-import type {Attribute, Command, CustomClusters, Parameter} from "../../../src/zspec/zcl/definition/tstype";
+import type {Attribute, CustomClusters, Parameter} from "../../../src/zspec/zcl/definition/tstype";
 
 const CUSTOM_CLUSTERS: CustomClusters = {
     genBasic: {
@@ -52,12 +52,10 @@ describe("ZCL Utils", () => {
         expect(zclError.message).toStrictEqual(`Status '${Zcl.Status[Zcl.Status.ABORT]}'`);
     });
 
-    it("Gets data type class", () => {
-        expect(Zcl.Utils.getDataTypeClass(Zcl.DataType.UINT16)).toStrictEqual(Zcl.DataTypeClass.ANALOG);
-        expect(Zcl.Utils.getDataTypeClass(Zcl.DataType.DATA16)).toStrictEqual(Zcl.DataTypeClass.DISCRETE);
-        expect(() => {
-            Zcl.Utils.getDataTypeClass(Zcl.DataType.NO_DATA);
-        }).toThrow();
+    it("Checks analog data type", () => {
+        expect(Zcl.Utils.isAnalogDataType(Zcl.DataType.UINT16)).toStrictEqual(true);
+        expect(Zcl.Utils.isAnalogDataType(Zcl.DataType.DATA16)).toStrictEqual(false);
+        expect(Zcl.Utils.isAnalogDataType(Zcl.DataType.NO_DATA)).toStrictEqual(false);
     });
 
     it.each([
@@ -247,17 +245,22 @@ describe("ZCL Utils", () => {
         ["by ID", {key: Zcl.Foundation.writeUndiv.ID}, {cluster: Zcl.Foundation.writeUndiv, name: "writeUndiv"}],
         ["by name", {key: "read"}, {cluster: Zcl.Foundation.read, name: "read"}],
     ])("Gets global command %s", (_name, payload, expected) => {
-        const command: Command = {
-            ID: expected.cluster.ID,
-            name: expected.name,
-            parameters: expected.cluster.parameters,
-        };
-
-        if (expected.cluster.response) {
-            command.response = expected.cluster.response;
-        }
-
-        expect(Zcl.Utils.getGlobalCommand(payload.key)).toStrictEqual(command);
+        expect(Zcl.Utils.getGlobalCommand(payload.key)).toMatchObject(
+            "response" in expected.cluster
+                ? {
+                      ID: expected.cluster.ID,
+                      name: expected.name,
+                      response: expected.cluster.response,
+                      parse: expect.any(Function),
+                      write: expect.any(Function),
+                  }
+                : {
+                      ID: expected.cluster.ID,
+                      name: expected.name,
+                      parse: expect.any(Function),
+                      write: expect.any(Function),
+                  },
+        );
     });
 
     it("Throws when getting invalid global command", () => {
@@ -277,12 +280,16 @@ describe("ZCL Utils", () => {
 
     it("Gets Foundation command", () => {
         expect(Zcl.Utils.getFoundationCommand(0)).toStrictEqual(Zcl.Foundation.read);
+        expect(Zcl.Utils.getFoundationCommandByName("read")).toStrictEqual(Zcl.Foundation.read);
     });
 
     it("Throws when getting invalid Foundation command ID", () => {
         expect(() => {
             Zcl.Utils.getFoundationCommand(9999);
         }).toThrow(`Status 'UNSUP_COMMAND' foundation:9999`);
+        expect(() => {
+            Zcl.Utils.getFoundationCommandByName("doesnotexist");
+        }).toThrow(`Status 'UNSUP_COMMAND' foundation:doesnotexist`);
     });
 
     function createAttribute(overrides: Partial<Attribute> = {}): Attribute {

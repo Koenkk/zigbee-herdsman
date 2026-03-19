@@ -225,7 +225,14 @@ const restoreMocksendZclFrameToEndpoint = () => {
             const payload: {[key: string]: unknown}[] = [];
             const cluster = frame.cluster;
             for (const item of frame.payload) {
-                if (item.attrId !== 65314) {
+                if (item.attrId === 65314) {
+                    payload.push({
+                        attrId: item.attrId,
+                        status: Zcl.Status.SUCCESS,
+                        dataType: Zcl.DataType.UINT16,
+                        attrData: 0x4312,
+                    });
+                } else {
                     const attribute = Zcl.Utils.getClusterAttribute(cluster, item.attrId, readManufacturerCode);
 
                     if (attribute) {
@@ -233,16 +240,16 @@ const restoreMocksendZclFrameToEndpoint = () => {
                             iasZoneReadState170Count++;
                             payload.push({
                                 attrId: item.attrId,
+                                status: Zcl.Status.SUCCESS,
                                 dataType: attribute.type,
                                 attrData: iasZoneReadState170Count === 2 && enroll170 ? 1 : 0,
-                                status: 0,
                             });
                         } else {
                             payload.push({
                                 attrId: item.attrId,
+                                status: Zcl.Status.SUCCESS,
                                 dataType: attribute.type,
                                 attrData: MOCK_DEVICES[networkAddress]!.attributes![endpoint][attribute.name],
-                                status: 0,
                             });
                         }
                     }
@@ -262,7 +269,7 @@ const restoreMocksendZclFrameToEndpoint = () => {
                 10,
                 `${frame.command.name}Rsp`,
                 frame.cluster.ID,
-                {status: 0, groupid: 1},
+                {status: Zcl.Status.SUCCESS, groupid: 1},
                 {},
             );
             return {clusterID: frame.cluster.ID, header: responseFrame.header, data: responseFrame.toBuffer()};
@@ -307,7 +314,7 @@ const restoreMocksendZclFrameToEndpoint = () => {
         if (frame.header.isGlobal && frame.isCommand("write")) {
             const payload: {[key: string]: unknown}[] = [];
             for (const item of frame.payload) {
-                payload.push({attrId: item.attrId, status: 0});
+                payload.push({attrId: item.attrId, status: Zcl.Status.SUCCESS});
             }
 
             const responseFrame = Zcl.Frame.create(0, 1, true, undefined, 10, "writeRsp", 0, payload, {});
@@ -2332,7 +2339,6 @@ describe("Controller", () => {
             command: {
                 ID: 2,
                 name: "write",
-                parameters: expect.any(Array),
                 response: 4,
             },
         });
@@ -5849,8 +5855,7 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
-        // @ts-expect-error private
-        device._manufacturerID = Zcl.ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH;
+        readManufacturerCode = Zcl.ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH;
         const endpoint = device.getEndpoint(1)!;
         await endpoint.read("hvacThermostat", ["viessmannWindowOpenInternal"]);
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);

@@ -7,7 +7,7 @@ import * as ZSpec from "../../zspec";
 import {BroadcastAddress} from "../../zspec/enums";
 import type {Eui64} from "../../zspec/tstypes";
 import * as Zcl from "../../zspec/zcl";
-import type {TClusterCommandPayload, TClusterPayload, TPartialClusterAttributes} from "../../zspec/zcl/definition/clusters-types";
+import type {TClusterCommandPayload, TPartialClusterAttributes} from "../../zspec/zcl/definition/clusters-types";
 import type {Cluster, CustomClusters} from "../../zspec/zcl/definition/tstype";
 import type {TZclFrame} from "../../zspec/zcl/zclFrame";
 import * as Zdo from "../../zspec/zdo";
@@ -1400,13 +1400,13 @@ export class Device extends Entity<ControllerEventMap> {
             commandId,
             timeout,
         );
-        const promise = new Promise<Zcl.Frame & {payload: TClusterPayload<"genOta", Co>}>((resolve, reject) => {
+        const promise = new Promise<TZclFrame<"genOta", Co>>((resolve, reject) => {
             waiter.promise.then(
                 (payload) => {
                     try {
                         const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, this.customClusters);
 
-                        resolve(frame);
+                        resolve(frame as TZclFrame<"genOta", Co>);
                     } catch (error) {
                         reject(error);
                     }

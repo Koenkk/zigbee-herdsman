@@ -178,7 +178,7 @@ describe("Device", () => {
             1,
             "defaultRsp",
             "genBasic",
-            [{cmdId: 0x00, statusCode: Status.SUCCESS}],
+            {cmdId: 0x00, statusCode: Status.SUCCESS},
             {},
         );
         const dataPayload: ZclPayload = {

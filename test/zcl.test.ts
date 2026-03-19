@@ -99,13 +99,6 @@ describe("Zcl", () => {
         }).toThrow("Status 'UNSUP_COMMAND' response genIdentify:nonexisting");
     });
 
-    it("Get discrete or analog of unkown type", () => {
-        expect(() => {
-            // @ts-expect-error invalid on purpose
-            Zcl.Utils.getDataTypeClass(99999);
-        }).toThrow("Status 'INVALID_DATA_TYPE' 9999");
-    });
-
     it("ZclFrame from buffer parse payload with unknown frame type", () => {
         expect(() => {
             // @ts-expect-error
@@ -258,7 +251,7 @@ describe("Zcl", () => {
     });
 
     it("ZclFrame from buffer configReportRsp - long", () => {
-        const buffer = Buffer.from([0x08, 0x01, 0x07, 0x00, 0x01, 0x34, 0x12, 0x01, 0x01, 0x35, 0x12]);
+        const buffer = Buffer.from([0x08, 0x01, 0x07, 0x02, 0x01, 0x34, 0x12, 0x01, 0x01, 0x35, 0x12]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genPowerCfg.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
             {
@@ -274,7 +267,7 @@ describe("Zcl", () => {
         );
 
         const payload = [
-            {status: 0, direction: 1, attrId: 0x1234},
+            {status: 2, direction: 1, attrId: 0x1234},
             {status: 1, direction: 1, attrId: 0x1235},
         ];
 
@@ -283,7 +276,7 @@ describe("Zcl", () => {
     });
 
     it("ZclFrame from buffer configReportRsp (hvacThermostat)", () => {
-        const buffer = Buffer.from([0x18, 0x03, 0x07, 0x00, 0x00, 0x12, 0x00]);
+        const buffer = Buffer.from([0x18, 0x03, 0x07, 0x00]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.hvacThermostat.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
             {
@@ -298,7 +291,7 @@ describe("Zcl", () => {
             7,
         );
 
-        const payload = [{status: 0, direction: 0, attrId: 18}];
+        const payload = [{status: 0}];
 
         expect(frame.payload).toStrictEqual(payload);
         expect(frame.header).toStrictEqual(header);
@@ -560,15 +553,6 @@ describe("Zcl", () => {
             {
                 attrId: 65282,
                 dataType: 76,
-                numElms: 6,
-                structElms: [
-                    {elmType: 16, elmVal: 1},
-                    {elmType: 33, elmVal: 3022},
-                    {elmType: 33, elmVal: 17320},
-                    {elmType: 36, elmVal: 1},
-                    {elmType: 33, elmVal: 560},
-                    {elmType: 32, elmVal: 86},
-                ],
                 attrData: [
                     {elmType: 16, elmVal: 1},
                     {elmType: 33, elmVal: 3022},
