@@ -3156,74 +3156,14 @@ export interface TClusters {
             fourNoksHysteresisLow?: number;
             /** ID=0x4000 | type=ENUM8 | manufacturerCode=VIESSMANN_ELEKTRONIK_GMBH(0x1221) | write=true | max=255 */
             viessmannWindowOpenInternal?: number;
-            /** ID=0x4000 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossWindowOpenInternal?: number;
             /** ID=0x4001 | type=INT16 | write=true | min=-32768 | max=32767 */
             StelproOutdoorTemp: number;
             /** ID=0x4003 | type=BOOLEAN | manufacturerCode=VIESSMANN_ELEKTRONIK_GMBH(0x1221) | write=true */
             viessmannWindowOpenForce?: number;
-            /** ID=0x4003 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossWindowOpenExternal?: number;
-            /** ID=0x4010 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossDayOfWeek?: number;
-            /** ID=0x4011 | type=UINT16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=65535 */
-            danfossTriggerTime?: number;
             /** ID=0x4012 | type=BOOLEAN | manufacturerCode=VIESSMANN_ELEKTRONIK_GMBH(0x1221) | write=true */
             viessmannAssemblyMode?: number;
-            /** ID=0x4012 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossMountedModeActive?: number;
-            /** ID=0x4013 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossMountedModeControl?: number;
-            /** ID=0x4014 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossThermostatOrientation?: number;
-            /** ID=0x4015 | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | min=-32768 | max=32767 */
-            danfossExternalMeasuredRoomSensor?: number;
-            /** ID=0x4016 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossRadiatorCovered?: number;
             /** ID=0x401c | type=ENUM8 | write=true | max=255 */
             StelproSystemMode: number;
-            /** ID=0x4020 | type=UINT8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossAlgorithmScaleFactor?: number;
-            /** ID=0x4030 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossHeatAvailable?: number;
-            /** ID=0x4031 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossHeatRequired?: number;
-            /** ID=0x4032 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossLoadBalancingEnable?: number;
-            /** ID=0x4040 | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | min=-32768 | max=32767 */
-            danfossLoadRoomMean?: number;
-            /** ID=0x404a | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | min=-32768 | max=32767 */
-            danfossLoadEstimate?: number;
-            /** ID=0x404b | type=INT8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | min=-128 | max=127 */
-            danfossRegulationSetpointOffset?: number;
-            /** ID=0x404c | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossAdaptionRunControl?: number;
-            /** ID=0x404d | type=BITMAP8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossAdaptionRunStatus?: number;
-            /** ID=0x404e | type=BITMAP8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossAdaptionRunSettings?: number;
-            /** ID=0x404f | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossPreheatStatus?: number;
-            /** ID=0x4050 | type=UINT32 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossPreheatTime?: number;
-            /** ID=0x4051 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossWindowOpenFeatureEnable?: number;
-            /** ID=0x4100 | type=BITMAP16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossRoomStatusCode?: number;
-            /** ID=0x4110 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossOutputStatus?: number;
-            /** ID=0x4120 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossRoomFloorSensorMode?: number;
-            /** ID=0x4121 | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | min=-32768 | max=32767 */
-            danfossFloorMinSetpoint?: number;
-            /** ID=0x4122 | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | min=-32768 | max=32767 */
-            danfossFloorMaxSetpoint?: number;
-            /** ID=0x4130 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossScheduleTypeUsed?: number;
-            /** ID=0x4131 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossIcon2PreHeat?: number;
-            /** ID=0x414f | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossIcon2PreHeatStatus?: number;
         };
         commands: {
             /** ID=0x00 | required=true */
@@ -3255,13 +3195,6 @@ export interface TClusters {
             clearWeeklySchedule: Record<string, never>;
             /** ID=0x04 | response=1 */
             getRelayStatusLog: Record<string, never>;
-            /** ID=0x40 */
-            danfossSetpointCommand: {
-                /** type=ENUM8 | max=255 */
-                setpointType: number;
-                /** type=INT16 | min=-32768 | max=32767 */
-                setpoint: number;
-            };
             /** ID=0xa0 */
             plugwiseCalibrateValve: Record<string, never>;
         };
@@ -3334,8 +3267,6 @@ export interface TClusters {
             keypadLockout: number;
             /** ID=0x0002 | type=ENUM8 | write=true | max=1 | default=0 */
             programmingVisibility: number;
-            /** ID=0x4000 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossViewingDirection?: number;
         };
         commands: never;
         commandResponses: never;
@@ -6885,18 +6816,6 @@ export interface TClusters {
             lastMessageLqi: number;
             /** ID=0x011d | type=INT8 | min=-127 | max=127 | default=0 */
             lastMessageRssi: number;
-            /** ID=0x4000 | type=BITMAP16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossSystemStatusCode?: number;
-            /** ID=0x4031 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossHeatSupplyRequest?: number;
-            /** ID=0x4200 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossSystemStatusWater?: number;
-            /** ID=0x4201 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossMultimasterRole?: number;
-            /** ID=0x4210 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossIconApplication?: number;
-            /** ID=0x4220 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossIconForcedHeatingCooling?: number;
         };
         commands: never;
         commandResponses: never;
