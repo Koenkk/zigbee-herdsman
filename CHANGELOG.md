@@ -1,5 +1,17 @@
 # Changelog
 
+## [10.0.3](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.2...v10.0.3) (2026-03-19)
+
+
+### Bug Fixes
+
+* better handling for ZCL default response ([#1694](https://github.com/Koenkk/zigbee-herdsman/issues/1694)) ([909bda4](https://github.com/Koenkk/zigbee-herdsman/commit/909bda49e130e257645416004f84bc4f6b2f9a70))
+* **ignore:** better test replacement for 374f0a ([#1707](https://github.com/Koenkk/zigbee-herdsman/issues/1707)) ([527e7a4](https://github.com/Koenkk/zigbee-herdsman/commit/527e7a4a3471b1882cb2b266ce781229e46b3d6c))
+* Move Danfoss custom attributes from ZH to ZHC ([#1709](https://github.com/Koenkk/zigbee-herdsman/issues/1709)) ([0a11cd0](https://github.com/Koenkk/zigbee-herdsman/commit/0a11cd0ca4d50a8e0d24e19c742caf25d21b86d5))
+* Move OwonSeMetering attributes from ZH to ZHC ([#1708](https://github.com/Koenkk/zigbee-herdsman/issues/1708)) ([490a13e](https://github.com/Koenkk/zigbee-herdsman/commit/490a13e6e9d63fe0a54642f675ec4e642ddec86b))
+* optimize ZCL foundation parse/write ([#1699](https://github.com/Koenkk/zigbee-herdsman/issues/1699)) ([0d19a7e](https://github.com/Koenkk/zigbee-herdsman/commit/0d19a7e6a82a3ff5b055e2d3a6770ff2ee9a1fd8))
+* Remove Schneider Electric-specific attributes from ZH cluster definitions that are not utilized in ZHC ([#1703](https://github.com/Koenkk/zigbee-herdsman/issues/1703)) ([374f0ae](https://github.com/Koenkk/zigbee-herdsman/commit/374f0ae470945fd3c0eb6c6d3c307501ca8fd301))
+
 ## [10.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.1...v10.0.2) (2026-03-16)
 
 
