@@ -30,4 +30,4 @@ const PositionCmd1 = 3;
 const MinMessageLength = 5;
 const MaxDataSize = 250;
 
-export {Type, Subsystem, DataStart, SOF, PositionDataLength, MinMessageLength, PositionCmd0, PositionCmd1, MaxDataSize};
+export {DataStart, MaxDataSize, MinMessageLength, PositionCmd0, PositionCmd1, PositionDataLength, SOF, Subsystem, Type};
