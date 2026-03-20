@@ -397,6 +397,4 @@ export type ClusterName =
     | "haDiagnostic"
     | "touchlink"
     | "manuSpecificTuya"
-    | "manuSpecificTuya2"
-    | "manuSpecificTuya3"
     | "manuSpecificAmazonWWAH";
