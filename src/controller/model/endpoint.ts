@@ -68,7 +68,7 @@ interface OptionsWithDefaults extends Options {
     writeUndiv: boolean;
 }
 
-interface Clusters {
+export interface Clusters {
     [cluster: string]: {
         attributes: {[attribute: string]: number | string};
     };

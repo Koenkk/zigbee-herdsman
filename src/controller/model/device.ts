@@ -26,7 +26,7 @@ import type {
     OtaUpdateAvailableResult,
     ZigbeeOtaImageMeta,
 } from "../tstype";
-import Endpoint, {type BindInternal} from "./endpoint";
+import Endpoint, {type BindInternal, type Clusters} from "./endpoint";
 import Entity from "./entity";
 
 const NS = "zh:controller:device";
@@ -365,7 +365,7 @@ export class Device extends Entity<ControllerEventMap> {
             return;
         }
 
-        const {header, command, cluster, payload} = frame;
+        const {header, command, cluster} = frame;
         let sendDefaultResponse = !header.frameControl.disableDefaultResponse && !dataPayload.wasBroadcast && command.response === undefined;
         let defaultResponseStatus = defaultResponse ?? Zcl.Status.SUCCESS;
 
@@ -379,25 +379,22 @@ export class Device extends Entity<ControllerEventMap> {
                         break;
                     }
 
-                    const attributes: {[s: string]: KeyValue} = {
-                        ...endpoint.clusters,
-                    };
+                    const endpointCache: Clusters[string] =
+                        dataPayload.clusterID === GEN_TIME_CLUSTER_ID
+                            ? {
+                                  attributes: timeService.getTimeClusterAttributes(),
+                              }
+                            : endpoint.clusters[frame.cluster.name];
 
-                    if (dataPayload.clusterID === GEN_TIME_CLUSTER_ID) {
-                        attributes.genTime = {
-                            attributes: timeService.getTimeClusterAttributes(),
-                        };
-                    }
-
-                    if (cluster.name in attributes) {
+                    if (endpointCache !== undefined) {
                         const response: KeyValue = {};
 
-                        for (const entry of payload) {
+                        for (const entry of frame.payload) {
                             // TODO: this.manufacturerID or frame.header.manufacturerCode
                             const name = Zcl.Utils.getClusterAttribute(cluster, entry.attrId, this.manufacturerID)?.name;
 
-                            if (name && name in attributes[cluster.name].attributes) {
-                                response[name] = attributes[cluster.name].attributes[name];
+                            if (name !== undefined && name in endpointCache.attributes) {
+                                response[name] = endpointCache.attributes[name];
                             }
                         }
 
@@ -439,6 +436,8 @@ export class Device extends Entity<ControllerEventMap> {
                 }
                 case "genPollCtrl": {
                     if (command.name === "checkin") {
+                        let startedFastPolling = false;
+
                         // Handle check-in from sleeping end devices
                         try {
                             if (this.hasPendingRequests() || this._checkinInterval === undefined) {
@@ -446,12 +445,10 @@ export class Device extends Entity<ControllerEventMap> {
                                 await endpoint.command(
                                     cluster.name as "genPollCtrl",
                                     "checkinRsp",
-                                    {
-                                        startFastPolling: 1,
-                                        fastPollTimeout: 0,
-                                    },
+                                    {startFastPolling: 1, fastPollTimeout: 0},
                                     {sendPolicy: "immediate"},
                                 );
+                                startedFastPolling = true;
 
                                 // This is a good time to read the checkin interval if we haven't stored it previously
                                 if (this._checkinInterval === undefined) {
@@ -465,19 +462,12 @@ export class Device extends Entity<ControllerEventMap> {
                                 }
 
                                 await Promise.all(this.endpoints.map(async (e) => await e.sendPendingRequests(true)));
-                                // We *must* end fast-poll when we're done sending things. Otherwise
-                                // we cause undue power-drain.
-                                logger.debug(`check-in from ${this.ieeeAddr}: stopping fast-poll`, NS);
-                                await endpoint.command(cluster.name as "genPollCtrl", "fastPollStop", {}, {sendPolicy: "immediate"});
                             } else {
                                 logger.debug(`check-in from ${this.ieeeAddr}: declining fast-poll`, NS);
                                 await endpoint.command(
                                     cluster.name as "genPollCtrl",
                                     "checkinRsp",
-                                    {
-                                        startFastPolling: 0,
-                                        fastPollTimeout: 0,
-                                    },
+                                    {startFastPolling: 0, fastPollTimeout: 0},
                                     {sendPolicy: "immediate"},
                                 );
                             }
@@ -486,6 +476,12 @@ export class Device extends Entity<ControllerEventMap> {
                         } catch (error) {
                             logger.error(`Handling of poll check-in from ${this.ieeeAddr} failed (${(error as Error).message})`, NS);
                             defaultResponseStatus = Zcl.Status.FAILURE;
+                        } finally {
+                            if (startedFastPolling) {
+                                // We *must* end fast-poll when we're done sending things. Otherwise we cause undue power-drain.
+                                logger.debug(`check-in from ${this.ieeeAddr}: stopping fast-poll`, NS);
+                                await endpoint.command(cluster.name as "genPollCtrl", "fastPollStop", {}, {sendPolicy: "immediate"});
+                            }
                         }
                     }
                     break;
