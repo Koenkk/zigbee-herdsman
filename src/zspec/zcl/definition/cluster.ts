@@ -656,14 +656,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             offWaitTime: {name: "offWaitTime", ID: 0x4002, type: DataType.UINT16, write: true, max: 0xffff, default: 0},
             startUpOnOff: {name: "startUpOnOff", ID: 0x4003, type: DataType.ENUM8, write: true, max: 0xff, special: [["SetToPreviousValue", "ff"]]},
             // custom
-            nodonTransitionTime: {
-                name: "nodonTransitionTime",
-                ID: 0x0001,
-                type: DataType.UINT16,
-                manufacturerCode: ManufacturerCode.NODON,
-                write: true,
-                max: 0xffff,
-            },
             tuyaBacklightSwitch: {name: "tuyaBacklightSwitch", ID: 0x5000, type: DataType.ENUM8, write: true, max: 0xff},
             tuyaBacklightMode: {name: "tuyaBacklightMode", ID: 0x8001, type: DataType.ENUM8, write: true, max: 0xff},
             moesStartUpOnOff: {name: "moesStartUpOnOff", ID: 0x8002, type: DataType.ENUM8, write: true, max: 0xff},
@@ -914,8 +906,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             resetAll: {name: "resetAll", ID: 0x01, parameters: [], required: true},
             getAlarm: {name: "getAlarm", ID: 0x02, parameters: []},
             resetLog: {name: "resetLog", ID: 0x03, parameters: []},
-            // custom
-            publishEventLog: {name: "publishEventLog", ID: 0x04, parameters: []},
         },
         commandsResponse: {
             alarm: {
@@ -949,8 +939,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                     },
                 ],
             },
-            // custom
-            getEventLog: {name: "getEventLog", ID: 0x02, parameters: []},
         },
     },
     genTime: {
@@ -4433,9 +4421,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             minMeasuredValue: {name: "minMeasuredValue", ID: 0x0001, type: DataType.INT16, required: true, min: -27315, max: 32766},
             maxMeasuredValue: {name: "maxMeasuredValue", ID: 0x0002, type: DataType.INT16, required: true, min: -27314, max: 32767},
             tolerance: {name: "tolerance", ID: 0x0003, type: DataType.UINT16, max: 0x0800},
-            // custom
-            minPercentChange: {name: "minPercentChange", ID: 0x0010, type: DataType.UNKNOWN, write: true},
-            minAbsoluteChange: {name: "minAbsoluteChange", ID: 0x0011, type: DataType.UNKNOWN, write: true},
             sprutTemperatureOffset: {
                 name: "sprutTemperatureOffset",
                 ID: 0x6600,
