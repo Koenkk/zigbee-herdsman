@@ -601,6 +601,10 @@ export class Endpoint extends ZigbeeEntity {
             : ({} as ClusterOrRawWriteAttributes<Cl, Custom>);
     }
 
+    /**
+     * Sends a Foundation response to a read request.
+     * Any attribute with an `undefined` value will result in a sent record with status `UNSUPPORTED_ATTRIBUTE`
+     */
     public async readResponse<Cl extends number | string, Custom extends TCustomCluster | undefined = undefined>(
         clusterKey: Cl,
         transactionSequenceNumber: number,
@@ -616,11 +620,22 @@ export class Endpoint extends ZigbeeEntity {
             const attribute = Zcl.Utils.getClusterAttribute(cluster, nameOrID, options?.manufacturerCode);
 
             if (attribute) {
-                payload.push({attrId: attribute.ID, attrData: attributes[nameOrID], dataType: attribute.type, status: 0});
+                const attrData = attributes[nameOrID];
+
+                if (attrData === undefined) {
+                    payload.push({attrId: attribute.ID, status: Zcl.Status.UNSUPPORTED_ATTRIBUTE});
+                } else {
+                    payload.push({attrId: attribute.ID, attrData, dataType: attribute.type, status: Zcl.Status.SUCCESS});
+                }
             } else if (!Number.isNaN(Number(nameOrID))) {
                 const value = attributes[nameOrID];
+                const attrData = value.value;
 
-                payload.push({attrId: Number(nameOrID), attrData: value.value, dataType: value.type, status: 0});
+                if (attrData === undefined) {
+                    payload.push({attrId: Number(nameOrID), status: Zcl.Status.UNSUPPORTED_ATTRIBUTE});
+                } else {
+                    payload.push({attrId: Number(nameOrID), attrData, dataType: value.type, status: Zcl.Status.SUCCESS});
+                }
             } else {
                 throw new Error(`Unknown attribute '${nameOrID}', specify either an existing attribute or a number`);
             }
