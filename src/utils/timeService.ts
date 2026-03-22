@@ -122,8 +122,8 @@ export function getTimeClusterAttributes(): TClusterAttributes<"genTime"> {
         dstStart: cachedTimeData.dstStart,
         dstEnd: cachedTimeData.dstEnd,
         dstShift: cachedTimeData.dstShift,
-        standardTime: standardTime,
-        localTime: localTime,
+        standardTime,
+        localTime,
         lastSetTime: currentZigbeeUtcTime,
         validUntilTime: cachedTimeData.validUntilTime,
     };
