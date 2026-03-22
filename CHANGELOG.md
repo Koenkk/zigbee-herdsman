@@ -1,5 +1,13 @@
 # Changelog
 
+## [10.0.4](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.3...v10.0.4) (2026-03-22)
+
+
+### Bug Fixes
+
+* Device onZclData optimizations ([#1711](https://github.com/Koenkk/zigbee-herdsman/issues/1711)) ([02cc145](https://github.com/Koenkk/zigbee-herdsman/commit/02cc145c9f192f3306385e3c65f61106c0787b5a))
+* Move manuSpecificTuya2 and 3 from ZH to ZHC ([#1710](https://github.com/Koenkk/zigbee-herdsman/issues/1710)) ([6cada34](https://github.com/Koenkk/zigbee-herdsman/commit/6cada34f54b0e003e25e1a888f9857c4d0994f97))
+
 ## [10.0.3](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.2...v10.0.3) (2026-03-19)
 
 
