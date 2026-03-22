@@ -495,17 +495,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                     {name: "sceneidto", type: DataType.UINT8},
                 ],
             },
-            // custom
-            tradfriArrowSingle: {
-                name: "tradfriArrowSingle",
-                ID: 0x07,
-                parameters: [
-                    {name: "value", type: DataType.UINT16, max: 0xffff},
-                    {name: "value2", type: DataType.UINT16, max: 0xffff},
-                ],
-            },
-            tradfriArrowHold: {name: "tradfriArrowHold", ID: 0x08, parameters: [{name: "value", type: DataType.UINT16, max: 0xffff}]},
-            tradfriArrowRelease: {name: "tradfriArrowRelease", ID: 0x09, parameters: [{name: "value", type: DataType.UINT16, max: 0xffff}]},
         },
         commandsResponse: {
             addRsp: {
