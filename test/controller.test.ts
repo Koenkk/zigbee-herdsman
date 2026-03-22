@@ -4103,13 +4103,16 @@ describe("Controller", () => {
         expect(device.checkinInterval).toBeUndefined();
         expect(device.pendingRequestTimeout).toStrictEqual(0);
         mocksendZclFrameToEndpoint.mockClear();
-        mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
+        mocksendZclFrameToEndpoint.mockReturnValueOnce(undefined);
         mocksendZclFrameToEndpoint.mockImplementationOnce((_ieeeAddr, _networkAddress, _endpoint, frame: Zcl.Frame) => {
             const payload = [{attrId: 0, status: 0, dataType: 35, attrData: 204}];
             const responseFrame = Zcl.Frame.create(0, 1, true, undefined, 10, "readRsp", frame.cluster.ID, payload, {});
             return {header: responseFrame.header, data: responseFrame.toBuffer(), clusterID: frame.cluster.ID};
         });
-        mocksendZclFrameToEndpoint.mockImplementationOnce(() => vi.advanceTimersByTime(10));
+        mocksendZclFrameToEndpoint.mockImplementationOnce(() => {
+            vi.advanceTimersByTime(10);
+            return undefined;
+        });
         let frame = Zcl.Frame.create(
             Zcl.FrameType.SPECIFIC,
             Zcl.Direction.SERVER_TO_CLIENT,
