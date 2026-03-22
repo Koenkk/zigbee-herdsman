@@ -7628,36 +7628,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             tuyaWeatherRequest: {name: "tuyaWeatherRequest", ID: 0x60, parameters: [{name: "payload", type: BuffaloZclDataType.BUFFER}]},
         },
     },
-    manuSpecificTuya2: {
-        name: "manuSpecificTuya2",
-        ID: 0xe002,
-        attributes: {
-            alarm_temperature_max: {name: "alarm_temperature_max", ID: 0xd00a, type: DataType.INT16, write: true, min: -32768, max: 32767},
-            alarm_temperature_min: {name: "alarm_temperature_min", ID: 0xd00b, type: DataType.INT16, write: true, min: -32768, max: 32767},
-            alarm_humidity_max: {name: "alarm_humidity_max", ID: 0xd00d, type: DataType.INT16, write: true, min: -32768, max: 32767},
-            alarm_humidity_min: {name: "alarm_humidity_min", ID: 0xd00e, type: DataType.INT16, write: true, min: -32768, max: 32767},
-            alarm_humidity: {name: "alarm_humidity", ID: 0xd00f, type: DataType.ENUM8, write: true, max: 0xff},
-            alarm_temperature: {name: "alarm_temperature", ID: 0xd006, type: DataType.ENUM8, write: true, max: 0xff},
-            unknown: {name: "unknown", ID: 0xd010, type: DataType.UINT8, write: true, max: 0xff},
-        },
-        commands: {},
-        commandsResponse: {},
-    },
-    manuSpecificTuya3: {
-        name: "manuSpecificTuya3",
-        ID: 0xe001,
-        attributes: {
-            powerOnBehavior: {name: "powerOnBehavior", ID: 0xd010, type: DataType.ENUM8, write: true, max: 0xff},
-            switchMode: {name: "switchMode", ID: 0xd020, type: DataType.ENUM8, write: true, max: 0xff},
-            switchType: {name: "switchType", ID: 0xd030, type: DataType.ENUM8, write: true, max: 0xff},
-        },
-        commands: {
-            setOptions1: {name: "setOptions1", ID: 0xe5, parameters: [{name: "data", type: BuffaloZclDataType.BUFFER}]},
-            setOptions2: {name: "setOptions2", ID: 0xe6, parameters: [{name: "data", type: BuffaloZclDataType.BUFFER}]},
-            setOptions3: {name: "setOptions3", ID: 0xe7, parameters: [{name: "data", type: BuffaloZclDataType.BUFFER}]},
-        },
-        commandsResponse: {},
-    },
     manuSpecificAmazonWWAH: {
         name: "manuSpecificAmazonWWAH",
         ID: 0xfc57,

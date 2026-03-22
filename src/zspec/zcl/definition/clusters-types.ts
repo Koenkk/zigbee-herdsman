@@ -7168,54 +7168,6 @@ export interface TClusters {
             };
         };
     };
-    manuSpecificTuya2: {
-        attributes: {
-            /** ID=0xd00a | type=INT16 | write=true | min=-32768 | max=32767 */
-            alarm_temperature_max: number;
-            /** ID=0xd00b | type=INT16 | write=true | min=-32768 | max=32767 */
-            alarm_temperature_min: number;
-            /** ID=0xd00d | type=INT16 | write=true | min=-32768 | max=32767 */
-            alarm_humidity_max: number;
-            /** ID=0xd00e | type=INT16 | write=true | min=-32768 | max=32767 */
-            alarm_humidity_min: number;
-            /** ID=0xd00f | type=ENUM8 | write=true | max=255 */
-            alarm_humidity: number;
-            /** ID=0xd006 | type=ENUM8 | write=true | max=255 */
-            alarm_temperature: number;
-            /** ID=0xd010 | type=UINT8 | write=true | max=255 */
-            unknown: number;
-        };
-        commands: never;
-        commandResponses: never;
-    };
-    manuSpecificTuya3: {
-        attributes: {
-            /** ID=0xd010 | type=ENUM8 | write=true | max=255 */
-            powerOnBehavior: number;
-            /** ID=0xd020 | type=ENUM8 | write=true | max=255 */
-            switchMode: number;
-            /** ID=0xd030 | type=ENUM8 | write=true | max=255 */
-            switchType: number;
-        };
-        commands: {
-            /** ID=0xe5 */
-            setOptions1: {
-                /** type=BUFFER */
-                data: Buffer;
-            };
-            /** ID=0xe6 */
-            setOptions2: {
-                /** type=BUFFER */
-                data: Buffer;
-            };
-            /** ID=0xe7 */
-            setOptions3: {
-                /** type=BUFFER */
-                data: Buffer;
-            };
-        };
-        commandResponses: never;
-    };
     manuSpecificAmazonWWAH: {
         attributes: {
             /** ID=0x0002 | type=BOOLEAN | write=true */
