@@ -2627,7 +2627,17 @@ describe("Controller", () => {
     });
 
     it("Receive cluster command", async () => {
-        const frame = Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, false, undefined, 29, "addRsp", "genScenes", {status: 0, groupId: 10, sceneId: 2}, {});
+        const frame = Zcl.Frame.create(
+            Zcl.FrameType.SPECIFIC, 
+            Zcl.Direction.SERVER_TO_CLIENT, 
+            false, 
+            undefined, 
+            29, 
+            "addRsp", 
+            "genScenes", 
+            {status: 0, groupId: 10, sceneId: 2}, 
+            {}
+        );
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         await mockAdapterEvents.zclPayload({
