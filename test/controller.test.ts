@@ -2627,8 +2627,7 @@ describe("Controller", () => {
     });
 
     it("Receive cluster command", async () => {
-        const buffer = Buffer.from([0x05, 0x7c, 0x11, 0x1d, 0x07, 0x00, 0x01, 0x0d, 0x00]);
-        const frame = Zcl.Frame.fromBuffer(5, Zcl.Header.fromBuffer(buffer), buffer, {});
+        const frame = Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.SERVER_TO_CLIENT, false, undefined, 29, "addRsp", "genScenes", {status: 0, groupId: 10, sceneId: 2}, {});
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         await mockAdapterEvents.zclPayload({
@@ -2645,7 +2644,7 @@ describe("Controller", () => {
         expect(events.message.length).toBe(1);
         const expected = {
             cluster: "genScenes",
-            type: "commandTradfriArrowSingle",
+            type: "addRsp",
             device: expect.any(Device),
             endpoint: expect.any(Endpoint),
             data: {
