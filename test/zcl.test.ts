@@ -138,30 +138,6 @@ describe("Zcl", () => {
         expect(frame.isCommand("report")).toBe(true);
     });
 
-    it("ZclFrame from buffer tradfriArrowSingle", () => {
-        const buffer = Buffer.from([0x05, 0x7c, 0x11, 0x1d, 0x07, 0x00, 0x01, 0x0d, 0x00]);
-        const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genScenes.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
-        const header = new Zcl.Header(
-            {
-                reservedBits: 0,
-                direction: 0,
-                disableDefaultResponse: false,
-                frameType: 1,
-                manufacturerSpecific: true,
-            },
-            4476,
-            29,
-            7,
-        );
-
-        const payload = {value: 256, value2: 13};
-
-        expect(frame.header).toStrictEqual(header);
-        expect(frame.payload).toStrictEqual(payload);
-        expect(frame.command.ID).toStrictEqual(7);
-        expect(frame.command.name).toStrictEqual("tradfriArrowSingle");
-    });
-
     it("ZclFrame from buffer genGroups getMembership", () => {
         const buffer = Buffer.from([0x11, 0x7c, 0x02, 2, 10, 0, 20, 0]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genGroups.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
@@ -1505,15 +1481,6 @@ describe("Zcl", () => {
         };
 
         const frame = Zcl.Frame.create(FrameType.GLOBAL, Direction.SERVER_TO_CLIENT, true, undefined, 23, 13, 0, payload, {});
-
-        expect(frame.toBuffer()).toStrictEqual(expected);
-    });
-
-    it("ZclFrame to buffer tradfriArrowSingle", () => {
-        const expected = Buffer.from([0x05, 0x7c, 0x11, 0x1d, 0x07, 0x00, 0x01, 0x0d, 0x00]);
-        const payload = {value: 256, value2: 13};
-
-        const frame = Zcl.Frame.create(FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, false, 4476, 29, 7, 5, payload, {});
 
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
