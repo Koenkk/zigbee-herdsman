@@ -2654,24 +2654,25 @@ describe("Controller", () => {
         expect(events.message.length).toBe(1);
         const expected = {
             cluster: "genScenes",
-            type: "addRsp",
+            type: "commandAddRsp",
             device: expect.any(Device),
             endpoint: expect.any(Endpoint),
             data: {
-                value: 256,
-                value2: 13,
+                groupId: 10,
+                sceneId: 2,
+                status: 0,
             },
             linkquality: 19,
             groupID: 10,
             meta: {
                 zclTransactionSequenceNumber: 29,
-                manufacturerCode: 4476,
+                manufacturerCode: undefined,
                 frameControl: {
                     reservedBits: 0,
-                    direction: 0,
+                    direction: 1,
                     disableDefaultResponse: false,
                     frameType: 1,
-                    manufacturerSpecific: true,
+                    manufacturerSpecific: false,
                 },
                 rawData: expect.any(Buffer),
             },
