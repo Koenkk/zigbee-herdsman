@@ -564,8 +564,6 @@ export interface TClusters {
             offWaitTime: number;
             /** ID=0x4003 | type=ENUM8 | write=true | max=255 | special=SetToPreviousValue,ff */
             startUpOnOff: number;
-            /** ID=0x0001 | type=UINT16 | manufacturerCode=NODON(0x128b) | write=true | max=65535 */
-            nodonTransitionTime?: number;
             /** ID=0x5000 | type=ENUM8 | write=true | max=255 */
             tuyaBacklightSwitch: number;
             /** ID=0x8001 | type=ENUM8 | write=true | max=255 */
@@ -775,8 +773,6 @@ export interface TClusters {
             getAlarm: Record<string, never>;
             /** ID=0x03 */
             resetLog: Record<string, never>;
-            /** ID=0x04 */
-            publishEventLog: Record<string, never>;
         };
         commandResponses: {
             /** ID=0x00 | required=true */
@@ -797,8 +793,6 @@ export interface TClusters {
                 /** type=UINT32 | conditions=[{fieldEquals field=status value=0}] */
                 timestamp?: number;
             };
-            /** ID=0x02 */
-            getEventLog: Record<string, never>;
         };
     };
     genTime: {
@@ -3752,6 +3746,8 @@ export interface TClusters {
             maxMeasuredValue: number;
             /** ID=0x0003 | type=UINT16 | max=2048 */
             tolerance: number;
+            /** ID=0x6600 | type=INT16 | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true | min=-32768 | max=32767 */
+            sprutTemperatureOffset?: number;
             /** ID=0x0010 | type=UNKNOWN | write=true */
             minPercentChange: never;
             /** ID=0x0011 | type=UNKNOWN | write=true */

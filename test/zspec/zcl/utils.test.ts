@@ -224,7 +224,7 @@ describe("ZCL Utils", () => {
             {key: Zcl.Clusters.genIdentify.commandsResponse.identifyQueryRsp.ID},
             {cluster: Zcl.Clusters.genIdentify, name: "identifyQueryRsp"},
         ],
-        ["by name", {key: "getEventLog"}, {cluster: Zcl.Clusters.genAlarms, name: "getEventLog"}],
+        ["by name", {key: "getRsp"}, {cluster: Zcl.Clusters.genAlarms, name: "getRsp"}],
     ])("Gets cluster command response %s", (_name, payload, expected) => {
         const cluster = Zcl.Utils.getCluster(expected.cluster.ID, undefined, {});
         const commandResponse = Zcl.Utils.getClusterCommandResponse(cluster, payload.key);
