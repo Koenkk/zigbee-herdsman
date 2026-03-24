@@ -3748,6 +3748,10 @@ export interface TClusters {
             tolerance: number;
             /** ID=0x6600 | type=INT16 | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true | min=-32768 | max=32767 */
             sprutTemperatureOffset?: number;
+            /** ID=0x0010 | type=UNKNOWN | write=true */
+            minPercentChange: never;
+            /** ID=0x0011 | type=UNKNOWN | write=true */
+            minAbsoluteChange: never;
         };
         commands: never;
         commandResponses: never;
@@ -3800,8 +3804,6 @@ export interface TClusters {
             maxMeasuredValue: number;
             /** ID=0x0003 | type=UINT16 | max=2048 */
             tolerance: number;
-            /** ID=0x6600 | type=BOOLEAN | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true */
-            sprutHeater?: number;
         };
         commands: never;
         commandResponses: never;
@@ -3832,10 +3834,6 @@ export interface TClusters {
             contactUToODelay: number;
             /** ID=0x0032 | type=UINT8 | write=true | min=1 | max=254 | default=1 */
             contactUToOThreshold: number;
-            /** ID=0x6600 | type=UINT16 | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true | max=65535 */
-            sprutOccupancyLevel?: number;
-            /** ID=0x6601 | type=UINT16 | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true | max=65535 */
-            sprutOccupancySensitivity?: number;
         };
         commands: never;
         commandResponses: never;
@@ -3934,10 +3932,6 @@ export interface TClusters {
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
-            /** ID=0x6600 | type=BOOLEAN | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true */
-            sprutCO2Calibration?: number;
-            /** ID=0x6601 | type=BOOLEAN | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true */
-            sprutCO2AutoCalibration?: number;
         };
         commands: never;
         commandResponses: never;
