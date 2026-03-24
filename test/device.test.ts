@@ -433,7 +433,7 @@ describe("Device", () => {
         expect(readSpy).toHaveBeenCalledTimes(0);
         expect(defaultResponseSpy).toHaveBeenCalledTimes(1);
         expect(defaultResponseSpy).toHaveBeenCalledWith(frame.command.ID, Status.SUCCESS, frame.cluster.ID, 1, {
-            direction: Direction.SERVER_TO_CLIENT,
+            direction: Direction.CLIENT_TO_SERVER,
         });
     });
 
@@ -538,7 +538,42 @@ describe("Device", () => {
         expect(readSpy).toHaveBeenCalledTimes(0);
         expect(defaultResponseSpy).toHaveBeenCalledTimes(1);
         expect(defaultResponseSpy).toHaveBeenCalledWith(frame.command.ID, Status.INVALID_VALUE, frame.cluster.ID, 1, {
-            direction: Direction.SERVER_TO_CLIENT,
+            direction: Direction.CLIENT_TO_SERVER,
+        });
+    });
+
+    it("replies with non-SUCCESS default response even when disable default response is ON", async () => {
+        const frame = ZclFrame.create(
+            FrameType.GLOBAL,
+            Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            1,
+            "report",
+            "genOnOff",
+            [{attrId: 0x0000, dataType: DataType.BOOLEAN, attrData: 0}],
+            {},
+        );
+        const dataPayload: ZclPayload = {
+            clusterID: frame.cluster.ID,
+            address: 0x1234,
+            header: frame.header,
+            data: frame.toBuffer(),
+            endpoint: 1,
+            linkquality: 150,
+            groupID: 0,
+            wasBroadcast: false,
+            destinationEndpoint: 1,
+        };
+
+        await device.onZclData(dataPayload, frame, endpoint, Status.INVALID_VALUE);
+
+        expect(readResponseSpy).toHaveBeenCalledTimes(0);
+        expect(commandSpy).toHaveBeenCalledTimes(0);
+        expect(readSpy).toHaveBeenCalledTimes(0);
+        expect(defaultResponseSpy).toHaveBeenCalledTimes(1);
+        expect(defaultResponseSpy).toHaveBeenCalledWith(frame.command.ID, Status.INVALID_VALUE, frame.cluster.ID, 1, {
+            direction: Direction.CLIENT_TO_SERVER,
         });
     });
 
@@ -607,7 +642,7 @@ describe("Device", () => {
         expect(readSpy).toHaveBeenCalledTimes(0);
         expect(defaultResponseSpy).toHaveBeenCalledTimes(1);
         expect(defaultResponseSpy).toHaveBeenCalledWith(frame.command.ID, Status.SUCCESS, frame.cluster.ID, 1, {
-            direction: Direction.SERVER_TO_CLIENT,
+            direction: Direction.CLIENT_TO_SERVER,
         });
     });
 

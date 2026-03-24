@@ -367,7 +367,7 @@ export class Device extends Entity<ControllerEventMap> {
         }
 
         const {header, command, cluster} = frame;
-        let sendDefaultResponse = !header.frameControl.disableDefaultResponse && !dataPayload.wasBroadcast && command.response === undefined;
+        let sendDefaultResponse = !dataPayload.wasBroadcast && command.response === undefined;
         let defaultResponseStatus = defaultResponse ?? Zcl.Status.SUCCESS;
 
         if (header.isGlobal) {
@@ -527,19 +527,19 @@ export class Device extends Entity<ControllerEventMap> {
         // Sometimes messages are received twice, prevent responding twice
         const alreadyResponded = this._lastDefaultResponseSequenceNumber === header.transactionSequenceNumber;
 
-        if (!this._skipDefaultResponse && sendDefaultResponse && !alreadyResponded && !disableTuyaDefaultResponse) {
+        if (
+            !this._skipDefaultResponse &&
+            sendDefaultResponse &&
+            (!header.frameControl.disableDefaultResponse || defaultResponseStatus !== Zcl.Status.SUCCESS) &&
+            !alreadyResponded &&
+            !disableTuyaDefaultResponse
+        ) {
             try {
                 this._lastDefaultResponseSequenceNumber = header.transactionSequenceNumber;
-                // In the ZCL it is not documented what the direction of the default response should be
-                // In https://github.com/Koenkk/zigbee2mqtt/issues/18096 a commandResponse (SERVER_TO_CLIENT)
-                // is send and the device expects a CLIENT_TO_SERVER back.
-                // Previously SERVER_TO_CLIENT was always used.
-                // Therefore for non-global commands we inverse the direction.
-                const direction = header.isGlobal
-                    ? Zcl.Direction.SERVER_TO_CLIENT
-                    : header.frameControl.direction === Zcl.Direction.CLIENT_TO_SERVER
-                      ? Zcl.Direction.SERVER_TO_CLIENT
-                      : Zcl.Direction.CLIENT_TO_SERVER;
+                const direction =
+                    header.frameControl.direction === Zcl.Direction.CLIENT_TO_SERVER
+                        ? Zcl.Direction.SERVER_TO_CLIENT
+                        : Zcl.Direction.CLIENT_TO_SERVER;
 
                 await endpoint.defaultResponse(command.ID, defaultResponseStatus, cluster.ID, header.transactionSequenceNumber, {
                     direction,
