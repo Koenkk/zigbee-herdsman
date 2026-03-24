@@ -345,7 +345,7 @@ describe("Device", () => {
         });
     });
 
-    it("replies with SUCCESS default response by default", async () => {
+    it("replies to GLOBAL with SUCCESS default response by default", async () => {
         const frame = ZclFrame.create(
             FrameType.GLOBAL,
             Direction.SERVER_TO_CLIENT,
@@ -355,6 +355,76 @@ describe("Device", () => {
             "readRsp",
             "genOnOff",
             [{attrId: 0x0000, status: Status.SUCCESS, dataType: DataType.BOOLEAN, attrData: 1}],
+            {},
+        );
+        const dataPayload: ZclPayload = {
+            clusterID: frame.cluster.ID,
+            address: 0x1234,
+            header: frame.header,
+            data: frame.toBuffer(),
+            endpoint: 1,
+            linkquality: 150,
+            groupID: 0,
+            wasBroadcast: false,
+            destinationEndpoint: 1,
+        };
+
+        await device.onZclData(dataPayload, frame, endpoint, undefined);
+
+        expect(readResponseSpy).toHaveBeenCalledTimes(0);
+        expect(commandSpy).toHaveBeenCalledTimes(0);
+        expect(readSpy).toHaveBeenCalledTimes(0);
+        expect(defaultResponseSpy).toHaveBeenCalledTimes(1);
+        expect(defaultResponseSpy).toHaveBeenCalledWith(frame.command.ID, Status.SUCCESS, frame.cluster.ID, 1, {
+            direction: Direction.SERVER_TO_CLIENT,
+        });
+    });
+
+    it("replies to SPECIFIC from SERVER with SUCCESS default response by default", async () => {
+        const frame = ZclFrame.create(
+            FrameType.SPECIFIC,
+            Direction.SERVER_TO_CLIENT,
+            false,
+            undefined,
+            1,
+            "removeRsp",
+            "genScenes",
+            {status: 0, groupid: 1, sceneid: 2},
+            {},
+        );
+        const dataPayload: ZclPayload = {
+            clusterID: frame.cluster.ID,
+            address: 0x1234,
+            header: frame.header,
+            data: frame.toBuffer(),
+            endpoint: 1,
+            linkquality: 150,
+            groupID: 0,
+            wasBroadcast: false,
+            destinationEndpoint: 1,
+        };
+
+        await device.onZclData(dataPayload, frame, endpoint, undefined);
+
+        expect(readResponseSpy).toHaveBeenCalledTimes(0);
+        expect(commandSpy).toHaveBeenCalledTimes(0);
+        expect(readSpy).toHaveBeenCalledTimes(0);
+        expect(defaultResponseSpy).toHaveBeenCalledTimes(1);
+        expect(defaultResponseSpy).toHaveBeenCalledWith(frame.command.ID, Status.SUCCESS, frame.cluster.ID, 1, {
+            direction: Direction.CLIENT_TO_SERVER,
+        });
+    });
+
+    it("replies to SPECIFIC from CLIENT with SUCCESS default response by default", async () => {
+        const frame = ZclFrame.create(
+            FrameType.SPECIFIC,
+            Direction.CLIENT_TO_SERVER,
+            false,
+            undefined,
+            1,
+            "identify",
+            "genIdentify",
+            {identifytime: 1},
             {},
         );
         const dataPayload: ZclPayload = {

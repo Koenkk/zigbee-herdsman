@@ -436,23 +436,6 @@ export interface TClusters {
                 /** type=UINT8 */
                 sceneidto: number;
             };
-            /** ID=0x07 */
-            tradfriArrowSingle: {
-                /** type=UINT16 | max=65535 */
-                value: number;
-                /** type=UINT16 | max=65535 */
-                value2: number;
-            };
-            /** ID=0x08 */
-            tradfriArrowHold: {
-                /** type=UINT16 | max=65535 */
-                value: number;
-            };
-            /** ID=0x09 */
-            tradfriArrowRelease: {
-                /** type=UINT16 | max=65535 */
-                value: number;
-            };
         };
         commandResponses: {
             /** ID=0x00 | required=true */
