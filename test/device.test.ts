@@ -348,7 +348,7 @@ describe("Device", () => {
             "genPollCtrl",
             "checkinRsp",
             {startFastPolling: 1, fastPollTimeout: 0},
-            {transactionSequenceNumber: 1, sendPolicy: "immediate"},
+            {transactionSequenceNumber: 1, disableDefaultResponse: true, sendPolicy: "immediate"},
         );
         expect(commandSpy).toHaveBeenNthCalledWith(2, "genPollCtrl", "fastPollStop", {}, {sendPolicy: "immediate"});
         expect(readSpy).toHaveBeenCalledTimes(1);
@@ -364,7 +364,12 @@ describe("Device", () => {
 
         expect(readResponseSpy).toHaveBeenCalledTimes(0);
         expect(commandSpy).toHaveBeenCalledTimes(1);
-        expect(commandSpy).toHaveBeenCalledWith("genPollCtrl", "checkinRsp", {startFastPolling: 0, fastPollTimeout: 0}, {sendPolicy: "immediate"});
+        expect(commandSpy).toHaveBeenCalledWith(
+            "genPollCtrl",
+            "checkinRsp",
+            {startFastPolling: 0, fastPollTimeout: 0},
+            {transactionSequenceNumber: 1, disableDefaultResponse: true, sendPolicy: "immediate"},
+        );
         expect(readSpy).toHaveBeenCalledTimes(0);
         expect(defaultResponseSpy).toHaveBeenCalledTimes(0);
     });
@@ -393,7 +398,7 @@ describe("Device", () => {
             "genPollCtrl",
             "checkinRsp",
             {startFastPolling: 1, fastPollTimeout: 0},
-            {transactionSequenceNumber: 1, sendPolicy: "immediate"},
+            {transactionSequenceNumber: 1, disableDefaultResponse: true, sendPolicy: "immediate"},
         );
         expect(readSpy).toHaveBeenCalledTimes(0);
         expect(defaultResponseSpy).toHaveBeenCalledTimes(1);
