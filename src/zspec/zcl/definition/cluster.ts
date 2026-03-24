@@ -301,25 +301,25 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             add: {
                 name: "add",
                 ID: 0x00,
-                response: 0,
+                response: 0x00,
                 parameters: [
                     {name: "groupid", type: DataType.UINT16},
                     {name: "groupname", type: DataType.CHAR_STR},
                 ],
                 required: true,
             },
-            view: {name: "view", ID: 0x01, response: 1, parameters: [{name: "groupid", type: DataType.UINT16}], required: true},
+            view: {name: "view", ID: 0x01, response: 0x01, parameters: [{name: "groupid", type: DataType.UINT16}], required: true},
             getMembership: {
                 name: "getMembership",
                 ID: 0x02,
-                response: 2,
+                response: 0x02,
                 parameters: [
                     {name: "groupcount", type: DataType.UINT8},
                     {name: "grouplist", type: BuffaloZclDataType.LIST_UINT16},
                 ],
                 required: true,
             },
-            remove: {name: "remove", ID: 0x03, response: 3, parameters: [{name: "groupid", type: DataType.UINT16}], required: true},
+            remove: {name: "remove", ID: 0x03, response: 0x03, parameters: [{name: "groupid", type: DataType.UINT16}], required: true},
             removeAll: {name: "removeAll", ID: 0x04, parameters: [], required: true},
             addIfIdentifying: {
                 name: "addIfIdentifying",
@@ -390,7 +390,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             add: {
                 name: "add",
                 ID: 0x00,
-                response: 0,
+                response: 0x00,
                 parameters: [
                     {name: "groupid", type: DataType.UINT16},
                     {name: "sceneid", type: DataType.UINT8},
@@ -403,7 +403,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             view: {
                 name: "view",
                 ID: 0x01,
-                response: 1,
+                response: 0x01,
                 parameters: [
                     {name: "groupid", type: DataType.UINT16},
                     {name: "sceneid", type: DataType.UINT8},
@@ -413,18 +413,18 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             remove: {
                 name: "remove",
                 ID: 0x02,
-                response: 2,
+                response: 0x02,
                 parameters: [
                     {name: "groupid", type: DataType.UINT16},
                     {name: "sceneid", type: DataType.UINT8},
                 ],
                 required: true,
             },
-            removeAll: {name: "removeAll", ID: 0x03, response: 3, parameters: [{name: "groupid", type: DataType.UINT16}], required: true},
+            removeAll: {name: "removeAll", ID: 0x03, response: 0x03, parameters: [{name: "groupid", type: DataType.UINT16}], required: true},
             store: {
                 name: "store",
                 ID: 0x04,
-                response: 4,
+                response: 0x04,
                 parameters: [
                     {name: "groupid", type: DataType.UINT16},
                     {name: "sceneid", type: DataType.UINT8},
@@ -448,14 +448,14 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             getSceneMembership: {
                 name: "getSceneMembership",
                 ID: 0x06,
-                response: 6,
+                response: 0x06,
                 parameters: [{name: "groupid", type: DataType.UINT16}],
                 required: true,
             },
             enhancedAdd: {
                 name: "enhancedAdd",
                 ID: 0x40,
-                response: 64,
+                response: 0x40,
                 parameters: [
                     {name: "groupid", type: DataType.UINT16},
                     {name: "sceneid", type: DataType.UINT8},
@@ -467,7 +467,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             enhancedView: {
                 name: "enhancedView",
                 ID: 0x41,
-                response: 65,
+                response: 0x41,
                 parameters: [
                     {name: "groupid", type: DataType.UINT16},
                     {name: "sceneid", type: DataType.UINT8},
@@ -476,7 +476,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             copy: {
                 name: "copy",
                 ID: 0x42,
-                response: 66,
+                response: 0x42,
                 parameters: [
                     {name: "mode", type: DataType.BITMAP8},
                     {name: "groupidfrom", type: DataType.UINT16},
@@ -3103,13 +3103,19 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             rfidProgrammingEventMask: {name: "rfidProgrammingEventMask", ID: 0x0047, type: DataType.BITMAP16, write: true, report: true, default: 0},
         },
         commands: {
-            lockDoor: {name: "lockDoor", ID: 0x00, response: 0, parameters: [{name: "pincodevalue", type: DataType.OCTET_STR}], required: true},
-            unlockDoor: {name: "unlockDoor", ID: 0x01, response: 1, parameters: [{name: "pincodevalue", type: DataType.OCTET_STR}], required: true},
-            toggleDoor: {name: "toggleDoor", ID: 0x02, response: 2, parameters: [{name: "pincodevalue", type: DataType.OCTET_STR}]},
+            lockDoor: {name: "lockDoor", ID: 0x00, response: 0x00, parameters: [{name: "pincodevalue", type: DataType.OCTET_STR}], required: true},
+            unlockDoor: {
+                name: "unlockDoor",
+                ID: 0x01,
+                response: 0x01,
+                parameters: [{name: "pincodevalue", type: DataType.OCTET_STR}],
+                required: true,
+            },
+            toggleDoor: {name: "toggleDoor", ID: 0x02, response: 0x02, parameters: [{name: "pincodevalue", type: DataType.OCTET_STR}]},
             unlockWithTimeout: {
                 name: "unlockWithTimeout",
                 ID: 0x03,
-                response: 3,
+                response: 0x03,
                 parameters: [
                     {name: "timeout", type: DataType.UINT16},
                     {name: "pincodevalue", type: DataType.OCTET_STR},
@@ -3118,13 +3124,13 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             getLogRecord: {
                 name: "getLogRecord",
                 ID: 0x04,
-                response: 4,
+                response: 0x04,
                 parameters: [{name: "logindex", type: DataType.UINT16, special: [["MostRecent", "0"]]}],
             },
             setPinCode: {
                 name: "setPinCode",
                 ID: 0x05,
-                response: 5,
+                response: 0x05,
                 parameters: [
                     {name: "userid", type: DataType.UINT16},
                     {name: "userstatus", type: DataType.UINT8},
@@ -3132,23 +3138,23 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                     {name: "pincodevalue", type: DataType.OCTET_STR},
                 ],
             },
-            getPinCode: {name: "getPinCode", ID: 0x06, response: 6, parameters: [{name: "userid", type: DataType.UINT16}]},
-            clearPinCode: {name: "clearPinCode", ID: 0x07, response: 7, parameters: [{name: "userid", type: DataType.UINT16}]},
-            clearAllPinCodes: {name: "clearAllPinCodes", ID: 0x08, response: 8, parameters: []},
+            getPinCode: {name: "getPinCode", ID: 0x06, response: 0x06, parameters: [{name: "userid", type: DataType.UINT16}]},
+            clearPinCode: {name: "clearPinCode", ID: 0x07, response: 0x07, parameters: [{name: "userid", type: DataType.UINT16}]},
+            clearAllPinCodes: {name: "clearAllPinCodes", ID: 0x08, response: 0x08, parameters: []},
             setUserStatus: {
                 name: "setUserStatus",
                 ID: 0x09,
-                response: 9,
+                response: 0x09,
                 parameters: [
                     {name: "userid", type: DataType.UINT16},
                     {name: "userstatus", type: DataType.UINT8},
                 ],
             },
-            getUserStatus: {name: "getUserStatus", ID: 0x0a, response: 10, parameters: [{name: "userid", type: DataType.UINT16}]},
+            getUserStatus: {name: "getUserStatus", ID: 0x0a, response: 0x0a, parameters: [{name: "userid", type: DataType.UINT16}]},
             setWeekDaySchedule: {
                 name: "setWeekDaySchedule",
                 ID: 0x0b,
-                response: 11,
+                response: 0x0b,
                 parameters: [
                     {name: "scheduleid", type: DataType.UINT8},
                     {name: "userid", type: DataType.UINT16},
@@ -3162,7 +3168,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             getWeekDaySchedule: {
                 name: "getWeekDaySchedule",
                 ID: 0x0c,
-                response: 12,
+                response: 0x0c,
                 parameters: [
                     {name: "scheduleid", type: DataType.UINT8},
                     {name: "userid", type: DataType.UINT16},
@@ -3171,7 +3177,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             clearWeekDaySchedule: {
                 name: "clearWeekDaySchedule",
                 ID: 0x0d,
-                response: 13,
+                response: 0x0d,
                 parameters: [
                     {name: "scheduleid", type: DataType.UINT8},
                     {name: "userid", type: DataType.UINT16},
@@ -3180,7 +3186,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             setYearDaySchedule: {
                 name: "setYearDaySchedule",
                 ID: 0x0e,
-                response: 14,
+                response: 0x0e,
                 parameters: [
                     {name: "scheduleid", type: DataType.UINT8},
                     {name: "userid", type: DataType.UINT16},
@@ -3191,7 +3197,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             getYearDaySchedule: {
                 name: "getYearDaySchedule",
                 ID: 0x0f,
-                response: 15,
+                response: 0x0f,
                 parameters: [
                     {name: "scheduleid", type: DataType.UINT8},
                     {name: "userid", type: DataType.UINT16},
@@ -3200,7 +3206,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             clearYearDaySchedule: {
                 name: "clearYearDaySchedule",
                 ID: 0x10,
-                response: 16,
+                response: 0x10,
                 parameters: [
                     {name: "scheduleid", type: DataType.UINT8},
                     {name: "userid", type: DataType.UINT16},
@@ -3209,7 +3215,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             setHolidaySchedule: {
                 name: "setHolidaySchedule",
                 ID: 0x11,
-                response: 17,
+                response: 0x11,
                 parameters: [
                     {name: "holidayscheduleid", type: DataType.UINT8},
                     {name: "zigbeelocalstarttime", type: DataType.UINT32},
@@ -3217,27 +3223,32 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                     {name: "opermodelduringholiday", type: DataType.ENUM8},
                 ],
             },
-            getHolidaySchedule: {name: "getHolidaySchedule", ID: 0x12, response: 18, parameters: [{name: "holidayscheduleid", type: DataType.UINT8}]},
+            getHolidaySchedule: {
+                name: "getHolidaySchedule",
+                ID: 0x12,
+                response: 0x12,
+                parameters: [{name: "holidayscheduleid", type: DataType.UINT8}],
+            },
             clearHolidaySchedule: {
                 name: "clearHolidaySchedule",
                 ID: 0x13,
-                response: 19,
+                response: 0x13,
                 parameters: [{name: "holidayscheduleid", type: DataType.UINT8}],
             },
             setUserType: {
                 name: "setUserType",
                 ID: 0x14,
-                response: 20,
+                response: 0x14,
                 parameters: [
                     {name: "userid", type: DataType.UINT16},
                     {name: "usertype", type: DataType.ENUM8},
                 ],
             },
-            getUserType: {name: "getUserType", ID: 0x15, response: 21, parameters: [{name: "userid", type: DataType.UINT16}]},
+            getUserType: {name: "getUserType", ID: 0x15, response: 0x15, parameters: [{name: "userid", type: DataType.UINT16}]},
             setRfidCode: {
                 name: "setRfidCode",
                 ID: 0x16,
-                response: 22,
+                response: 0x16,
                 parameters: [
                     {name: "userid", type: DataType.UINT16},
                     {name: "userstatus", type: DataType.UINT8},
@@ -3245,9 +3256,9 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                     {name: "pincodevalue", type: DataType.OCTET_STR},
                 ],
             },
-            getRfidCode: {name: "getRfidCode", ID: 0x17, response: 23, parameters: [{name: "userid", type: DataType.UINT16}]},
-            clearRfidCode: {name: "clearRfidCode", ID: 0x18, response: 24, parameters: [{name: "userid", type: DataType.UINT16}]},
-            clearAllRfidCodes: {name: "clearAllRfidCodes", ID: 0x19, response: 25, parameters: []},
+            getRfidCode: {name: "getRfidCode", ID: 0x17, response: 0x17, parameters: [{name: "userid", type: DataType.UINT16}]},
+            clearRfidCode: {name: "clearRfidCode", ID: 0x18, response: 0x18, parameters: [{name: "userid", type: DataType.UINT16}]},
+            clearAllRfidCodes: {name: "clearAllRfidCodes", ID: 0x19, response: 0x19, parameters: []},
         },
         commandsResponse: {
             lockDoorRsp: {name: "lockDoorRsp", ID: 0x00, parameters: [{name: "status", type: DataType.ENUM8}], required: true},
@@ -3716,14 +3727,14 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             getWeeklySchedule: {
                 name: "getWeeklySchedule",
                 ID: 0x02,
-                response: 0,
+                response: 0x00,
                 parameters: [
                     {name: "daystoreturn", type: DataType.BITMAP8},
                     {name: "modetoreturn", type: DataType.BITMAP8},
                 ],
             },
             clearWeeklySchedule: {name: "clearWeeklySchedule", ID: 0x03, parameters: []},
-            getRelayStatusLog: {name: "getRelayStatusLog", ID: 0x04, response: 1, parameters: []},
+            getRelayStatusLog: {name: "getRelayStatusLog", ID: 0x04, response: 0x01, parameters: []},
             // custom
             plugwiseCalibrateValve: {name: "plugwiseCalibrateValve", ID: 0xa0, parameters: []},
         },
@@ -4965,7 +4976,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             arm: {
                 name: "arm",
                 ID: 0x00,
-                response: 0,
+                response: 0x00,
                 parameters: [
                     {name: "armmode", type: DataType.ENUM8},
                     {name: "code", type: DataType.CHAR_STR},
@@ -4986,14 +4997,14 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             emergency: {name: "emergency", ID: 0x02, parameters: [], required: true},
             fire: {name: "fire", ID: 0x03, parameters: [], required: true},
             panic: {name: "panic", ID: 0x04, parameters: [], required: true},
-            getZoneIDMap: {name: "getZoneIDMap", ID: 0x05, response: 1, parameters: [], required: true},
-            getZoneInfo: {name: "getZoneInfo", ID: 0x06, response: 2, parameters: [{name: "zoneid", type: DataType.UINT8}], required: true},
-            getPanelStatus: {name: "getPanelStatus", ID: 0x07, response: 5, parameters: [], required: true},
+            getZoneIDMap: {name: "getZoneIDMap", ID: 0x05, response: 0x01, parameters: [], required: true},
+            getZoneInfo: {name: "getZoneInfo", ID: 0x06, response: 0x02, parameters: [{name: "zoneid", type: DataType.UINT8}], required: true},
+            getPanelStatus: {name: "getPanelStatus", ID: 0x07, response: 0x05, parameters: [], required: true},
             getBypassedZoneList: {name: "getBypassedZoneList", ID: 0x08, parameters: [], required: true},
             getZoneStatus: {
                 name: "getZoneStatus",
                 ID: 0x09,
-                response: 8,
+                response: 0x08,
                 parameters: [
                     {name: "startzoneid", type: DataType.UINT8},
                     {name: "maxnumzoneid", type: DataType.UINT8},
