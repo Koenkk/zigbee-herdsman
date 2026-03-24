@@ -719,6 +719,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         this.selfAndDeviceEmit(device, "lastSeenChanged", {device, reason: "deviceAnnounce"});
         device.implicitCheckin();
         this.checkDeviceNetworkAddress(device, payload.eui64, payload.nwkAddress);
+        device.resetTransient(false);
         this.selfAndDeviceEmit(device, "deviceAnnounce", {device});
     }
 
@@ -865,10 +866,13 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                 InterviewState.Pending,
                 undefined,
             );
+
+            device.resetTransient(true);
             this.selfAndDeviceEmit(device, "deviceJoined", {device});
         } else if (device.isDeleted) {
             logger.debug(`Deleted device '${payload.ieeeAddr}' joined, undeleting`, NS);
             device.undelete();
+            device.resetTransient(true);
             this.selfAndDeviceEmit(device, "deviceJoined", {device});
         }
 
