@@ -294,6 +294,21 @@ export class Device extends Entity<ControllerEventMap> {
         this.#scheduledOta = scheduledOta;
     }
 
+    /**
+     * Reset transient data about the device.
+     * @param cache If true, reset some previously cached data.
+     *   Should be set to true when device potentially changed its internal data to prevent mismatching state/config.
+     */
+    resetTransient(cache: boolean): void {
+        this._lastDefaultResponseSequenceNumber = undefined;
+
+        if (cache) {
+            // force retrieving this data again
+            this._checkinInterval = undefined;
+            this._pendingRequestTimeout = 0;
+        }
+    }
+
     public createEndpoint(id: number): Endpoint {
         if (this.getEndpoint(id)) {
             throw new Error(`Device '${this.ieeeAddr}' already has an endpoint '${id}'`);

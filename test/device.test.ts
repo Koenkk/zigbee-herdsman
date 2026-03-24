@@ -621,7 +621,7 @@ describe("Device", () => {
             Direction.SERVER_TO_CLIENT,
             false,
             undefined,
-            1,
+            0,
             "readRsp",
             "genOnOff",
             [{attrId: 0x0000, status: Status.SUCCESS, dataType: DataType.BOOLEAN, attrData: 1}],
@@ -646,7 +646,16 @@ describe("Device", () => {
         expect(commandSpy).toHaveBeenCalledTimes(0);
         expect(readSpy).toHaveBeenCalledTimes(0);
         expect(defaultResponseSpy).toHaveBeenCalledTimes(1);
-        expect(defaultResponseSpy).toHaveBeenCalledWith(frame.command.ID, Status.SUCCESS, frame.cluster.ID, 1, {
+        expect(defaultResponseSpy).toHaveBeenNthCalledWith(1, frame.command.ID, Status.SUCCESS, frame.cluster.ID, 0, {
+            direction: Direction.CLIENT_TO_SERVER,
+        });
+
+        device.resetTransient(false);
+        await device.onZclData(dataPayload, frame, endpoint, undefined);
+        await device.onZclData(dataPayload, frame, endpoint, undefined);
+
+        expect(defaultResponseSpy).toHaveBeenCalledTimes(2);
+        expect(defaultResponseSpy).toHaveBeenNthCalledWith(2, frame.command.ID, Status.SUCCESS, frame.cluster.ID, 0, {
             direction: Direction.CLIENT_TO_SERVER,
         });
     });

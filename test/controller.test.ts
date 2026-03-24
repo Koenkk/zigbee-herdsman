@@ -4137,8 +4137,16 @@ describe("Controller", () => {
         expect(device.pendingRequestTimeout).toStrictEqual(0);
         mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockReturnValueOnce(undefined);
+        const newCheckinInterval = 204;
         mocksendZclFrameToEndpoint.mockImplementationOnce((_ieeeAddr, _networkAddress, _endpoint, frame: Zcl.Frame) => {
-            const payload = [{attrId: 0, status: 0, dataType: 35, attrData: 204}];
+            const payload = [
+                {
+                    attrId: Zcl.Clusters.genPollCtrl.attributes.checkinInterval.ID,
+                    status: Zcl.Status.SUCCESS,
+                    dataType: Zcl.DataType.UINT32,
+                    attrData: newCheckinInterval,
+                },
+            ];
             const responseFrame = Zcl.Frame.create(0, 1, true, undefined, 10, "readRsp", frame.cluster.ID, payload, {});
             return {header: responseFrame.header, data: responseFrame.toBuffer(), clusterID: frame.cluster.ID};
         });
@@ -4168,10 +4176,9 @@ describe("Controller", () => {
             groupID: undefined,
         });
         await flushPromises();
-        expect(device.checkinInterval).toStrictEqual(51);
-        expect(device.pendingRequestTimeout).toStrictEqual(51000);
+        expect(device.checkinInterval).toStrictEqual(newCheckinInterval / 4);
+        expect(device.pendingRequestTimeout).toStrictEqual((newCheckinInterval / 4) * 1000);
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(3);
-        device.checkinInterval = 50;
 
         mocksendZclFrameToEndpoint.mockClear();
         frame = Zcl.Frame.create(
@@ -4202,6 +4209,36 @@ describe("Controller", () => {
         expect(call[3].cluster.name).toBe("genPollCtrl");
         expect(call[3].command.name).toBe("checkinRsp");
         expect(call[3].payload).toStrictEqual({startFastPolling: 0, fastPollTimeout: 0});
+
+        await mockAdapterEvents.zdoResponse(Zdo.ClusterId.END_DEVICE_ANNOUNCE, [
+            Zdo.Status.SUCCESS,
+            {
+                nwkAddress: 174,
+                eui64: "0x174",
+                capabilities: {
+                    allocateAddress: 0,
+                    alternatePANCoordinator: 0,
+                    deviceType: 0,
+                    powerSource: 0,
+                    reserved1: 0,
+                    reserved2: 0,
+                    rxOnWhenIdle: 0,
+                    securityCapability: 0,
+                },
+            },
+        ]);
+
+        // doesn't reset on announce
+        expect(device.checkinInterval).toStrictEqual(newCheckinInterval / 4);
+        expect(device.pendingRequestTimeout).toStrictEqual((newCheckinInterval / 4) * 1000);
+
+        device.removeFromDatabase();
+
+        await mockAdapterEvents.deviceJoined({networkAddress: 174, ieeeAddr: "0x174"});
+
+        // resets on join
+        expect(device.checkinInterval).toStrictEqual(DEFAULT_184_CHECKIN_INTERVAL / 4);
+        expect(device.pendingRequestTimeout).toStrictEqual((DEFAULT_184_CHECKIN_INTERVAL / 4) * 1000);
     });
 
     it("Poll control unsupported", async () => {
