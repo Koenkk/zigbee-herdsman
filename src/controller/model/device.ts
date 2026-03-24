@@ -478,7 +478,11 @@ export class Device extends Entity<ControllerEventMap> {
                                     cluster.name as "genPollCtrl",
                                     "checkinRsp",
                                     {startFastPolling: 1, fastPollTimeout: 0},
-                                    {transactionSequenceNumber: header.transactionSequenceNumber, sendPolicy: "immediate"},
+                                    {
+                                        transactionSequenceNumber: header.transactionSequenceNumber,
+                                        disableDefaultResponse: true,
+                                        sendPolicy: "immediate",
+                                    },
                                 );
                                 startedFastPolling = true;
 
@@ -500,7 +504,11 @@ export class Device extends Entity<ControllerEventMap> {
                                     cluster.name as "genPollCtrl",
                                     "checkinRsp",
                                     {startFastPolling: 0, fastPollTimeout: 0},
-                                    {sendPolicy: "immediate"},
+                                    {
+                                        transactionSequenceNumber: header.transactionSequenceNumber,
+                                        disableDefaultResponse: true,
+                                        sendPolicy: "immediate",
+                                    },
                                 );
                             }
 

@@ -645,7 +645,7 @@ export class Endpoint extends ZigbeeEntity {
             cluster,
             "readRsp",
             payload,
-            {direction: Zcl.Direction.SERVER_TO_CLIENT, ...options, transactionSequenceNumber},
+            {direction: Zcl.Direction.SERVER_TO_CLIENT, disableDefaultResponse: true, ...options, transactionSequenceNumber},
             attributes,
         );
     }
