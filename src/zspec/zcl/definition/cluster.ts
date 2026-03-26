@@ -3484,22 +3484,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                 write: true,
                 max: 0xff,
             },
-            nikoCalibrationTimeUp: {
-                name: "nikoCalibrationTimeUp",
-                ID: 0xfcc1,
-                type: DataType.UINT16,
-                manufacturerCode: ManufacturerCode.NIKO_NV,
-                write: true,
-                max: 0xffff,
-            },
-            nikoCalibrationTimeDown: {
-                name: "nikoCalibrationTimeDown",
-                ID: 0xfcc2,
-                type: DataType.UINT16,
-                manufacturerCode: ManufacturerCode.NIKO_NV,
-                write: true,
-                max: 0xffff,
-            },
         },
         commands: {
             upOpen: {name: "upOpen", ID: 0x00, parameters: [], required: true},
