@@ -2902,10 +2902,6 @@ export interface TClusters {
             targetPositionTiltPercentage?: number;
             /** ID=0xf004 | type=ENUM8 | manufacturerCode=LEGRAND_GROUP(0x1021) | write=true | max=255 */
             stepPositionTilt?: number;
-            /** ID=0xfcc1 | type=UINT16 | manufacturerCode=NIKO_NV(0x125f) | write=true | max=65535 */
-            nikoCalibrationTimeUp?: number;
-            /** ID=0xfcc2 | type=UINT16 | manufacturerCode=NIKO_NV(0x125f) | write=true | max=65535 */
-            nikoCalibrationTimeDown?: number;
         };
         commands: {
             /** ID=0x00 | required=true */
