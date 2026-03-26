@@ -47,7 +47,7 @@ describe("Zcl", () => {
     it("Get specific command by name", () => {
         const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
         const command = Zcl.Utils.getClusterCommand(cluster, "identify");
-        expect(command.ID).toBe(2);
+        expect(command.ID).toBe(0);
         expect(command.name).toBe("identify");
     });
 
