@@ -8,7 +8,7 @@ import type {BroadcastAddress} from "../../../zspec/enums";
 import * as Zcl from "../../../zspec/zcl";
 import * as Zdo from "../../../zspec/zdo";
 import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
-import Adapter from "../../adapter";
+import Adapter, {type ClusterWaitressMatcher, type ZclWaitressPayload} from "../../adapter";
 import type * as Events from "../../events";
 import type * as TsType from "../../tstype";
 import type {RawAPSDataRequestPayload} from "../driver/commandType";
@@ -19,20 +19,11 @@ import {patchZdoBuffaloBE} from "./patchZdoBuffaloBE";
 
 const NS = "zh:zigate";
 const default_bind_group = 901; // https://github.com/Koenkk/zigbee-herdsman-converters/blob/master/lib/constants.js#L3
-interface WaitressMatcher {
-    address?: number | string;
-    endpoint: number;
-    transactionSequenceNumber?: number;
-    frameType: Zcl.FrameType;
-    clusterID: number;
-    commandIdentifier: number;
-    direction: number;
-}
 
 export class ZiGateAdapter extends Adapter {
     private driver: Driver;
     private joinPermitted: boolean;
-    private waitress: Waitress<Events.ZclPayload, WaitressMatcher>;
+    private waitress: Waitress<ZclWaitressPayload, ClusterWaitressMatcher>;
     private closing: boolean;
     private queue: Queue;
 
@@ -54,7 +45,7 @@ export class ZiGateAdapter extends Adapter {
         this.queue = new Queue(concurrent);
         // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         this.driver = new Driver(serialPortOptions.path!, serialPortOptions);
-        this.waitress = new Waitress<Events.ZclPayload, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
+        this.waitress = new Waitress(Adapter.zclWaitressValidator, Adapter.clusterWaitressTimeoutFormatter);
 
         this.driver.on("received", this.dataListener.bind(this));
         this.driver.on("LeaveIndication", this.leaveIndicationListener.bind(this));
@@ -518,24 +509,16 @@ export class ZiGateAdapter extends Adapter {
     }
 
     public waitFor(
-        networkAddress: number | undefined,
+        networkAddress: number,
         endpoint: number,
-        frameType: Zcl.FrameType,
-        direction: Zcl.Direction,
+        _frameType: Zcl.FrameType,
+        _direction: Zcl.Direction,
         transactionSequenceNumber: number | undefined,
-        clusterID: number,
-        commandIdentifier: number,
+        clusterId: number,
+        commandId: number,
         timeout: number,
     ): {promise: Promise<Events.ZclPayload>; cancel: () => void} {
-        const payload = {
-            address: networkAddress,
-            endpoint,
-            clusterID,
-            commandIdentifier,
-            frameType,
-            direction,
-            transactionSequenceNumber,
-        };
+        const payload = {address: networkAddress, endpoint, clusterId, commandId, transactionSequenceNumber};
         const waiter = this.waitress.waitFor(payload, timeout);
         const cancel = (): void => this.waitress.remove(waiter.ID);
         return {promise: waiter.start().promise, cancel};
@@ -591,7 +574,11 @@ export class ZiGateAdapter extends Adapter {
             wasBroadcast: false, // TODO
             destinationEndpoint: <number>ziGateObject.payload.destinationEndpoint,
         };
-        this.waitress.resolve(payload);
+
+        if (payload.header !== undefined) {
+            this.waitress.resolve(payload as ZclWaitressPayload);
+        }
+
         this.emit("zclPayload", payload);
     }
 
@@ -602,27 +589,6 @@ export class ZiGateAdapter extends Adapter {
             ieeeAddr: <string>ziGateObject.payload.extendedAddress,
         };
         this.emit("deviceLeave", payload);
-    }
-
-    private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {
-        return (
-            `Timeout - ${matcher.address} - ${matcher.endpoint}` +
-            ` - ${matcher.transactionSequenceNumber} - ${matcher.clusterID}` +
-            ` - ${matcher.commandIdentifier} after ${timeout}ms`
-        );
-    }
-
-    private waitressValidator(payload: Events.ZclPayload, matcher: WaitressMatcher): boolean {
-        return Boolean(
-            payload.header &&
-                (!matcher.address || payload.address === matcher.address) &&
-                matcher.endpoint === payload.endpoint &&
-                (matcher.transactionSequenceNumber === undefined || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
-                matcher.clusterID === payload.clusterID &&
-                matcher.frameType === payload.header.frameControl.frameType &&
-                matcher.commandIdentifier === payload.header.commandIdentifier &&
-                matcher.direction === payload.header.frameControl.direction,
-        );
     }
 
     private onZiGateClose(): void {
