@@ -3316,7 +3316,7 @@ describe("zstack-adapter", () => {
             {clusterid: 0, data: frame.toBuffer(), destendpoint: 20, dstaddr: 2, len: 5, options: 0, radius: 30, srcendpoint: 1, transid: 2},
             99,
         );
-        expect(error).toStrictEqual(new Error("Timeout - 2 - 20 - 100 - 0 - 1 after 1ms"));
+        expect(error).toStrictEqual(new Error("Timeout after 1ms [address=2 endpoint=20 clusterId=0 cmdId=1 tsn=100]"));
     });
 
     it("Send zcl frame network address timeout should discover route, rewrite child entry and retry for sleepy end device", async () => {
@@ -3377,7 +3377,7 @@ describe("zstack-adapter", () => {
             {clusterid: 0, data: frame.toBuffer(), destendpoint: 20, dstaddr: 2, len: 5, options: 0, radius: 30, srcendpoint: 1, transid: 2},
             99,
         );
-        expect(error).toStrictEqual(new Error("Timeout - 2 - 20 - 100 - 0 - 1 after 1ms"));
+        expect(error).toStrictEqual(new Error("Timeout after 1ms [address=2 endpoint=20 clusterId=0 cmdId=1 tsn=100]"));
     });
 
     it("Send zcl frame network address with default response timeout shouldnt care because command has response", async () => {
