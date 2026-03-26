@@ -3131,14 +3131,8 @@ export interface TClusters {
             fourNoksHysteresisHigh?: number;
             /** ID=0x0102 | type=UINT16 | manufacturerCode=ASTREL_GROUP_SRL(0x1071) | write=true | max=65535 */
             fourNoksHysteresisLow?: number;
-            /** ID=0x4000 | type=ENUM8 | manufacturerCode=VIESSMANN_ELEKTRONIK_GMBH(0x1221) | write=true | max=255 */
-            viessmannWindowOpenInternal?: number;
             /** ID=0x4001 | type=INT16 | write=true | min=-32768 | max=32767 */
             StelproOutdoorTemp: number;
-            /** ID=0x4003 | type=BOOLEAN | manufacturerCode=VIESSMANN_ELEKTRONIK_GMBH(0x1221) | write=true */
-            viessmannWindowOpenForce?: number;
-            /** ID=0x4012 | type=BOOLEAN | manufacturerCode=VIESSMANN_ELEKTRONIK_GMBH(0x1221) | write=true */
-            viessmannAssemblyMode?: number;
             /** ID=0x401c | type=ENUM8 | write=true | max=255 */
             StelproSystemMode: number;
         };
