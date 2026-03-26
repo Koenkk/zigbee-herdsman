@@ -233,18 +233,6 @@ export interface TClusters {
                 /** type=ENUM8 */
                 effectvariant: number;
             };
-            /** ID=0x02 */
-            ezmodeInvoke: {
-                /** type=UINT8 | max=255 */
-                action: number;
-            };
-            /** ID=0x03 */
-            updateCommissionState: {
-                /** type=UINT8 | max=255 */
-                action: number;
-                /** type=UINT8 | max=255 */
-                commstatemask: number;
-            };
         };
         commandResponses: {
             /** ID=0x00 | required=true */
