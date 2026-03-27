@@ -4963,15 +4963,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             },
             // if numZoneSensitivityLevelsSupported is supported, this one should be too (`required: true`)
             currentZoneSensitivityLevel: {name: "currentZoneSensitivityLevel", ID: 0x0013, type: DataType.UINT8, write: true, max: 0xff, default: 0},
-            // custom
-            develcoAlarmOffDelay: {
-                name: "develcoAlarmOffDelay",
-                ID: 0x8001,
-                type: DataType.UINT16,
-                manufacturerCode: ManufacturerCode.DEVELCO,
-                write: true,
-                max: 0xffff,
-            },
         },
         commands: {
             enrollRsp: {
