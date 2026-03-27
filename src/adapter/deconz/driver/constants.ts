@@ -241,6 +241,6 @@ interface ApsDataRequest {
 
 type Command = Buffer | number | bigint;
 
-export type {ApsRequest, Request, WaitForDataRequest, ApsDataRequest, ReceivedDataResponse, DataStateResponse, Command, GpDataInd};
+export type {ApsDataRequest, ApsRequest, Command, DataStateResponse, GpDataInd, ReceivedDataResponse, Request, WaitForDataRequest};
 
 export default {PARAM};
