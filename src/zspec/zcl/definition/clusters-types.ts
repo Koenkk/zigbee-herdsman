@@ -4355,8 +4355,6 @@ export interface TClusters {
             numZoneSensitivityLevelsSupported: number;
             /** ID=0x0013 | type=UINT8 | write=true | max=255 | default=0 */
             currentZoneSensitivityLevel: number;
-            /** ID=0x8001 | type=UINT16 | manufacturerCode=DEVELCO(0x1015) | write=true | max=65535 */
-            develcoAlarmOffDelay?: number;
         };
         commands: {
             /** ID=0x00 | required=true */
