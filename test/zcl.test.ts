@@ -46,9 +46,9 @@ describe("Zcl", () => {
 
     it("Get specific command by name", () => {
         const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
-        const command = Zcl.Utils.getClusterCommand(cluster, "ezmodeInvoke");
-        expect(command.ID).toBe(2);
-        expect(command.name).toBe("ezmodeInvoke");
+        const command = Zcl.Utils.getClusterCommand(cluster, "identify");
+        expect(command.ID).toBe(0);
+        expect(command.name).toBe("identify");
     });
 
     it("Get global command by name", () => {
@@ -81,8 +81,8 @@ describe("Zcl", () => {
 
     it("Get specific command by ID", () => {
         const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
-        const command = Zcl.Utils.getClusterCommand(cluster, 2);
-        expect(command).toStrictEqual(Zcl.Utils.getClusterCommand(cluster, "ezmodeInvoke"));
+        const command = Zcl.Utils.getClusterCommand(cluster, 0);
+        expect(command).toStrictEqual(Zcl.Utils.getClusterCommand(cluster, "identify"));
     });
 
     it("Get specific command by name server to client", () => {
