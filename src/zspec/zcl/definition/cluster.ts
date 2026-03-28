@@ -3726,14 +3726,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                 write: true,
                 max: 0xff,
             },
-            StelproOutdoorTemp: {name: "StelproOutdoorTemp", ID: 0x4001, type: DataType.INT16, write: true, min: -32768, max: 32767},
-            viessmannWindowOpenForce: {
-                name: "viessmannWindowOpenForce",
-                ID: 0x4003,
-                type: DataType.BOOLEAN,
-                manufacturerCode: ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH,
-                write: true,
-            },
             viessmannAssemblyMode: {
                 name: "viessmannAssemblyMode",
                 ID: 0x4012,
@@ -3741,7 +3733,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                 manufacturerCode: ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH,
                 write: true,
             },
-            StelproSystemMode: {name: "StelproSystemMode", ID: 0x401c, type: DataType.ENUM8, write: true, max: 0xff},
         },
         commands: {
             setpointRaiseLower: {
