@@ -3722,8 +3722,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             },
             clearWeeklySchedule: {name: "clearWeeklySchedule", ID: 0x03, parameters: []},
             getRelayStatusLog: {name: "getRelayStatusLog", ID: 0x04, response: 1, parameters: []},
-            // custom
-            plugwiseCalibrateValve: {name: "plugwiseCalibrateValve", ID: 0xa0, parameters: []},
         },
         commandsResponse: {
             getWeeklyScheduleRsp: {
