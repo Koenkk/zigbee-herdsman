@@ -233,18 +233,6 @@ export interface TClusters {
                 /** type=ENUM8 */
                 effectvariant: number;
             };
-            /** ID=0x02 */
-            ezmodeInvoke: {
-                /** type=UINT8 | max=255 */
-                action: number;
-            };
-            /** ID=0x03 */
-            updateCommissionState: {
-                /** type=UINT8 | max=255 */
-                action: number;
-                /** type=UINT8 | max=255 */
-                commstatemask: number;
-            };
         };
         commandResponses: {
             /** ID=0x00 | required=true */
@@ -2902,10 +2890,6 @@ export interface TClusters {
             targetPositionTiltPercentage?: number;
             /** ID=0xf004 | type=ENUM8 | manufacturerCode=LEGRAND_GROUP(0x1021) | write=true | max=255 */
             stepPositionTilt?: number;
-            /** ID=0xfcc1 | type=UINT16 | manufacturerCode=NIKO_NV(0x125f) | write=true | max=65535 */
-            nikoCalibrationTimeUp?: number;
-            /** ID=0xfcc2 | type=UINT16 | manufacturerCode=NIKO_NV(0x125f) | write=true | max=65535 */
-            nikoCalibrationTimeDown?: number;
         };
         commands: {
             /** ID=0x00 | required=true */
@@ -3131,10 +3115,6 @@ export interface TClusters {
             fourNoksHysteresisHigh?: number;
             /** ID=0x0102 | type=UINT16 | manufacturerCode=ASTREL_GROUP_SRL(0x1071) | write=true | max=65535 */
             fourNoksHysteresisLow?: number;
-            /** ID=0x4001 | type=INT16 | write=true | min=-32768 | max=32767 */
-            StelproOutdoorTemp: number;
-            /** ID=0x401c | type=ENUM8 | write=true | max=255 */
-            StelproSystemMode: number;
         };
         commands: {
             /** ID=0x00 | required=true */
@@ -4349,8 +4329,6 @@ export interface TClusters {
             numZoneSensitivityLevelsSupported: number;
             /** ID=0x0013 | type=UINT8 | write=true | max=255 | default=0 */
             currentZoneSensitivityLevel: number;
-            /** ID=0x8001 | type=UINT16 | manufacturerCode=DEVELCO(0x1015) | write=true | max=65535 */
-            develcoAlarmOffDelay?: number;
         };
         commands: {
             /** ID=0x00 | required=true */

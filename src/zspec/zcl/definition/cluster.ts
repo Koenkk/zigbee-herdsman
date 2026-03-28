@@ -280,16 +280,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                     {name: "effectvariant", type: DataType.ENUM8},
                 ],
             },
-            // custom
-            ezmodeInvoke: {name: "ezmodeInvoke", ID: 0x02, parameters: [{name: "action", type: DataType.UINT8, max: 0xff}]},
-            updateCommissionState: {
-                name: "updateCommissionState",
-                ID: 0x03,
-                parameters: [
-                    {name: "action", type: DataType.UINT8, max: 0xff},
-                    {name: "commstatemask", type: DataType.UINT8, max: 0xff},
-                ],
-            },
         },
         commandsResponse: {
             identifyQueryRsp: {
@@ -3484,22 +3474,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                 write: true,
                 max: 0xff,
             },
-            nikoCalibrationTimeUp: {
-                name: "nikoCalibrationTimeUp",
-                ID: 0xfcc1,
-                type: DataType.UINT16,
-                manufacturerCode: ManufacturerCode.NIKO_NV,
-                write: true,
-                max: 0xffff,
-            },
-            nikoCalibrationTimeDown: {
-                name: "nikoCalibrationTimeDown",
-                ID: 0xfcc2,
-                type: DataType.UINT16,
-                manufacturerCode: ManufacturerCode.NIKO_NV,
-                write: true,
-                max: 0xffff,
-            },
         },
         commands: {
             upOpen: {name: "upOpen", ID: 0x00, parameters: [], required: true},
@@ -3718,8 +3692,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                 write: true,
                 max: 0xffff,
             },
-            StelproOutdoorTemp: {name: "StelproOutdoorTemp", ID: 0x4001, type: DataType.INT16, write: true, min: -32768, max: 32767},
-            StelproSystemMode: {name: "StelproSystemMode", ID: 0x401c, type: DataType.ENUM8, write: true, max: 0xff},
         },
         commands: {
             setpointRaiseLower: {
@@ -4941,15 +4913,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             },
             // if numZoneSensitivityLevelsSupported is supported, this one should be too (`required: true`)
             currentZoneSensitivityLevel: {name: "currentZoneSensitivityLevel", ID: 0x0013, type: DataType.UINT8, write: true, max: 0xff, default: 0},
-            // custom
-            develcoAlarmOffDelay: {
-                name: "develcoAlarmOffDelay",
-                ID: 0x8001,
-                type: DataType.UINT16,
-                manufacturerCode: ManufacturerCode.DEVELCO,
-                write: true,
-                max: 0xffff,
-            },
         },
         commands: {
             enrollRsp: {
