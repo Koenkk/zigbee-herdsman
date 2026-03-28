@@ -3112,10 +3112,6 @@ export interface TClusters {
             /** ID=0x0047 | type=ENUM8 | write=true | default=0 */
             acCapacityFormat: number;
             /** ID=0x0101 | type=UINT16 | manufacturerCode=ASTREL_GROUP_SRL(0x1071) | write=true | max=65535 */
-            fourNoksHysteresisHigh?: number;
-            /** ID=0x0102 | type=UINT16 | manufacturerCode=ASTREL_GROUP_SRL(0x1071) | write=true | max=65535 */
-            fourNoksHysteresisLow?: number;
-            /** ID=0x4000 | type=ENUM8 | manufacturerCode=VIESSMANN_ELEKTRONIK_GMBH(0x1221) | write=true | max=255 */
             viessmannWindowOpenInternal?: number;
             /** ID=0x4003 | type=BOOLEAN | manufacturerCode=VIESSMANN_ELEKTRONIK_GMBH(0x1221) | write=true */
             viessmannWindowOpenForce?: number;
@@ -3152,8 +3148,6 @@ export interface TClusters {
             clearWeeklySchedule: Record<string, never>;
             /** ID=0x04 | response=1 */
             getRelayStatusLog: Record<string, never>;
-            /** ID=0xa0 */
-            plugwiseCalibrateValve: Record<string, never>;
         };
         commandResponses: {
             /** ID=0x00 */
