@@ -1,5 +1,17 @@
 # Changelog
 
+## [10.0.5](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.4...v10.0.5) (2026-03-28)
+
+
+### Bug Fixes
+
+* Move "Tradfri" commands used in ZHC to ZHC / ikea.ts ([#1714](https://github.com/Koenkk/zigbee-herdsman/issues/1714)) ([599cd08](https://github.com/Koenkk/zigbee-herdsman/commit/599cd082d8e4470d6e49f59e1a0b84555bb22ec4))
+* Move cluster attribute develcoAlarmOffDelay from ZH to ZHC ([#1725](https://github.com/Koenkk/zigbee-herdsman/issues/1725)) ([b224e13](https://github.com/Koenkk/zigbee-herdsman/commit/b224e134495333df8049691b00e47aeebd37366c))
+* Move Sprut attributes from ZH to ZHC ([#1713](https://github.com/Koenkk/zigbee-herdsman/issues/1713)) ([5a1276e](https://github.com/Koenkk/zigbee-herdsman/commit/5a1276eeb0eb0142ea90da197ae21195e8456170))
+* Move two Stelpro attributes in hvacThermostat from ZH to ZHC ([#1722](https://github.com/Koenkk/zigbee-herdsman/issues/1722)) ([9ad65bf](https://github.com/Koenkk/zigbee-herdsman/commit/9ad65bf5d57781d0e830d81fe0491ac94de7b469))
+* Remove custom attributes and commands not used in ZHC ([#1723](https://github.com/Koenkk/zigbee-herdsman/issues/1723)) ([8527a0e](https://github.com/Koenkk/zigbee-herdsman/commit/8527a0eb2cfce28afb9cf2b694e77c82c8c7b988))
+* Remove custom attributes/commandsResponses not used in ZHC ([#1715](https://github.com/Koenkk/zigbee-herdsman/issues/1715)) ([124640f](https://github.com/Koenkk/zigbee-herdsman/commit/124640f04379719441359d7a7deabd167aea7cfb))
+
 ## [10.0.4](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.3...v10.0.4) (2026-03-22)
 
 
