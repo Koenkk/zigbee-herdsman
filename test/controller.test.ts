@@ -8539,6 +8539,128 @@ describe("Controller", () => {
         expect(fastpollstop[3].payload).toStrictEqual({});
     });
 
+    it("Send to device with pendingRequestTimeout > 0, retry on timeout error", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const frame = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            1,
+            "report",
+            "genPowerCfg",
+            [{attrId: 33, dataType: 32, attrData: 84}],
+            {},
+        );
+        const data = {
+            wasBroadcast: false,
+            address: "0x129",
+            clusterID: frame.cluster.ID,
+            data: frame.toBuffer(),
+            header: frame.header,
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 0,
+        };
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        const group = controller.createGroup(1);
+        device.checkinInterval = 3_600;
+
+        expect(device.pendingRequestTimeout).toStrictEqual(3_600_000);
+
+        mocksendZclFrameToEndpoint.mockClear();
+        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {
+            await vi.advanceTimersByTimeAsync(10_000);
+            throw new Error("timeout");
+        });
+
+        const p = endpoint.addToGroup(group);
+
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+
+        await vi.advanceTimersByTimeAsync(1000);
+        await mockAdapterEvents.zclPayload(data);
+
+        await expect(p).resolves.toStrictEqual(undefined);
+
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
+    });
+
+    it("Send to device with pendingRequestTimeout > 0, fails on non-timeout error", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const frame = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            1,
+            "report",
+            "genPowerCfg",
+            [{attrId: 33, dataType: 32, attrData: 84}],
+            {},
+        );
+        const data = {
+            wasBroadcast: false,
+            address: "0x129",
+            clusterID: frame.cluster.ID,
+            data: frame.toBuffer(),
+            header: frame.header,
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 0,
+        };
+        const failureFrame = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            2,
+            "defaultRsp",
+            "genGroups",
+            {cmdId: 0, statusCode: Zcl.Status.UNSUPPORTED_CLUSTER},
+            {},
+        );
+        const failureData = {
+            wasBroadcast: false,
+            address: "0x129",
+            clusterID: failureFrame.cluster.ID,
+            data: failureFrame.toBuffer(),
+            header: failureFrame.header,
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 0,
+        };
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        const group = controller.createGroup(1);
+        device.checkinInterval = 3_600;
+        expect(device.pendingRequestTimeout).toStrictEqual(3_600_000);
+
+        mocksendZclFrameToEndpoint.mockClear();
+        mocksendZclFrameToEndpoint.mockImplementationOnce(async () => {
+            await vi.advanceTimersByTimeAsync(150);
+            await mockAdapterEvents.zclPayload(failureData);
+
+            return failureData;
+        });
+
+        const p = endpoint.addToGroup(group);
+
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+
+        await expect(p).rejects.toThrow(/UNSUPPORTED_CLUSTER/);
+
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+
+        await vi.advanceTimersByTimeAsync(1000);
+        await mockAdapterEvents.zclPayload(data);
+
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+    });
+
     it("Handle retransmitted Xiaomi messages", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 175, ieeeAddr: "0x175"});

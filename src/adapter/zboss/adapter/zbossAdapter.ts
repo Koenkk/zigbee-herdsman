@@ -8,35 +8,23 @@ import * as ZSpec from "../../../zspec";
 import * as Zcl from "../../../zspec/zcl";
 import * as Zdo from "../../../zspec/zdo";
 import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
-import {Adapter, type TsType} from "../..";
+import {Adapter, type ClusterWaitressMatcher, type ZclWaitressPayload} from "../../adapter";
 import {WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE} from "../../const";
 import type {ZclPayload} from "../../events";
+import type {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from "../../tstype";
 import {ZBOSSDriver} from "../driver";
 import {CommandId, DeviceUpdateStatus} from "../enums";
 import {FrameType, type ZBOSSFrame} from "../frame";
 
 const NS = "zh:zboss";
 
-interface WaitressMatcher {
-    address: number | string;
-    endpoint: number;
-    transactionSequenceNumber?: number;
-    clusterID: number;
-    commandIdentifier: number;
-}
-
 export class ZBOSSAdapter extends Adapter {
     private queue: Queue;
     private readonly driver: ZBOSSDriver;
-    private waitress: Waitress<ZclPayload, WaitressMatcher>;
+    private waitress: Waitress<ZclWaitressPayload, ClusterWaitressMatcher>;
     private currentManufacturerCode: Zcl.ManufacturerCode;
 
-    constructor(
-        networkOptions: TsType.NetworkOptions,
-        serialPortOptions: TsType.SerialPortOptions,
-        backupPath: string,
-        adapterOptions: TsType.AdapterOptions,
-    ) {
+    constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
         this.hasZdoMessageOverhead = false;
         this.manufacturerID = Zcl.ManufacturerCode.NORDIC_SEMICONDUCTOR_ASA;
@@ -45,7 +33,7 @@ export class ZBOSSAdapter extends Adapter {
         logger.debug(`Adapter concurrent: ${concurrent}`, NS);
         this.queue = new Queue(concurrent);
 
-        this.waitress = new Waitress<ZclPayload, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
+        this.waitress = new Waitress(Adapter.zclWaitressValidator, Adapter.clusterWaitressTimeoutFormatter);
         this.driver = new ZBOSSDriver(serialPortOptions, networkOptions);
         this.driver.on("frame", this.processMessage.bind(this));
     }
@@ -107,7 +95,10 @@ export class ZBOSSAdapter extends Adapter {
                         destinationEndpoint: frame.payload.dstEndpoint,
                     };
 
-                    this.waitress.resolve(payload);
+                    if (payload.header !== undefined) {
+                        this.waitress.resolve(payload as ZclWaitressPayload);
+                    }
+
                     this.emit("zclPayload", payload);
                     break;
                 }
@@ -115,7 +106,7 @@ export class ZBOSSAdapter extends Adapter {
         }
     }
 
-    public async start(): Promise<TsType.StartResult> {
+    public async start(): Promise<StartResult> {
         logger.info("ZBOSS Adapter starting", NS);
 
         await this.driver.connect();
@@ -133,8 +124,8 @@ export class ZBOSSAdapter extends Adapter {
         return await Promise.resolve(this.driver.netInfo.ieeeAddr);
     }
 
-    public async getCoordinatorVersion(): Promise<TsType.CoordinatorVersion> {
-        return await this.queue.execute<TsType.CoordinatorVersion>(async () => {
+    public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
+        return await this.queue.execute<CoordinatorVersion>(async () => {
             const ver = await this.driver.execCommand(CommandId.GET_MODULE_VERSION, {});
             const cver = await this.driver.execCommand(CommandId.GET_COORDINATOR_VERSION, {});
             const ver2str = (version: number): string => {
@@ -169,7 +160,7 @@ export class ZBOSSAdapter extends Adapter {
         return await Promise.reject(new Error("This adapter does not support backup"));
     }
 
-    public async getNetworkParameters(): Promise<TsType.NetworkParameters> {
+    public async getNetworkParameters(): Promise<NetworkParameters> {
         return await this.queue.execute(async () => {
             // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             const channel = this.driver.netInfo!.network.channel;
@@ -480,20 +471,11 @@ export class ZBOSSAdapter extends Adapter {
         networkAddress: number,
         endpoint: number,
         transactionSequenceNumber: number | undefined,
-        clusterID: number,
-        commandIdentifier: number,
+        clusterId: number,
+        commandId: number,
         timeout: number,
     ): {start: () => {promise: Promise<ZclPayload>}; cancel: () => void} {
-        const waiter = this.waitress.waitFor(
-            {
-                address: networkAddress,
-                endpoint,
-                clusterID,
-                commandIdentifier,
-                transactionSequenceNumber,
-            },
-            timeout,
-        );
+        const waiter = this.waitress.waitFor({address: networkAddress, endpoint, clusterId, commandId, transactionSequenceNumber}, timeout);
         const cancel = (): void => this.waitress.remove(waiter.ID);
         return {start: waiter.start, cancel};
     }
@@ -504,32 +486,12 @@ export class ZBOSSAdapter extends Adapter {
         _frameType: Zcl.FrameType,
         _direction: Zcl.Direction,
         transactionSequenceNumber: number | undefined,
-        clusterID: number,
-        commandIdentifier: number,
+        clusterId: number,
+        commandId: number,
         timeout: number,
     ): {promise: Promise<ZclPayload>; cancel: () => void} {
-        const waiter = this.waitForInternal(networkAddress, endpoint, transactionSequenceNumber, clusterID, commandIdentifier, timeout);
+        const waiter = this.waitForInternal(networkAddress, endpoint, transactionSequenceNumber, clusterId, commandId, timeout);
 
         return {cancel: waiter.cancel, promise: waiter.start().promise};
-    }
-
-    private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {
-        return (
-            `Timeout - ${matcher.address} - ${matcher.endpoint}` +
-            ` - ${matcher.transactionSequenceNumber} - ${matcher.clusterID}` +
-            ` - ${matcher.commandIdentifier} after ${timeout}ms`
-        );
-    }
-
-    private waitressValidator(payload: ZclPayload, matcher: WaitressMatcher): boolean {
-        return (
-            (payload.header &&
-                (!matcher.address || payload.address === matcher.address) &&
-                payload.endpoint === matcher.endpoint &&
-                (matcher.transactionSequenceNumber === undefined || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
-                payload.clusterID === matcher.clusterID &&
-                matcher.commandIdentifier === payload.header.commandIdentifier) ||
-            false
-        );
     }
 }
