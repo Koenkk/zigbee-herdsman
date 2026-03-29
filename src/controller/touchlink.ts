@@ -29,7 +29,7 @@ const createIdentifyRequestFrame = (transaction: number): Zcl.Frame =>
         0,
         "identifyRequest",
         "touchlink",
-        {transactionID: transaction, duration: 65535},
+        {transactionID: transaction, duration: 5},
         {},
     );
 
