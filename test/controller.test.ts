@@ -834,7 +834,7 @@ describe("Controller", () => {
                 transactionSequenceNumber: 0,
                 commandIdentifier: 6,
             },
-            payload: {transactionID: expect.any(Number), duration: 65535},
+            payload: {transactionID: expect.any(Number), duration: 5},
             cluster: {
                 ID: 4096,
                 attributes: {},
@@ -996,7 +996,7 @@ describe("Controller", () => {
                 transactionSequenceNumber: 0,
                 commandIdentifier: 6,
             },
-            payload: {transactionID: expect.any(Number), duration: 65535},
+            payload: {transactionID: expect.any(Number), duration: 5},
             cluster: {
                 ID: 4096,
                 attributes: {},
@@ -1069,7 +1069,7 @@ describe("Controller", () => {
                 transactionSequenceNumber: 0,
                 commandIdentifier: 6,
             },
-            payload: {transactionID: expect.any(Number), duration: 65535},
+            payload: {transactionID: expect.any(Number), duration: 5},
             cluster: {
                 ID: 4096,
                 attributes: {},
