@@ -1086,6 +1086,30 @@ describe("Controller", () => {
         });
     });
 
+    it("Touchlink identify when scan request fails", async () => {
+        await controller.start();
+        mocksendZclFrameInterPANBroadcast.mockRejectedValueOnce(new Error("Scan timeout"));
+        await controller.touchlink.identify("0x0000012300000000", 15);
+
+        expect(mockSetChannelInterPAN).toHaveBeenCalledTimes(1);
+        expect(mockSetChannelInterPAN).toHaveBeenCalledWith(15);
+        expect(mocksendZclFrameInterPANBroadcast).toHaveBeenCalledTimes(1);
+        expect(mockRestoreChannelInterPAN).toHaveBeenCalledTimes(1);
+        expect(mocksendZclFrameInterPANToIeeeAddr).toHaveBeenCalledTimes(1);
+    });
+
+    it("Touchlink factory reset when scan request fails", async () => {
+        await controller.start();
+        mocksendZclFrameInterPANBroadcast.mockRejectedValueOnce(new Error("Scan timeout"));
+        await controller.touchlink.factoryReset("0x0000012300000000", 15);
+
+        expect(mockSetChannelInterPAN).toHaveBeenCalledTimes(1);
+        expect(mockSetChannelInterPAN).toHaveBeenCalledWith(15);
+        expect(mocksendZclFrameInterPANBroadcast).toHaveBeenCalledTimes(1);
+        expect(mockRestoreChannelInterPAN).toHaveBeenCalledTimes(1);
+        expect(mocksendZclFrameInterPANToIeeeAddr).toHaveBeenCalledTimes(2);
+    });
+
     it("Controller should ignore touchlink messages", async () => {
         const frame = Zcl.Frame.create(
             Zcl.FrameType.SPECIFIC,
