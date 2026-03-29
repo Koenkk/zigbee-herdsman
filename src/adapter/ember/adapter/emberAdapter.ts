@@ -2165,7 +2165,9 @@ export class EmberAdapter extends Adapter {
                 throw new Error(`~x~> [ZCL TOUCHLINK to=${ieeeAddress}] Failed to send with status=${SLStatus[status]}.`);
             }
 
-            // NOTE: can use ezspRawTransmitCompleteHandler if needed here
+            await new Promise<void>((resolve) => {
+                this.ezsp.once("rawTransmitComplete", resolve);
+            });
         });
     }
 
@@ -2218,7 +2220,9 @@ export class EmberAdapter extends Adapter {
                 throw new Error(`~x~> [ZCL TOUCHLINK BROADCAST] Failed to send with status=${SLStatus[status]}.`);
             }
 
-            // NOTE: can use ezspRawTransmitCompleteHandler if needed here
+            await new Promise<void>((resolve) => {
+                this.ezsp.once("rawTransmitComplete", resolve);
+            });
 
             if (!disableResponse && command.response !== undefined) {
                 const result = await this.oneWaitress.startWaitingFor<ZclPayload>(
