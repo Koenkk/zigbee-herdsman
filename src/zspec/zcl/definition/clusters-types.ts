@@ -1,21 +1,14 @@
 import type {Foundation} from "./foundation";
+
 import type {
     ExtensionFieldSet,
-    Gpd,
-    GpdAttributeReport,
-    GpdChannelConfiguration,
-    GpdChannelRequest,
     GpdCommissioningReply,
     GpdCustomReply,
+    MiboxerZone,
     Struct,
     ThermoTransition,
     TuyaDataPointValue,
-    ZclArray,
     ZoneInfo,
-} from "./tstype";
-/* biome-ignore lint/correctness/noUnusedImports: intentional for spec completeness */
-import type {
-    MiboxerZone,
 } from "./tstype";
 
 export interface TClusters {
