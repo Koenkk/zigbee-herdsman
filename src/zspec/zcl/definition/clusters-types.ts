@@ -4,7 +4,7 @@ import type {
     ExtensionFieldSet,
     GpdCommissioningReply,
     GpdCustomReply,
-    MiboxerZone,
+//     MiboxerZone,
     Struct,
     ThermoTransition,
     TuyaDataPointValue,
