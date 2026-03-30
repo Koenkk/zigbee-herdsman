@@ -1,6 +1,19 @@
 import type {Foundation} from "./foundation";
 
-import type {ExtensionFieldSet, GpdCommissioningReply, GpdCustomReply, Struct, ThermoTransition, TuyaDataPointValue, ZoneInfo} from "./tstype";
+import type {
+    ExtensionFieldSet,
+    Gpd,
+    GpdAttributeReport,
+    GpdChannelConfiguration,
+    GpdChannelRequest,
+    GpdCommissioningReply,
+    GpdCustomReply,
+    Struct,
+    ThermoTransition,
+    TuyaDataPointValue,
+    ZclArray,
+    ZoneInfo,
+} from "./tstype";
 
 export interface TClusters {
     genBasic: {
