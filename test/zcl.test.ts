@@ -2290,7 +2290,7 @@ describe("Zcl", () => {
             true,
             undefined,
             1,
-            "miboxerSetZones",
+            {name: "miboxerSetZones", ID: 0xf0, parameters: [{name: "zones", type: BuffaloZclDataType.LIST_MIBOXER_ZONES}]},
             Zcl.Clusters.genGroups.ID,
             {zones: testZones},
             {},
