@@ -7,7 +7,6 @@ import type {
     GpdChannelRequest,
     GpdCommissioningReply,
     GpdCustomReply,
-    MiboxerZone,
     Struct,
     ThermoTransition,
     TuyaDataPointValue,
