@@ -20,7 +20,7 @@ const MIBOXER_GROUPS_CUSTOM_CLUSTER = {
             miboxerSetZones: {name: "miboxerSetZones", ID: 0xf0, parameters: [{name: "zones", type: BuffaloZclDataType.LIST_MIBOXER_ZONES}]},
         },
         commandsResponse: {},
-    }
+    },
 };
 
 describe("Zcl", () => {
