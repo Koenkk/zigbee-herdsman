@@ -15,6 +15,8 @@ const MANU_SPE_CUSTOM_CLUSTERS = {
 
 const MIBOXER_GROUPS_CUSTOM_CLUSTER = {
     genGroups: {
+        name: "genGroups",
+        ID: Zcl.Clusters.genGroups.ID,
         attributes: {},
         commands: {
             miboxerSetZones: {name: "miboxerSetZones", ID: 0xf0, parameters: [{name: "zones", type: BuffaloZclDataType.LIST_MIBOXER_ZONES}]},
