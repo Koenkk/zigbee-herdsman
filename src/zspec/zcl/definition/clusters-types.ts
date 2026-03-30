@@ -1,5 +1,5 @@
 import type {Foundation} from "./foundation";
-/* biome-ignore lint/correctness/noUnusedImports -- intentional for spec completeness */
+/* biome-ignore lint/correctness/noUnusedImports: intentional for spec completeness */
 import type {
     ExtensionFieldSet,
     Gpd,
