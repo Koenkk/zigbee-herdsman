@@ -835,15 +835,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             },
             // only `required: true` if `currentFrequency` attribute supported
             moveToClosestFrequency: {name: "moveToClosestFrequency", ID: 0x08, parameters: [{name: "frequency", type: DataType.UINT16}]},
-            // custom
-            moveToLevelTuya: {
-                name: "moveToLevelTuya",
-                ID: 0xf0,
-                parameters: [
-                    {name: "level", type: DataType.UINT16, max: 0xffff},
-                    {name: "transtime", type: DataType.UINT16, max: 0xffff},
-                ],
-            },
         },
         commandsResponse: {},
     },
