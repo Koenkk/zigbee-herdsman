@@ -1,5 +1,4 @@
 import type {Foundation} from "./foundation";
-/* biome-ignore lint/correctness/noUnusedImports: intentional for spec completeness */
 import type {
     ExtensionFieldSet,
     Gpd,
@@ -8,12 +7,15 @@ import type {
     GpdChannelRequest,
     GpdCommissioningReply,
     GpdCustomReply,
-    MiboxerZone,
     Struct,
     ThermoTransition,
     TuyaDataPointValue,
     ZclArray,
     ZoneInfo,
+} from "./tstype";
+/* biome-ignore lint/correctness/noUnusedImports: intentional for spec completeness */
+import type {
+    MiboxerZone,
 } from "./tstype";
 
 export interface TClusters {
