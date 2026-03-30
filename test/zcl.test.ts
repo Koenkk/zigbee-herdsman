@@ -13,6 +13,16 @@ const MANU_SPE_CUSTOM_CLUSTERS = {
     },
 };
 
+const MIBOXER_GROUPS_CUSTOM_CLUSTER = {
+    genGroups: {
+        attributes: {},
+        commands: {
+            miboxerSetZones: {name: "miboxerSetZones", ID: 0xf0, parameters: [{name: "zones", type: BuffaloZclDataType.LIST_MIBOXER_ZONES}]},
+        },
+        commandsResponse: {},
+    }
+};
+
 describe("Zcl", () => {
     it("Get cluster by name", () => {
         const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
@@ -2261,7 +2271,7 @@ describe("Zcl", () => {
             0x11, 0x01, 0xf0, 0x08, 0x84, 0x2b, 0x01, 0x98, 0x2b, 0x02, 0xac, 0x2b, 0x03, 0xc0, 0x2b, 0x04, 0xd4, 0x2b, 0x05, 0xe8, 0x2b, 0x06, 0xfc,
             0x2b, 0x07, 0x10, 0x2c, 0x08,
         ]);
-        const zoneConfigFrame = Zcl.Frame.fromBuffer(Zcl.Clusters.genGroups.ID, Zcl.Header.fromBuffer(zoneConfigPayload)!, zoneConfigPayload, {});
+        const zoneConfigFrame = Zcl.Frame.fromBuffer(Zcl.Clusters.genGroups.ID, Zcl.Header.fromBuffer(zoneConfigPayload)!, zoneConfigPayload, MIBOXER_GROUPS_CUSTOM_CLUSTER);
         expect(zoneConfigFrame.payload.zones).toStrictEqual([
             {zoneNum: 1, groupId: 0x2b84},
             {zoneNum: 2, groupId: 0x2b98},
@@ -2290,10 +2300,10 @@ describe("Zcl", () => {
             true,
             undefined,
             1,
-            {name: "miboxerSetZones", ID: 0xf0, parameters: [{name: "zones", type: BuffaloZclDataType.LIST_MIBOXER_ZONES}]},
+            "miboxerSetZones",
             Zcl.Clusters.genGroups.ID,
             {zones: testZones},
-            {},
+            MIBOXER_GROUPS_CUSTOM_CLUSTER,
         );
         expect(zoneConfigFrame.toBuffer()).toStrictEqual(
             Buffer.from([
