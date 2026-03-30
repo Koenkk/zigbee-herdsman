@@ -688,13 +688,6 @@ export interface TClusters {
                 /** type=UINT16 */
                 frequency: number;
             };
-            /** ID=0xf0 */
-            moveToLevelTuya: {
-                /** type=UINT16 | max=65535 */
-                level: number;
-                /** type=UINT16 | max=65535 */
-                transtime: number;
-            };
         };
         commandResponses: never;
     };
