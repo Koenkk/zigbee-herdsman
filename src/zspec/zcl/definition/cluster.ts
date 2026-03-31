@@ -3692,21 +3692,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                 write: true,
                 max: 0xffff,
             },
-            viessmannWindowOpenInternal: {
-                name: "viessmannWindowOpenInternal",
-                ID: 0x4000,
-                type: DataType.ENUM8,
-                manufacturerCode: ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH,
-                write: true,
-                max: 0xff,
-            },
-            viessmannAssemblyMode: {
-                name: "viessmannAssemblyMode",
-                ID: 0x4012,
-                type: DataType.BOOLEAN,
-                manufacturerCode: ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH,
-                write: true,
-            },
         },
         commands: {
             setpointRaiseLower: {
