@@ -2838,8 +2838,6 @@ export interface TClusters {
             intermediateSetpointsLift: Buffer;
             /** ID=0x0019 | type=OCTET_STR | write=true | default=1,0x0000 */
             intermediateSetpointsTilt: Buffer;
-            /** ID=0x000a | type=BITMAP8 */
-            operationalStatus: number;
             /** ID=0xf000 | type=ENUM8 | write=true | max=255 */
             tuyaMovingState: number;
             /** ID=0xf001 | type=ENUM8 | write=true | max=255 */
