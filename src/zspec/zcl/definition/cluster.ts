@@ -3408,7 +3408,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             intermediateSetpointsTilt: {name: "intermediateSetpointsTilt", ID: 0x0019, type: DataType.OCTET_STR, write: true, default: "1,0x0000"},
             // custom
             // XXX: doesn't exist?
-            operationalStatus: {name: "operationalStatus", ID: 0x000a, type: DataType.BITMAP8},
 
             tuyaMovingState: {name: "tuyaMovingState", ID: 0xf000, type: DataType.ENUM8, write: true, max: 0xff},
             tuyaCalibration: {name: "tuyaCalibration", ID: 0xf001, type: DataType.ENUM8, write: true, max: 0xff},
