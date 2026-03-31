@@ -10,6 +10,7 @@ import Request from "../src/controller/helpers/request";
 import zclTransactionSequenceNumber from "../src/controller/helpers/zclTransactionSequenceNumber";
 import {Device, Endpoint, Group} from "../src/controller/model";
 import {InterviewState} from "../src/controller/model/device";
+import type {TCustomCluster} from "../src/controller/tstype";
 import type * as Models from "../src/models";
 import * as Utils from "../src/utils";
 import {setLogger} from "../src/utils/logger";
@@ -472,6 +473,35 @@ const options = {
 };
 
 const databaseContents = () => fs.readFileSync(options.databasePath).toString();
+
+const CUSTOM_CLUSTERS = {
+    hvacThermostat: {
+        name: "hvacThermostat",
+        ID: 0x0201,
+        attributes: {
+            viessmannWindowOpenInternal: {
+                name: "viessmannWindowOpenInternal",
+                ID: 0x4000,
+                type: Zcl.DataType.ENUM8,
+                manufacturerCode: Zcl.ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH,
+                write: true,
+                max: 0xff,
+            },
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+} satisfies CustomClusters;
+
+interface CustomClustersTypes extends Record<string, TCustomCluster> {
+    hvacThermostat: {
+        attributes: {
+            viessmannWindowOpenInternal: number;
+        };
+        commands: never;
+        commandResponses: never;
+    };
+}
 
 describe("Controller", () => {
     let controller: Controller;
@@ -4543,9 +4573,10 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         // @ts-expect-error private
         device._manufacturerID = 4641;
+        device.addCustomCluster("hvacThermostat", CUSTOM_CLUSTERS.hvacThermostat);
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
-        await endpoint.configureReporting(
+        await endpoint.configureReporting<"hvacThermostat", CustomClustersTypes["hvacThermostat"]>(
             "hvacThermostat",
             [
                 {
@@ -4562,7 +4593,7 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual(
+        expect(deepClone(call[3])).toMatchObject(
             deepClone(
                 Zcl.Frame.create(
                     Zcl.FrameType.GLOBAL,
@@ -4573,12 +4604,13 @@ describe("Controller", () => {
                     "configReport",
                     513,
                     [{attrId: 16384, dataType: 48, direction: 0, maxRepIntval: 10, minRepIntval: 1, repChange: 1}],
-                    {},
+                    CUSTOM_CLUSTERS,
                 ),
             ),
         );
 
         expect(endpoint.configuredReportings.length).toBe(1);
+
         expect({...endpoint.configuredReportings[0], cluster: undefined}).toStrictEqual({
             attribute: expect.objectContaining({ID: 16384, type: 48, manufacturerCode: 4641, name: "viessmannWindowOpenInternal"}),
             minimumReportInterval: 1,
@@ -4594,9 +4626,10 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         // @ts-expect-error private
         device._manufacturerID = Zcl.ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH;
+        device.addCustomCluster("hvacThermostat", CUSTOM_CLUSTERS.hvacThermostat);
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
-        await endpoint.configureReporting("hvacThermostat", [
+        await endpoint.configureReporting<"hvacThermostat", CustomClustersTypes["hvacThermostat"]>("hvacThermostat", [
             {
                 attribute: "viessmannWindowOpenInternal",
                 minimumReportInterval: 1,
@@ -4609,7 +4642,7 @@ describe("Controller", () => {
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual(
+        expect(deepClone(call[3])).toMatchObject(
             deepClone(
                 Zcl.Frame.create(
                     Zcl.FrameType.GLOBAL,
@@ -5590,14 +5623,15 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         // @ts-expect-error private
         device._manufacturerID = Zcl.ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH;
+        device.addCustomCluster("hvacThermostat", CUSTOM_CLUSTERS.hvacThermostat);
         const endpoint = device.getEndpoint(1)!;
-        await endpoint.write("hvacThermostat", {viessmannWindowOpenInternal: 1});
+        await endpoint.write<"hvacThermostat", CustomClustersTypes["hvacThermostat"]>("hvacThermostat", {viessmannWindowOpenInternal: 1});
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual(
+        expect(deepClone(call[3])).toMatchObject(
             deepClone(
                 Zcl.Frame.create(
                     Zcl.FrameType.GLOBAL,
@@ -5608,7 +5642,7 @@ describe("Controller", () => {
                     "write",
                     513,
                     [{attrId: 16384, attrData: 1, dataType: 48}],
-                    {},
+                    CUSTOM_CLUSTERS,
                 ),
             ),
         );
@@ -5869,15 +5903,28 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockClear();
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         readManufacturerCode = Zcl.ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH;
+        device.addCustomCluster("hvacThermostat", CUSTOM_CLUSTERS.hvacThermostat);
         const endpoint = device.getEndpoint(1)!;
-        await endpoint.read("hvacThermostat", ["viessmannWindowOpenInternal"]);
+        await endpoint.read<"hvacThermostat", CustomClustersTypes["hvacThermostat"]>("hvacThermostat", ["viessmannWindowOpenInternal"]);
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
-        expect(deepClone(call[3])).toStrictEqual(
-            deepClone(Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, 4641, 9, "read", 513, [{attrId: 16384}], {})),
+        expect(deepClone(call[3])).toMatchObject(
+            deepClone(
+                Zcl.Frame.create(
+                    Zcl.FrameType.GLOBAL,
+                    Zcl.Direction.CLIENT_TO_SERVER,
+                    true,
+                    4641,
+                    9,
+                    "read",
+                    513,
+                    [{attrId: 16384}],
+                    CUSTOM_CLUSTERS,
+                ),
+            ),
         );
         expect(call[4]).toBe(10000);
     });
@@ -10186,6 +10233,7 @@ describe("Controller", () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
+        device.addCustomCluster("hvacThermostat", CUSTOM_CLUSTERS.hvacThermostat);
         const endpoint = device.getEndpoint(1)!;
         const zclCommandSpy = vi.spyOn(endpoint, "zclCommand");
 
@@ -10212,24 +10260,24 @@ describe("Controller", () => {
         await expect(endpoint.write("hvacThermostat", writePayloadRaw)).rejects.toThrow(
             "Cannot have attributes with different manufacturerCode in single 'write' call",
         );
-        await expect(endpoint.read("hvacThermostat", readPayload)).rejects.toThrow(
+        await expect(endpoint.read<"hvacThermostat", CustomClustersTypes["hvacThermostat"]>("hvacThermostat", readPayload)).rejects.toThrow(
             "Cannot have attributes with different manufacturerCode in single 'read' call",
         );
-        await expect(endpoint.read("hvacThermostat", readPayloadRaw)).rejects.toThrow(
+        await expect(endpoint.read<"hvacThermostat", CustomClustersTypes["hvacThermostat"]>("hvacThermostat", readPayloadRaw)).rejects.toThrow(
             "Cannot have attributes with different manufacturerCode in single 'read' call",
         );
-        await expect(endpoint.configureReporting("hvacThermostat", configureReportingPayload)).rejects.toThrow(
-            "Cannot have attributes with different manufacturerCode in single 'configureReporting' call",
-        );
-        await expect(endpoint.configureReporting("hvacThermostat", configureReportingPayloadRaw)).rejects.toThrow(
-            "Cannot have attributes with different manufacturerCode in single 'configureReporting' call",
-        );
-        await expect(endpoint.readReportingConfig("hvacThermostat", readReportingConfigPayload)).rejects.toThrow(
-            "Cannot have attributes with different manufacturerCode in single 'readReportingConfig' call",
-        );
-        await expect(endpoint.readReportingConfig("hvacThermostat", readReportingConfigPayloadRaw)).rejects.toThrow(
-            "Cannot have attributes with different manufacturerCode in single 'readReportingConfig' call",
-        );
+        await expect(
+            endpoint.configureReporting<"hvacThermostat", CustomClustersTypes["hvacThermostat"]>("hvacThermostat", configureReportingPayload),
+        ).rejects.toThrow("Cannot have attributes with different manufacturerCode in single 'configureReporting' call");
+        await expect(
+            endpoint.configureReporting<"hvacThermostat", CustomClustersTypes["hvacThermostat"]>("hvacThermostat", configureReportingPayloadRaw),
+        ).rejects.toThrow("Cannot have attributes with different manufacturerCode in single 'configureReporting' call");
+        await expect(
+            endpoint.readReportingConfig<"hvacThermostat", CustomClustersTypes["hvacThermostat"]>("hvacThermostat", readReportingConfigPayload),
+        ).rejects.toThrow("Cannot have attributes with different manufacturerCode in single 'readReportingConfig' call");
+        await expect(
+            endpoint.readReportingConfig<"hvacThermostat", CustomClustersTypes["hvacThermostat"]>("hvacThermostat", readReportingConfigPayloadRaw),
+        ).rejects.toThrow("Cannot have attributes with different manufacturerCode in single 'readReportingConfig' call");
 
         //-- with override manufacturer code
 
@@ -10241,24 +10289,40 @@ describe("Controller", () => {
         await expect(endpoint.write("hvacThermostat", writePayloadRaw, manufOpts)).rejects.toThrow(
             "Cannot have attributes with different manufacturerCode in single 'write' call",
         );
-        await expect(endpoint.read("hvacThermostat", readPayload, manufOpts)).rejects.toThrow(
-            "Cannot have attributes with different manufacturerCode in single 'read' call",
-        );
-        await expect(endpoint.read("hvacThermostat", readPayloadRaw, manufOpts)).rejects.toThrow(
-            "Cannot have attributes with different manufacturerCode in single 'read' call",
-        );
-        await expect(endpoint.configureReporting("hvacThermostat", configureReportingPayload, manufOpts)).rejects.toThrow(
-            "Cannot have attributes with different manufacturerCode in single 'configureReporting' call",
-        );
-        await expect(endpoint.configureReporting("hvacThermostat", configureReportingPayloadRaw, manufOpts)).rejects.toThrow(
-            "Cannot have attributes with different manufacturerCode in single 'configureReporting' call",
-        );
-        await expect(endpoint.readReportingConfig("hvacThermostat", readReportingConfigPayload, manufOpts)).rejects.toThrow(
-            "Cannot have attributes with different manufacturerCode in single 'readReportingConfig' call",
-        );
-        await expect(endpoint.readReportingConfig("hvacThermostat", readReportingConfigPayloadRaw, manufOpts)).rejects.toThrow(
-            "Cannot have attributes with different manufacturerCode in single 'readReportingConfig' call",
-        );
+        await expect(
+            endpoint.read<"hvacThermostat", CustomClustersTypes["hvacThermostat"]>("hvacThermostat", readPayload, manufOpts),
+        ).rejects.toThrow("Cannot have attributes with different manufacturerCode in single 'read' call");
+        await expect(
+            endpoint.read<"hvacThermostat", CustomClustersTypes["hvacThermostat"]>("hvacThermostat", readPayloadRaw, manufOpts),
+        ).rejects.toThrow("Cannot have attributes with different manufacturerCode in single 'read' call");
+        await expect(
+            endpoint.configureReporting<"hvacThermostat", CustomClustersTypes["hvacThermostat"]>(
+                "hvacThermostat",
+                configureReportingPayload,
+                manufOpts,
+            ),
+        ).rejects.toThrow("Cannot have attributes with different manufacturerCode in single 'configureReporting' call");
+        await expect(
+            endpoint.configureReporting<"hvacThermostat", CustomClustersTypes["hvacThermostat"]>(
+                "hvacThermostat",
+                configureReportingPayloadRaw,
+                manufOpts,
+            ),
+        ).rejects.toThrow("Cannot have attributes with different manufacturerCode in single 'configureReporting' call");
+        await expect(
+            endpoint.readReportingConfig<"hvacThermostat", CustomClustersTypes["hvacThermostat"]>(
+                "hvacThermostat",
+                readReportingConfigPayload,
+                manufOpts,
+            ),
+        ).rejects.toThrow("Cannot have attributes with different manufacturerCode in single 'readReportingConfig' call");
+        await expect(
+            endpoint.readReportingConfig<"hvacThermostat", CustomClustersTypes["hvacThermostat"]>(
+                "hvacThermostat",
+                readReportingConfigPayloadRaw,
+                manufOpts,
+            ),
+        ).rejects.toThrow("Cannot have attributes with different manufacturerCode in single 'readReportingConfig' call");
 
         expect(zclCommandSpy).toHaveBeenCalledTimes(0);
     });

@@ -3675,21 +3675,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             acLouverPosition: {name: "acLouverPosition", ID: 0x0045, type: DataType.ENUM8, write: true, default: 0},
             acCollTemp: {name: "acCollTemp", ID: 0x0046, type: DataType.INT16, min: -27315, max: 32767},
             acCapacityFormat: {name: "acCapacityFormat", ID: 0x0047, type: DataType.ENUM8, write: true, default: 0},
-            viessmannWindowOpenInternal: {
-                name: "viessmannWindowOpenInternal",
-                ID: 0x4000,
-                type: DataType.ENUM8,
-                manufacturerCode: ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH,
-                write: true,
-                max: 0xff,
-            },
-            viessmannAssemblyMode: {
-                name: "viessmannAssemblyMode",
-                ID: 0x4012,
-                type: DataType.BOOLEAN,
-                manufacturerCode: ManufacturerCode.VIESSMANN_ELEKTRONIK_GMBH,
-                write: true,
-            },
         },
         commands: {
             setpointRaiseLower: {
