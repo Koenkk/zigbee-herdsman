@@ -1,13 +1,14 @@
 import type {Foundation} from "./foundation";
-
 import type {
     ExtensionFieldSet,
     Gpd,
-    GpdAttributeReport,
+    GpdAttributeReporting,
     GpdChannelConfiguration,
     GpdChannelRequest,
     GpdCommissioningReply,
     GpdCustomReply,
+    GpdReadAttributeResponse,
+    GpdRequestAttribute,
     Struct,
     ThermoTransition,
     TuyaDataPointValue,
@@ -1995,14 +1996,16 @@ export interface TClusters {
                 commandFrame?:
                     | Gpd
                     | GpdChannelRequest
-                    | GpdAttributeReport
+                    | GpdAttributeReporting
+                    | GpdCommissioningReply
+                    | GpdChannelConfiguration
+                    | GpdCustomReply
+                    | GpdReadAttributeResponse
+                    | GpdRequestAttribute
                     | {
                           raw: Buffer;
                       }
-                    | Record<string, never>
-                    | GpdCommissioningReply
-                    | GpdChannelConfiguration
-                    | GpdCustomReply;
+                    | Record<string, never>;
                 /** type=UINT16 | conditions=[{bitMaskSet param=options mask=16384}] */
                 gppNwkAddr?: number;
                 /** type=BITMAP8 | conditions=[{bitMaskSet param=options mask=16384}] */
@@ -2056,14 +2059,16 @@ export interface TClusters {
                 commandFrame?:
                     | Gpd
                     | GpdChannelRequest
-                    | GpdAttributeReport
+                    | GpdAttributeReporting
+                    | GpdCommissioningReply
+                    | GpdChannelConfiguration
+                    | GpdCustomReply
+                    | GpdReadAttributeResponse
+                    | GpdRequestAttribute
                     | {
                           raw: Buffer;
                       }
-                    | Record<string, never>
-                    | GpdCommissioningReply
-                    | GpdChannelConfiguration
-                    | GpdCustomReply;
+                    | Record<string, never>;
                 /** type=UINT16 | conditions=[{bitMaskSet param=options mask=2048}] */
                 gppNwkAddr?: number;
                 /** type=BITMAP8 | conditions=[{bitMaskSet param=options mask=2048}] */
@@ -2193,14 +2198,16 @@ export interface TClusters {
                 gpdPayload:
                     | Gpd
                     | GpdChannelRequest
-                    | GpdAttributeReport
+                    | GpdAttributeReporting
+                    | GpdCommissioningReply
+                    | GpdChannelConfiguration
+                    | GpdCustomReply
+                    | GpdReadAttributeResponse
+                    | GpdRequestAttribute
                     | {
                           raw: Buffer;
                       }
-                    | Record<string, never>
-                    | GpdCommissioningReply
-                    | GpdChannelConfiguration
-                    | GpdCustomReply;
+                    | Record<string, never>;
             };
             /** ID=0x08 */
             translationTableRsp: {
@@ -3554,7 +3561,7 @@ export interface TClusters {
     };
     msIlluminanceMeasurement: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | report=true | required=true | max=65535 | default=0 | special=TooLowToBeMeasured,0000,Invalid,ffff */
+            /** ID=0x0000 | type=UINT16 | report=true | required=true | max=65534 | default=0 | special=TooLowToBeMeasured,0000,Invalid,ffff */
             measuredValue: number;
             /** ID=0x0001 | type=UINT16 | required=true | min=1 | max=65533 */
             minMeasuredValue: number;
@@ -3590,12 +3597,6 @@ export interface TClusters {
             maxMeasuredValue: number;
             /** ID=0x0003 | type=UINT16 | max=2048 */
             tolerance: number;
-            /** ID=0x6600 | type=INT16 | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true | min=-32768 | max=32767 */
-            sprutTemperatureOffset?: number;
-            /** ID=0x0010 | type=UNKNOWN | write=true */
-            minPercentChange: never;
-            /** ID=0x0011 | type=UNKNOWN | write=true */
-            minAbsoluteChange: never;
         };
         commands: never;
         commandResponses: never;

@@ -39,12 +39,13 @@ const namedImports = ts.factory.createImportDeclaration(
             // sorted by name
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ExtensionFieldSet")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("Gpd")),
-            ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("GpdAttributeReport")),
+            ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("GpdAttributeReporting")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("GpdChannelConfiguration")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("GpdChannelRequest")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("GpdCommissioningReply")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("GpdCustomReply")),
-            ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("MiboxerZone")),
+            ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("GpdReadAttributeResponse")),
+            ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("GpdRequestAttribute")),
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("Struct")),
             // ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("StructuredSelector")), // XXX: currently unused
             ts.factory.createImportSpecifier(false, undefined, ts.factory.createIdentifier("ThermoTransition")),
@@ -128,14 +129,16 @@ const getTypeFromDataType = (dataType: DataType | BuffaloZclDataType): ts.TypeNo
             return ts.factory.createUnionTypeNode([
                 ts.factory.createTypeReferenceNode("Gpd"),
                 ts.factory.createTypeReferenceNode("GpdChannelRequest"),
-                ts.factory.createTypeReferenceNode("GpdAttributeReport"),
+                ts.factory.createTypeReferenceNode("GpdAttributeReporting"),
+                ts.factory.createTypeReferenceNode("GpdCommissioningReply"),
+                ts.factory.createTypeReferenceNode("GpdChannelConfiguration"),
+                ts.factory.createTypeReferenceNode("GpdCustomReply"),
+                ts.factory.createTypeReferenceNode("GpdReadAttributeResponse"),
+                ts.factory.createTypeReferenceNode("GpdRequestAttribute"),
                 ts.factory.createTypeLiteralNode([
                     ts.factory.createPropertySignature(undefined, "raw", undefined, ts.factory.createTypeReferenceNode("Buffer")),
                 ]),
                 ts.factory.createTypeReferenceNode("Record<string, never>"),
-                ts.factory.createTypeReferenceNode("GpdCommissioningReply"),
-                ts.factory.createTypeReferenceNode("GpdChannelConfiguration"),
-                ts.factory.createTypeReferenceNode("GpdCustomReply"),
             ]);
         }
         case BuffaloZclDataType.STRUCTURED_SELECTOR: {
