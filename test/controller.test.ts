@@ -28,8 +28,8 @@ const TEST_ATTR_CUSTOM_CLUSTER = {
         name: "closuresWindowCovering",
         ID: Zcl.Clusters.closuresWindowCovering.ID,
         attributes: {
-            calibrationMode: {ID: 0xf002, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.LEGRAND_GROUP, write: true, max: 0xff},
-            // tuyaMotorReversal: {ID: 0xf002, type: DataType.ENUM8, write: true, max: 0xff},
+            calibrationMode: {ID: 0xf002, type: Zcl.DataType.ENUM8, manufacturerCode: Zcl.ManufacturerCode.LEGRAND_GROUP, write: true, max: 0xff},
+            // tuyaMotorReversal: {ID: 0xf002, type: Zcl.DataType.ENUM8, write: true, max: 0xff},
         },
         commands: {},
         commandsResponse: {},
