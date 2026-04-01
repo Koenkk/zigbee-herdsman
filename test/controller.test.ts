@@ -8666,7 +8666,7 @@ describe("Controller", () => {
                 Zcl.Utils.getCluster("closuresWindowCovering", undefined, {}).ID,
                 Zcl.Header.fromBuffer(buffer),
                 buffer,
-                TEST_ATTR_CUSTOM_CLUSTER,
+                {},
             );
             await mockAdapterEvents.zclPayload({
                 wasBroadcast: false,
@@ -8679,8 +8679,8 @@ describe("Controller", () => {
                 groupID: 0,
             });
             expect(events.message.length).toBe(1);
-            expect(events.message[0].data).toMatchObject({calibrationMode: 4});
-            expect(events.message[0].data).not.toMatchObject({tuyaMotorReversal: 4});
+            expect(events.message[0].data).toMatchObject({tuyaMotorReversal: 4});
+            expect(events.message[0].data).not.toMatchObject({calibrationMode: 4});
         });
 
         // ZCLFrame with manufacturer specific flag and manufacturer code defined, to specific device
