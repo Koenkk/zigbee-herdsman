@@ -8670,7 +8670,7 @@ describe("Controller", () => {
             device.addCustomCluster("closuresWindowCovering", CUSTOM_CLUSTERS.closuresWindowCovering);
 
             const frame = Zcl.Frame.fromBuffer(
-                Zcl.Utils.getCluster("closuresWindowCovering", CustomClustersTypes["closuresWindowCovering"], {}).ID,
+                Zcl.Utils.getCluster("closuresWindowCovering", undefined, {}).ID,
                 Zcl.Header.fromBuffer(buffer),
                 buffer,
                 CUSTOM_CLUSTERS,
