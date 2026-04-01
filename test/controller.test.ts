@@ -517,7 +517,7 @@ interface CustomClustersTypes extends Record<string, TCustomCluster> {
         };
         commands: never;
         commandResponses: never;
-    };  
+    };
 }
 
 describe("Controller", () => {
