@@ -23,6 +23,19 @@ import * as Zdo from "../src/zspec/zdo";
 import type {IEEEAddressResponse, NetworkAddressResponse} from "../src/zspec/zdo/definition/tstypes";
 import {DEFAULT_184_CHECKIN_INTERVAL, LQI_TABLE_ENTRY_DEFAULTS, MOCK_DEVICES, ROUTING_TABLE_ENTRY_DEFAULTS} from "./mockDevices";
 
+const TEST_ATTR_CUSTOM_CLUSTER = {
+    closuresWindowCovering: {
+        name: "closuresWindowCovering",
+        ID: Zcl.Clusters.closuresWindowCovering.ID,
+        attributes: {
+            calibrationMode: {ID: 0xf002, type: DataType.ENUM8, manufacturerCode: ManufacturerCode.LEGRAND_GROUP, write: true, max: 0xff},
+            // tuyaMotorReversal: {ID: 0xf002, type: DataType.ENUM8, write: true, max: 0xff},            
+        },
+        commands: {},
+        commandsResponse: {},
+    },
+};
+
 const globalSetImmediate = setImmediate;
 const flushPromises = () => new Promise(globalSetImmediate);
 
@@ -8653,7 +8666,7 @@ describe("Controller", () => {
                 Zcl.Utils.getCluster("closuresWindowCovering", undefined, {}).ID,
                 Zcl.Header.fromBuffer(buffer),
                 buffer,
-                {},
+                TEST_ATTR_CUSTOM_CLUSTER,
             );
             await mockAdapterEvents.zclPayload({
                 wasBroadcast: false,
@@ -8680,7 +8693,7 @@ describe("Controller", () => {
                 Zcl.Utils.getCluster("closuresWindowCovering", undefined, {}).ID,
                 Zcl.Header.fromBuffer(buffer),
                 buffer,
-                {},
+                TEST_ATTR_CUSTOM_CLUSTER,
             );
             await mockAdapterEvents.zclPayload({
                 wasBroadcast: false,
