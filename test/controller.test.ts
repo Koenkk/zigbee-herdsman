@@ -8673,7 +8673,18 @@ describe("Controller", () => {
                 Zcl.Utils.getCluster("closuresWindowCovering", undefined, {}).ID,
                 Zcl.Header.fromBuffer(buffer),
                 buffer,
-                CUSTOM_CLUSTERS,
+                {
+                    closuresWindowCovering: {
+                        name: "closuresWindowCovering",
+                        ID: Zcl.Clusters.closuresWindowCovering.ID,
+                        attributes: {
+                            calibrationMode: {ID: 0xf002, type: Zcl.DataType.ENUM8, manufacturerCode: Zcl.ManufacturerCode.LEGRAND_GROUP, write: true, max: 0xff},
+                            // tuyaMotorReversal: {ID: 0xf002, type: Zcl.DataType.ENUM8, write: true, max: 0xff},
+                        },
+                        commands: {},
+                        commandsResponse: {},
+                },
+                // CUSTOM_CLUSTERS,
             );
             await mockAdapterEvents.zclPayload({
                 wasBroadcast: false,
