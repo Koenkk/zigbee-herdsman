@@ -500,7 +500,7 @@ const CUSTOM_CLUSTERS = {
         },
         commands: {},
         commandsResponse: {},
-    },  
+    },
 } satisfies CustomClusters;
 
 interface CustomClustersTypes extends Record<string, TCustomCluster> {
