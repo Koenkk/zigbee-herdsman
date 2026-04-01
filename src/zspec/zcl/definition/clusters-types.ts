@@ -3111,10 +3111,6 @@ export interface TClusters {
             acCollTemp: number;
             /** ID=0x0047 | type=ENUM8 | write=true | default=0 */
             acCapacityFormat: number;
-            /** ID=0x0101 | type=UINT16 | manufacturerCode=ASTREL_GROUP_SRL(0x1071) | write=true | max=65535 */
-            fourNoksHysteresisHigh?: number;
-            /** ID=0x0102 | type=UINT16 | manufacturerCode=ASTREL_GROUP_SRL(0x1071) | write=true | max=65535 */
-            fourNoksHysteresisLow?: number;
         };
         commands: {
             /** ID=0x00 | required=true */
@@ -3146,8 +3142,6 @@ export interface TClusters {
             clearWeeklySchedule: Record<string, never>;
             /** ID=0x04 | response=1 */
             getRelayStatusLog: Record<string, never>;
-            /** ID=0xa0 */
-            plugwiseCalibrateValve: Record<string, never>;
         };
         commandResponses: {
             /** ID=0x00 */

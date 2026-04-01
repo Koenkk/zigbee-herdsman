@@ -3686,23 +3686,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             acLouverPosition: {name: "acLouverPosition", ID: 0x0045, type: DataType.ENUM8, write: true, default: 0},
             acCollTemp: {name: "acCollTemp", ID: 0x0046, type: DataType.INT16, min: -27315, max: 32767},
             acCapacityFormat: {name: "acCapacityFormat", ID: 0x0047, type: DataType.ENUM8, write: true, default: 0},
-            // custom
-            fourNoksHysteresisHigh: {
-                name: "fourNoksHysteresisHigh",
-                ID: 0x0101,
-                type: DataType.UINT16,
-                manufacturerCode: ManufacturerCode.ASTREL_GROUP_SRL,
-                write: true,
-                max: 0xffff,
-            },
-            fourNoksHysteresisLow: {
-                name: "fourNoksHysteresisLow",
-                ID: 0x0102,
-                type: DataType.UINT16,
-                manufacturerCode: ManufacturerCode.ASTREL_GROUP_SRL,
-                write: true,
-                max: 0xffff,
-            },
         },
         commands: {
             setpointRaiseLower: {
@@ -3735,8 +3718,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             },
             clearWeeklySchedule: {name: "clearWeeklySchedule", ID: 0x03, parameters: []},
             getRelayStatusLog: {name: "getRelayStatusLog", ID: 0x04, response: 0x01, parameters: []},
-            // custom
-            plugwiseCalibrateValve: {name: "plugwiseCalibrateValve", ID: 0xa0, parameters: []},
         },
         commandsResponse: {
             getWeeklyScheduleRsp: {
