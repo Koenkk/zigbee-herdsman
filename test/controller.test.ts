@@ -511,6 +511,13 @@ interface CustomClustersTypes extends Record<string, TCustomCluster> {
         commands: never;
         commandResponses: never;
     };
+    closuresWindowCovering: {
+      attributes: {
+            calibrationMode: number;
+        };
+        commands: never;
+        commandResponses: never;
+    };  
 }
 
 describe("Controller", () => {
