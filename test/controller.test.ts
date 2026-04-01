@@ -512,7 +512,7 @@ interface CustomClustersTypes extends Record<string, TCustomCluster> {
         commandResponses: never;
     };
     closuresWindowCovering: {
-      attributes: {
+        attributes: {
             calibrationMode: number;
         };
         commands: never;
