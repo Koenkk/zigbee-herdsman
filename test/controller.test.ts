@@ -491,9 +491,6 @@ const CUSTOM_CLUSTERS = {
         commands: {},
         commandsResponse: {},
     },
-} satisfies CustomClusters;
-
-const CUSTOM_CLUSTERS2 = {
     closuresWindowCovering: {
         name: "closuresWindowCovering",
         ID: Zcl.Clusters.closuresWindowCovering.ID,
@@ -8670,13 +8667,13 @@ describe("Controller", () => {
             await controller.start();
             await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
             const device = controller.getDeviceByIeeeAddr("0x129")!;
-            device.addCustomCluster("closuresWindowCovering", CUSTOM_CLUSTERS2.closuresWindowCovering);
+            device.addCustomCluster("closuresWindowCovering", CUSTOM_CLUSTERS.closuresWindowCovering);
 
             const frame = Zcl.Frame.fromBuffer(
-                Zcl.Utils.getCluster("closuresWindowCovering", undefined, CUSTOM_CLUSTERS2).ID,
+                Zcl.Utils.getCluster("closuresWindowCovering", undefined, CUSTOM_CLUSTERS).ID,
                 Zcl.Header.fromBuffer(buffer),
                 buffer,
-                CUSTOM_CLUSTERS2,
+                CUSTOM_CLUSTERS,
             );
             await mockAdapterEvents.zclPayload({
                 wasBroadcast: false,
@@ -8700,13 +8697,13 @@ describe("Controller", () => {
             await controller.start();
             await mockAdapterEvents.deviceJoined({networkAddress: 177, ieeeAddr: "0x177"});
             const device = controller.getDeviceByIeeeAddr("0x177")!;
-            device.addCustomCluster("closuresWindowCovering", CUSTOM_CLUSTERS2.closuresWindowCovering);
+            device.addCustomCluster("closuresWindowCovering", CUSTOM_CLUSTERS.closuresWindowCovering);
 
             const frame = Zcl.Frame.fromBuffer(
-                Zcl.Utils.getCluster("closuresWindowCovering", undefined, CUSTOM_CLUSTERS2).ID,
+                Zcl.Utils.getCluster("closuresWindowCovering", undefined, CUSTOM_CLUSTERS).ID,
                 Zcl.Header.fromBuffer(buffer),
                 buffer,
-                CUSTOM_CLUSTERS2,
+                CUSTOM_CLUSTERS,
             );
             await mockAdapterEvents.zclPayload({
                 wasBroadcast: false,
@@ -8729,13 +8726,13 @@ describe("Controller", () => {
             await controller.start();
             await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
             const device = controller.getDeviceByIeeeAddr("0x129")!;
-            device.addCustomCluster("closuresWindowCovering", CUSTOM_CLUSTERS2.closuresWindowCovering);
+            device.addCustomCluster("closuresWindowCovering", CUSTOM_CLUSTERS.closuresWindowCovering);
 
             const frame = Zcl.Frame.fromBuffer(
-                Zcl.Utils.getCluster("closuresWindowCovering", undefined, CUSTOM_CLUSTERS2).ID,
+                Zcl.Utils.getCluster("closuresWindowCovering", undefined, CUSTOM_CLUSTERS).ID,
                 Zcl.Header.fromBuffer(buffer),
                 buffer,
-                CUSTOM_CLUSTERS2,
+                CUSTOM_CLUSTERS,
             );
             await mockAdapterEvents.zclPayload({
                 wasBroadcast: false,
@@ -8758,13 +8755,13 @@ describe("Controller", () => {
             await controller.start();
             await mockAdapterEvents.deviceJoined({networkAddress: 177, ieeeAddr: "0x177"});
             const device = controller.getDeviceByIeeeAddr("0x177")!;
-            device.addCustomCluster("closuresWindowCovering", CUSTOM_CLUSTERS2.closuresWindowCovering);
+            device.addCustomCluster("closuresWindowCovering", CUSTOM_CLUSTERS.closuresWindowCovering);
 
             const frame = Zcl.Frame.fromBuffer(
-                Zcl.Utils.getCluster("closuresWindowCovering", undefined, CUSTOM_CLUSTERS2).ID,
+                Zcl.Utils.getCluster("closuresWindowCovering", undefined, CUSTOM_CLUSTERS).ID,
                 Zcl.Header.fromBuffer(buffer),
                 buffer,
-                CUSTOM_CLUSTERS2,
+                CUSTOM_CLUSTERS,
             );
             await mockAdapterEvents.zclPayload({
                 wasBroadcast: false,
