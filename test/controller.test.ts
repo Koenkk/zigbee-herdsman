@@ -8673,7 +8673,7 @@ describe("Controller", () => {
                 Zcl.Utils.getCluster("closuresWindowCovering", undefined, CUSTOM_CLUSTERS).ID,
                 Zcl.Header.fromBuffer(buffer),
                 buffer,
-                {},
+                CUSTOM_CLUSTERS,
             );
             await mockAdapterEvents.zclPayload({
                 wasBroadcast: false,
@@ -8703,7 +8703,7 @@ describe("Controller", () => {
                 Zcl.Utils.getCluster("closuresWindowCovering", undefined, CUSTOM_CLUSTERS).ID,
                 Zcl.Header.fromBuffer(buffer),
                 buffer,
-                {},
+                CUSTOM_CLUSTERS,
             );
             await mockAdapterEvents.zclPayload({
                 wasBroadcast: false,
