@@ -496,7 +496,7 @@ const CUSTOM_CLUSTERS = {
         ID: Zcl.Clusters.closuresWindowCovering.ID,
         attributes: {
             calibrationMode: {ID: 0xf002, type: Zcl.DataType.ENUM8, manufacturerCode: Zcl.ManufacturerCode.LEGRAND_GROUP, write: true, max: 0xff},
-            // tuyaMotorReversal: {ID: 0xf002, type: Zcl.DataType.ENUM8, write: true, max: 0xff},
+            tuyaMotorReversal: {ID: 0xf002, type: Zcl.DataType.ENUM8, write: true, max: 0xff},
         },
         commands: {},
         commandsResponse: {},
@@ -514,7 +514,7 @@ interface CustomClustersTypes extends Record<string, TCustomCluster> {
     closuresWindowCovering: {
         attributes: {
             calibrationMode: number;
-            // tuyaMotorReversal: number;
+            tuyaMotorReversal: number;
         };
         commands: never;
         commandResponses: never;
