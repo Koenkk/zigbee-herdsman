@@ -1,4 +1,5 @@
 import type {Foundation} from "./foundation";
+
 import type {
     ExtensionFieldSet,
     Gpd,
@@ -7,7 +8,6 @@ import type {
     GpdChannelRequest,
     GpdCommissioningReply,
     GpdCustomReply,
-    MiboxerZone,
     Struct,
     ThermoTransition,
     TuyaDataPointValue,
@@ -64,8 +64,6 @@ export interface TClusters {
         commands: {
             /** ID=0x00 */
             resetFactDefault: Record<string, never>;
-            /** ID=0xf0 */
-            tuyaSetup: Record<string, never>;
         };
         commandResponses: never;
     };
@@ -280,11 +278,6 @@ export interface TClusters {
                 groupid: number;
                 /** type=CHAR_STR */
                 groupname: string;
-            };
-            /** ID=0xf0 */
-            miboxerSetZones: {
-                /** type=LIST_MIBOXER_ZONES */
-                zones: MiboxerZone[];
             };
         };
         commandResponses: {
@@ -535,14 +528,6 @@ export interface TClusters {
             offWaitTime: number;
             /** ID=0x4003 | type=ENUM8 | write=true | max=255 | special=SetToPreviousValue,ff */
             startUpOnOff: number;
-            /** ID=0x5000 | type=ENUM8 | write=true | max=255 */
-            tuyaBacklightSwitch: number;
-            /** ID=0x8001 | type=ENUM8 | write=true | max=255 */
-            tuyaBacklightMode: number;
-            /** ID=0x8002 | type=ENUM8 | write=true | max=255 */
-            moesStartUpOnOff: number;
-            /** ID=0x8004 | type=ENUM8 | write=true | max=255 */
-            tuyaOperationMode: number;
         };
         commands: {
             /** ID=0x00 | required=true */
@@ -568,18 +553,6 @@ export interface TClusters {
                 ontime: number;
                 /** type=UINT16 */
                 offwaittime: number;
-            };
-            /** ID=0xfc */
-            tuyaAction2: {
-                /** type=UINT8 | max=255 */
-                value: number;
-            };
-            /** ID=0xfd */
-            tuyaAction: {
-                /** type=UINT8 | max=255 */
-                value: number;
-                /** type=BUFFER */
-                data: Buffer;
             };
         };
         commandResponses: never;
@@ -714,13 +687,6 @@ export interface TClusters {
             moveToClosestFrequency: {
                 /** type=UINT16 */
                 frequency: number;
-            };
-            /** ID=0xf0 */
-            moveToLevelTuya: {
-                /** type=UINT16 | max=65535 */
-                level: number;
-                /** type=UINT16 | max=65535 */
-                transtime: number;
             };
         };
         commandResponses: never;
@@ -2872,8 +2838,6 @@ export interface TClusters {
             intermediateSetpointsLift: Buffer;
             /** ID=0x0019 | type=OCTET_STR | write=true | default=1,0x0000 */
             intermediateSetpointsTilt: Buffer;
-            /** ID=0x000a | type=BITMAP8 */
-            operationalStatus: number;
             /** ID=0xf000 | type=ENUM8 | write=true | max=255 */
             tuyaMovingState: number;
             /** ID=0xf001 | type=ENUM8 | write=true | max=255 */
