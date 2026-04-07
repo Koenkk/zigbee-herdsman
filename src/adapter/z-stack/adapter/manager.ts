@@ -182,7 +182,7 @@ export class ZnpAdapterManager {
         };
 
         /* Determine startup strategy */
-        if (!hasConfigured || !hasConfigured.isConfigured() || !nib) {
+        if (!hasConfigured?.isConfigured() || !nib) {
             /* Adapter is not configured or not commissioned */
             logger.debug("(stage-1) adapter is not configured / not commissioned", NS);
             if (configMatchesBackup) {

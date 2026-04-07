@@ -151,7 +151,7 @@ export class AdapterNvMemory {
     public async updateItem(id: NvItemsIds, data: Buffer, autoInit = true): Promise<void> {
         this.checkMemoryAlignmentSetup();
         const current = await this.readItem(id);
-        if (!current || !current.equals(data)) {
+        if (!current?.equals(data)) {
             await this.writeItem(id, data, 0, autoInit);
         }
     }
