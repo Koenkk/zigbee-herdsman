@@ -32,8 +32,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
         },
         commands: {
             resetFactDefault: {name: "resetFactDefault", ID: 0x00, parameters: []},
-            // custom
-            tuyaSetup: {name: "tuyaSetup", ID: 0xf0, parameters: []},
         },
         commandsResponse: {},
     },
@@ -330,8 +328,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                 ],
                 required: true,
             },
-            // custom
-            miboxerSetZones: {name: "miboxerSetZones", ID: 0xf0, parameters: [{name: "zones", type: BuffaloZclDataType.LIST_MIBOXER_ZONES}]},
         },
         commandsResponse: {
             addRsp: {
@@ -634,11 +630,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             onTime: {name: "onTime", ID: 0x4001, type: DataType.UINT16, write: true, max: 0xffff, default: 0},
             offWaitTime: {name: "offWaitTime", ID: 0x4002, type: DataType.UINT16, write: true, max: 0xffff, default: 0},
             startUpOnOff: {name: "startUpOnOff", ID: 0x4003, type: DataType.ENUM8, write: true, max: 0xff, special: [["SetToPreviousValue", "ff"]]},
-            // custom
-            tuyaBacklightSwitch: {name: "tuyaBacklightSwitch", ID: 0x5000, type: DataType.ENUM8, write: true, max: 0xff},
-            tuyaBacklightMode: {name: "tuyaBacklightMode", ID: 0x8001, type: DataType.ENUM8, write: true, max: 0xff},
-            moesStartUpOnOff: {name: "moesStartUpOnOff", ID: 0x8002, type: DataType.ENUM8, write: true, max: 0xff},
-            tuyaOperationMode: {name: "tuyaOperationMode", ID: 0x8004, type: DataType.ENUM8, write: true, max: 0xff},
         },
         commands: {
             off: {name: "off", ID: 0x00, parameters: [], required: true},
@@ -660,16 +651,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                     {name: "ctrlbits", type: DataType.UINT8},
                     {name: "ontime", type: DataType.UINT16},
                     {name: "offwaittime", type: DataType.UINT16},
-                ],
-            },
-            // custom
-            tuyaAction2: {name: "tuyaAction2", ID: 0xfc, parameters: [{name: "value", type: DataType.UINT8, max: 0xff}]},
-            tuyaAction: {
-                name: "tuyaAction",
-                ID: 0xfd,
-                parameters: [
-                    {name: "value", type: DataType.UINT8, max: 0xff},
-                    {name: "data", type: BuffaloZclDataType.BUFFER},
                 ],
             },
         },
@@ -854,15 +835,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             },
             // only `required: true` if `currentFrequency` attribute supported
             moveToClosestFrequency: {name: "moveToClosestFrequency", ID: 0x08, parameters: [{name: "frequency", type: DataType.UINT16}]},
-            // custom
-            moveToLevelTuya: {
-                name: "moveToLevelTuya",
-                ID: 0xf0,
-                parameters: [
-                    {name: "level", type: DataType.UINT16, max: 0xffff},
-                    {name: "transtime", type: DataType.UINT16, max: 0xffff},
-                ],
-            },
         },
         commandsResponse: {},
     },
@@ -3436,7 +3408,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             intermediateSetpointsTilt: {name: "intermediateSetpointsTilt", ID: 0x0019, type: DataType.OCTET_STR, write: true, default: "1,0x0000"},
             // custom
             // XXX: doesn't exist?
-            operationalStatus: {name: "operationalStatus", ID: 0x000a, type: DataType.BITMAP8},
 
             tuyaMovingState: {name: "tuyaMovingState", ID: 0xf000, type: DataType.ENUM8, write: true, max: 0xff},
             tuyaCalibration: {name: "tuyaCalibration", ID: 0xf001, type: DataType.ENUM8, write: true, max: 0xff},
