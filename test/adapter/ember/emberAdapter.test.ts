@@ -3062,7 +3062,7 @@ describe("Ember Adapter Layer", () => {
             ]);
         });
 
-        it("Adapter impl: sendZclFrameToEndpoint with default response", async () => {
+        it("Adapter impl: sendZclFrameToEndpoint with default response to global", async () => {
             const networkAddress: NodeId = 1234;
             const endpoint: number = 3;
             const sourceEndpoint = FIXED_ENDPOINTS[0].endpoint;
@@ -3087,8 +3087,17 @@ describe("Ember Adapter Layer", () => {
                 sequence: 0, // set by stack
             };
             const lastHopLqi: number = 234;
-            // defaultRsp with cmdId=0, status=0
-            const messageContents = Buffer.from("18030b0000", "hex");
+            const messageContents = Zcl.Frame.create(
+                Zcl.FrameType.GLOBAL,
+                Zcl.Direction.SERVER_TO_CLIENT,
+                true,
+                undefined,
+                3,
+                "defaultRsp",
+                "genBasic",
+                {cmdId: 0, statusCode: Zcl.Status.SUCCESS},
+                {},
+            ).toBuffer();
 
             mockEzspSend.mockImplementationOnce(() => {
                 setTimeout(async () => {
@@ -3107,6 +3116,76 @@ describe("Ember Adapter Layer", () => {
             });
 
             const p = adapter.sendZclFrameToEndpoint("0x1122334455667788", networkAddress, endpoint, zclFrame, 10000, true, false, sourceEndpoint);
+
+            await vi.advanceTimersByTimeAsync(5000);
+            await expect(p).resolves.toStrictEqual({
+                clusterID: apsFrame.clusterId,
+                header: Zcl.Header.fromBuffer(messageContents),
+                address: networkAddress,
+                data: messageContents,
+                endpoint: apsFrame.destinationEndpoint,
+                linkquality: lastHopLqi,
+                groupID: apsFrame.groupId,
+                wasBroadcast: false,
+                destinationEndpoint: apsFrame.sourceEndpoint,
+            } as ZclPayload);
+            expect(mockEzspSend).toHaveBeenCalledWith(EmberOutgoingMessageType.DIRECT, networkAddress, apsFrame, zclFrame.toBuffer(), 0, 0);
+        });
+
+        it("Adapter impl: sendZclFrameToEndpoint with default response to specific", async () => {
+            const networkAddress: NodeId = 1234;
+            const endpoint: number = 3;
+            const sourceEndpoint = FIXED_ENDPOINTS[0].endpoint;
+            const zclFrame = Zcl.Frame.create(
+                Zcl.FrameType.SPECIFIC,
+                Zcl.Direction.CLIENT_TO_SERVER,
+                false,
+                undefined,
+                3,
+                "add",
+                "genGroups",
+                {groupid: 1, groupname: ""},
+                {},
+            );
+            const apsFrame: EmberApsFrame = {
+                profileId: FIXED_ENDPOINTS[0].profileId,
+                clusterId: zclFrame.cluster.ID,
+                sourceEndpoint,
+                destinationEndpoint: endpoint,
+                options: DEFAULT_APS_OPTIONS,
+                groupId: 0,
+                sequence: 0, // set by stack
+            };
+            const lastHopLqi: number = 234;
+            const messageContents = Zcl.Frame.create(
+                Zcl.FrameType.GLOBAL,
+                Zcl.Direction.SERVER_TO_CLIENT,
+                true,
+                undefined,
+                3,
+                "defaultRsp",
+                "genGroups",
+                {cmdId: 0, statusCode: Zcl.Status.UNSUPPORTED_CLUSTER},
+                {},
+            ).toBuffer();
+
+            mockEzspSend.mockImplementationOnce(() => {
+                setTimeout(async () => {
+                    mockEzspEmitter.emit(
+                        "incomingMessage",
+                        EmberIncomingMessageType.UNICAST,
+                        reverseApsFrame(apsFrame),
+                        lastHopLqi,
+                        networkAddress,
+                        messageContents,
+                    );
+                    await flushPromises();
+                }, 300);
+
+                return [SLStatus.OK, ++mockAPSSequence];
+            });
+
+            const p = adapter.sendZclFrameToEndpoint("0x1122334455667788", networkAddress, endpoint, zclFrame, 10000, false, false, sourceEndpoint);
 
             await vi.advanceTimersByTimeAsync(5000);
             await expect(p).resolves.toStrictEqual({

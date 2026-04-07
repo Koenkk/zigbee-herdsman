@@ -3078,7 +3078,7 @@ describe("zstack-adapter", () => {
         expect(error.message).toStrictEqual("Data request failed with error: 'APS_DUPLICATE_ENTRY' (0xb8)");
     });
 
-    it("Send zcl frame network address and default response", async () => {
+    it("Send zcl frame network address matches by tsn", async () => {
         basicMocks();
         await adapter.start();
 
@@ -3145,7 +3145,7 @@ describe("zstack-adapter", () => {
         expect(result.data).toStrictEqual(Buffer.from([24, 100, 1, 0, 0, 0, 32, 2]));
     });
 
-    it("Send zcl frame network address and default response", async () => {
+    it("Send zcl frame network address matches on default response", async () => {
         basicMocks();
         await adapter.start();
 
@@ -3163,26 +3163,18 @@ describe("zstack-adapter", () => {
             [{attrId: 0, attrData: 5, dataType: 32, status: 0}],
             {},
         );
-        const responseFrame = Zcl.Frame.create(
+        const defaultResponse = Zcl.Frame.create(
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.SERVER_TO_CLIENT,
             true,
             undefined,
             100,
-            "readRsp",
+            "defaultRsp",
             0,
-            [{attrId: 0, attrData: 2, dataType: 32, status: 0}],
+            {cmdId: 0, statusCode: Zcl.Status.NOT_AUTHORIZED},
             {},
         );
         const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, undefined, 100, "read", 0, [{attrId: 0}], {});
-        const object = mockZpiObject(Type.AREQ, Subsystem.AF, "incomingMsg", {
-            clusterid: 0,
-            srcendpoint: 20,
-            srcaddr: 2,
-            linkquality: 101,
-            groupid: 12,
-            data: responseFrame.toBuffer(),
-        });
         const objectMismatch = mockZpiObject(Type.AREQ, Subsystem.AF, "incomingMsg", {
             clusterid: 0,
             srcendpoint: 20,
@@ -3191,29 +3183,17 @@ describe("zstack-adapter", () => {
             groupid: 12,
             data: responseMismatchFrame.toBuffer(),
         });
-        const defaultReponse = Zcl.Frame.create(
-            Zcl.FrameType.GLOBAL,
-            Zcl.Direction.SERVER_TO_CLIENT,
-            true,
-            undefined,
-            100,
-            "defaultRsp",
-            0,
-            {cmdId: 0, status: 0},
-            {},
-        );
         const defaultObject = mockZpiObject(Type.AREQ, Subsystem.AF, "incomingMsg", {
             clusterid: 0,
             srcendpoint: 20,
             srcaddr: 2,
             linkquality: 101,
             groupid: 12,
-            data: defaultReponse.toBuffer(),
+            data: defaultResponse.toBuffer(),
         });
         const response = adapter.sendZclFrameToEndpoint("0x02", 2, 20, frame, 10000, false, false);
         znpReceived(objectMismatch);
         znpReceived(defaultObject);
-        znpReceived(object);
         const result = await response;
 
         expect(mockZnpRequest).toHaveBeenCalledWith(
@@ -3229,7 +3209,7 @@ describe("zstack-adapter", () => {
         expect(result.linkquality).toStrictEqual(101);
         expect(result.address).toStrictEqual(2);
         expect(result.groupID).toStrictEqual(12);
-        expect(result.data).toStrictEqual(Buffer.from([24, 100, 1, 0, 0, 0, 32, 2]));
+        expect(result.data).toStrictEqual(Buffer.from([24, 100, 11, 0, 126]));
     });
 
     it("Send zcl frame network address data confirm fails with default response", async () => {
@@ -3316,7 +3296,7 @@ describe("zstack-adapter", () => {
             {clusterid: 0, data: frame.toBuffer(), destendpoint: 20, dstaddr: 2, len: 5, options: 0, radius: 30, srcendpoint: 1, transid: 2},
             99,
         );
-        expect(error).toStrictEqual(new Error("Timeout - 2 - 20 - 100 - 0 - 1 after 1ms"));
+        expect(error).toStrictEqual(new Error("Timeout after 1ms [address=2 endpoint=20 clusterId=0 cmdId=1 tsn=100]"));
     });
 
     it("Send zcl frame network address timeout should discover route, rewrite child entry and retry for sleepy end device", async () => {
@@ -3377,7 +3357,7 @@ describe("zstack-adapter", () => {
             {clusterid: 0, data: frame.toBuffer(), destendpoint: 20, dstaddr: 2, len: 5, options: 0, radius: 30, srcendpoint: 1, transid: 2},
             99,
         );
-        expect(error).toStrictEqual(new Error("Timeout - 2 - 20 - 100 - 0 - 1 after 1ms"));
+        expect(error).toStrictEqual(new Error("Timeout after 1ms [address=2 endpoint=20 clusterId=0 cmdId=1 tsn=100]"));
     });
 
     it("Send zcl frame network address with default response timeout shouldnt care because command has response", async () => {

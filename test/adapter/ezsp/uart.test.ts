@@ -110,18 +110,18 @@ describe("UART", () => {
     it("Send data", async () => {
         await serialDriver.connect("/dev/ttyACM0", {});
         // send 8 frames
-        serialDriver.sendDATA(Buffer.from([1, 2, 3]));
-        serialDriver.sendDATA(Buffer.from([1, 2, 3]));
-        serialDriver.sendDATA(Buffer.from([1, 2, 3]));
-        serialDriver.sendDATA(Buffer.from([1, 2, 3]));
-        serialDriver.sendDATA(Buffer.from([1, 2, 3]));
-        serialDriver.sendDATA(Buffer.from([1, 2, 3]));
-        serialDriver.sendDATA(Buffer.from([1, 2, 3]));
-        serialDriver.sendDATA(Buffer.from([1, 2, 3]));
+        void serialDriver.sendDATA(Buffer.from([1, 2, 3]));
+        void serialDriver.sendDATA(Buffer.from([1, 2, 3]));
+        void serialDriver.sendDATA(Buffer.from([1, 2, 3]));
+        void serialDriver.sendDATA(Buffer.from([1, 2, 3]));
+        void serialDriver.sendDATA(Buffer.from([1, 2, 3]));
+        void serialDriver.sendDATA(Buffer.from([1, 2, 3]));
+        void serialDriver.sendDATA(Buffer.from([1, 2, 3]));
+        void serialDriver.sendDATA(Buffer.from([1, 2, 3]));
         expect(writeBufferSpy).toHaveBeenCalledTimes(2);
         // send another 2 frame - not counted, until resolve 8 promices
-        serialDriver.sendDATA(Buffer.from([1, 2, 3]));
-        serialDriver.sendDATA(Buffer.from([1, 2, 3]));
+        void serialDriver.sendDATA(Buffer.from([1, 2, 3]));
+        void serialDriver.sendDATA(Buffer.from([1, 2, 3]));
         expect(writeBufferSpy).toHaveBeenCalledTimes(2);
     });
 

@@ -1,5 +1,17 @@
 # Changelog
 
+## [10.0.6](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.5...v10.0.6) (2026-04-07)
+
+
+### Bug Fixes
+
+* `defaultRsp` command ID matching when sending ([#1720](https://github.com/Koenkk/zigbee-herdsman/issues/1720)) ([5ef90a5](https://github.com/Koenkk/zigbee-herdsman/commit/5ef90a5d59c35bdd00583abaa5da926e01405f1b))
+* **ignore:** bump the minor-patch group across 1 directory with 2 updates ([#1735](https://github.com/Koenkk/zigbee-herdsman/issues/1735)) ([016961d](https://github.com/Koenkk/zigbee-herdsman/commit/016961d6882cc63708535ea1815c2367cf3806a3))
+* Move custom attributes  (fournoks) and command (plugwise) from ZH to ZHC ([#1726](https://github.com/Koenkk/zigbee-herdsman/issues/1726)) ([913f140](https://github.com/Koenkk/zigbee-herdsman/commit/913f140e76840cc0dabb57521b038ac9aee71c10))
+* Move more custom attributes and commands from ZH to ZHC ([#1728](https://github.com/Koenkk/zigbee-herdsman/issues/1728)) ([4a3d508](https://github.com/Koenkk/zigbee-herdsman/commit/4a3d508e9de844079c664cbc85e90341d873ffc0))
+* Proper `readRsp` & `defaultRsp` spec behavior ([#1716](https://github.com/Koenkk/zigbee-herdsman/issues/1716)) ([d127f9a](https://github.com/Koenkk/zigbee-herdsman/commit/d127f9a8347e071073236fcf56e1127dff94bf53))
+* Set max illuminance measured value to 0xfffe ([#1736](https://github.com/Koenkk/zigbee-herdsman/issues/1736)) ([dbbb976](https://github.com/Koenkk/zigbee-herdsman/commit/dbbb976a0296fc4ea00444afee0abe6dd1f0390c))
+
 ## [10.0.5](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.4...v10.0.5) (2026-03-31)
 
 

@@ -8,4 +8,4 @@ import UTIL from "./util";
 import * as Utils from "./utils";
 import ZDO from "./zdo";
 
-export {AF, common as COMMON, DBG, MAC, SAPI, SYS, UTIL, ZDO, Utils};
+export {AF, common as COMMON, DBG, MAC, SAPI, SYS, UTIL, Utils, ZDO};
