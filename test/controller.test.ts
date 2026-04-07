@@ -2380,7 +2380,7 @@ describe("Controller", () => {
         expect(deepClone(enrollRsp[3])).toStrictEqual({
             header: {
                 frameControl: {reservedBits: 0, frameType: 1, direction: 0, disableDefaultResponse: true, manufacturerSpecific: false},
-                transactionSequenceNumber: 11,
+                transactionSequenceNumber: 1,
                 commandIdentifier: 0,
             },
             payload: {enrollrspcode: 0, zoneid: 23},
@@ -3046,11 +3046,8 @@ describe("Controller", () => {
     it("Respond to read of attribute", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
-        const device = controller.getDeviceByIeeeAddr("0x129")!;
-        const endpoint = device.getEndpoint(1)!;
-        endpoint.saveClusterAttributeKeyValue("hvacThermostat", {systemMode: 3});
         mocksendZclFrameToEndpoint.mockClear();
-        const frame = Zcl.Frame.create(0, 0, true, undefined, 40, 0, 513, [{attrId: 28}, {attrId: 290}], {});
+        const frame = Zcl.Frame.create(0, 0, true, undefined, 40, "read", "genTime", [{attrId: 0x0000}, {attrId: 0xfffa}], {});
         await mockAdapterEvents.zclPayload({
             wasBroadcast: false,
             address: 129,
@@ -3073,12 +3070,38 @@ describe("Controller", () => {
                 transactionSequenceNumber: 40,
                 commandIdentifier: 1,
             },
-            payload: [{attrId: 28, attrData: 3, dataType: 48, status: 0}],
+            payload: [
+                {attrId: 0xfffa, status: Zcl.Status.UNSUPPORTED_ATTRIBUTE},
+                {attrId: 0x0000, attrData: expect.any(Number), dataType: Zcl.DataType.UTC, status: Zcl.Status.SUCCESS},
+            ],
             cluster: null,
-            command: expect.objectContaining({
-                ID: 1,
-                name: "readRsp",
-            }),
+            command: expect.objectContaining({ID: 1, name: "readRsp"}),
+        });
+    });
+
+    it("Sends read response for unsupported attribute", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        mocksendZclFrameToEndpoint.mockClear();
+
+        endpoint.readResponse("genGroups", 1, {nameSupport: undefined}, {srcEndpoint: 1});
+
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        const call = mocksendZclFrameToEndpoint.mock.calls[0];
+        expect(call[0]).toBe("0x129");
+        expect(call[1]).toBe(129);
+        expect(call[2]).toBe(1);
+        expect(deepClone({...call[3], cluster: null})).toStrictEqual({
+            header: {
+                frameControl: {reservedBits: 0, frameType: 0, direction: 1, disableDefaultResponse: true, manufacturerSpecific: false},
+                transactionSequenceNumber: 1,
+                commandIdentifier: 1,
+            },
+            payload: [{attrId: 0x0000, status: Zcl.Status.UNSUPPORTED_ATTRIBUTE}],
+            cluster: null,
+            command: expect.objectContaining({ID: 1, name: "readRsp"}),
         });
     });
 
@@ -4144,8 +4167,16 @@ describe("Controller", () => {
         expect(device.pendingRequestTimeout).toStrictEqual(0);
         mocksendZclFrameToEndpoint.mockClear();
         mocksendZclFrameToEndpoint.mockReturnValueOnce(undefined);
+        const newCheckinInterval = 204;
         mocksendZclFrameToEndpoint.mockImplementationOnce((_ieeeAddr, _networkAddress, _endpoint, frame: Zcl.Frame) => {
-            const payload = [{attrId: 0, status: 0, dataType: 35, attrData: 204}];
+            const payload = [
+                {
+                    attrId: Zcl.Clusters.genPollCtrl.attributes.checkinInterval.ID,
+                    status: Zcl.Status.SUCCESS,
+                    dataType: Zcl.DataType.UINT32,
+                    attrData: newCheckinInterval,
+                },
+            ];
             const responseFrame = Zcl.Frame.create(0, 1, true, undefined, 10, "readRsp", frame.cluster.ID, payload, {});
             return {header: responseFrame.header, data: responseFrame.toBuffer(), clusterID: frame.cluster.ID};
         });
@@ -4175,10 +4206,9 @@ describe("Controller", () => {
             groupID: undefined,
         });
         await flushPromises();
-        expect(device.checkinInterval).toStrictEqual(51);
-        expect(device.pendingRequestTimeout).toStrictEqual(51000);
+        expect(device.checkinInterval).toStrictEqual(newCheckinInterval / 4);
+        expect(device.pendingRequestTimeout).toStrictEqual((newCheckinInterval / 4) * 1000);
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(3);
-        device.checkinInterval = 50;
 
         mocksendZclFrameToEndpoint.mockClear();
         frame = Zcl.Frame.create(
@@ -4209,6 +4239,36 @@ describe("Controller", () => {
         expect(call[3].cluster.name).toBe("genPollCtrl");
         expect(call[3].command.name).toBe("checkinRsp");
         expect(call[3].payload).toStrictEqual({startFastPolling: 0, fastPollTimeout: 0});
+
+        await mockAdapterEvents.zdoResponse(Zdo.ClusterId.END_DEVICE_ANNOUNCE, [
+            Zdo.Status.SUCCESS,
+            {
+                nwkAddress: 174,
+                eui64: "0x174",
+                capabilities: {
+                    allocateAddress: 0,
+                    alternatePANCoordinator: 0,
+                    deviceType: 0,
+                    powerSource: 0,
+                    reserved1: 0,
+                    reserved2: 0,
+                    rxOnWhenIdle: 0,
+                    securityCapability: 0,
+                },
+            },
+        ]);
+
+        // doesn't reset on announce
+        expect(device.checkinInterval).toStrictEqual(newCheckinInterval / 4);
+        expect(device.pendingRequestTimeout).toStrictEqual((newCheckinInterval / 4) * 1000);
+
+        device.removeFromDatabase();
+
+        await mockAdapterEvents.deviceJoined({networkAddress: 174, ieeeAddr: "0x174"});
+
+        // resets on join
+        expect(device.checkinInterval).toStrictEqual(DEFAULT_184_CHECKIN_INTERVAL / 4);
+        expect(device.pendingRequestTimeout).toStrictEqual((DEFAULT_184_CHECKIN_INTERVAL / 4) * 1000);
     });
 
     it("Poll control unsupported", async () => {
@@ -6082,7 +6142,7 @@ describe("Controller", () => {
         expect(Array.from(group6.members)).toStrictEqual([device2.getEndpoint(1)]);
         expect(Array.from(group7.members)).toStrictEqual([device2.getEndpoint(1)]);
         expect(deepClone(call[3])).toStrictEqual(
-            deepClone(Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 23, "removeAll", 4, {}, {})),
+            deepClone(Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 22, "removeAll", 4, {}, {})),
         );
     });
 
