@@ -15,7 +15,7 @@ import * as ZSpec from "../../../zspec";
 import * as Zcl from "../../../zspec/zcl";
 import * as Zdo from "../../../zspec/zdo";
 import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
-import {Adapter} from "../../adapter";
+import {Adapter, type ClusterWaitressMatcher, type ZclWaitressPayload} from "../../adapter";
 import type {ZclPayload} from "../../events";
 import {SerialPort} from "../../serialPort";
 import type * as TsType from "../../tstype";
@@ -24,16 +24,8 @@ import {bigUInt64ToHexBE} from "./utils";
 
 const NS = "zh:zoh";
 
-interface WaitressMatcher {
-    sender: number | string;
-    clusterId: number;
-    endpoint?: number;
-    commandId?: number;
-    transactionSequenceNumber?: number;
-}
-
 type ZdoResponse = {
-    sender: number | string;
+    address: number | string;
     clusterId: number;
     response: ZdoTypes.GenericZdoResponse;
     seqNum: number;
@@ -79,8 +71,8 @@ export class ZoHAdapter extends Adapter {
     public readonly stackConfig: StackConfig;
     public readonly driver: OTRCPDriver;
     private readonly queue: Queue;
-    private readonly zclWaitress: Waitress<ZclPayload, WaitressMatcher>;
-    private readonly zdoWaitress: Waitress<ZdoResponse, WaitressMatcher>;
+    private readonly zclWaitress: Waitress<ZclWaitressPayload, ClusterWaitressMatcher>;
+    private readonly zdoWaitress: Waitress<ZdoResponse, ClusterWaitressMatcher>;
 
     constructor(
         networkOptions: TsType.NetworkOptions,
@@ -145,8 +137,8 @@ export class ZoHAdapter extends Adapter {
             dirname(this.backupPath),
         );
         this.queue = new Queue(this.adapterOptions.concurrent || /* v8 ignore next */ 8); // ORed to avoid 0 (not checked in settings/queue constructor)
-        this.zclWaitress = new Waitress(this.zclWaitressValidator, this.waitressTimeoutFormatter);
-        this.zdoWaitress = new Waitress(this.zdoWaitressValidator, this.waitressTimeoutFormatter);
+        this.zclWaitress = new Waitress(Adapter.zclWaitressValidator, Adapter.clusterWaitressTimeoutFormatter);
+        this.zdoWaitress = new Waitress(this.zdoWaitressValidator, Adapter.clusterWaitressTimeoutFormatter);
 
         this.interpanLock = false;
     }
@@ -461,20 +453,11 @@ export class ZoHAdapter extends Adapter {
         _frameType: Zcl.FrameType,
         _direction: Zcl.Direction,
         transactionSequenceNumber: number | undefined,
-        clusterID: number,
-        commandIdentifier: number,
+        clusterId: number,
+        commandId: number,
         timeout: number,
     ): {promise: Promise<ZclPayload>; cancel: () => void} {
-        const waiter = this.zclWaitress.waitFor(
-            {
-                sender: networkAddress,
-                endpoint,
-                clusterId: clusterID,
-                commandId: commandIdentifier,
-                transactionSequenceNumber,
-            },
-            timeout,
-        );
+        const waiter = this.zclWaitress.waitFor({address: networkAddress, endpoint, clusterId, commandId, transactionSequenceNumber}, timeout);
         const cancel = (): void => this.zclWaitress.remove(waiter.ID);
 
         return {cancel, promise: waiter.start().promise};
@@ -540,7 +523,7 @@ export class ZoHAdapter extends Adapter {
                     const resp = await this.zdoWaitress
                         .waitFor(
                             {
-                                sender: responseClusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE ? ieeeAddress : networkAddress,
+                                address: responseClusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE ? ieeeAddress : networkAddress,
                                 clusterId: responseClusterId,
                                 transactionSequenceNumber: zdoSeqNum,
                             },
@@ -645,7 +628,7 @@ export class ZoHAdapter extends Adapter {
                         const resp = await this.zclWaitress
                             .waitFor(
                                 {
-                                    sender: networkAddress,
+                                    address: networkAddress,
                                     clusterId: zclFrame.cluster.ID,
                                     endpoint,
                                     commandId: commandResponseId,
@@ -774,11 +757,11 @@ export class ZoHAdapter extends Adapter {
                     // special case to properly resolve a NETWORK_ADDRESS_RESPONSE following a NETWORK_ADDRESS_REQUEST (based on EUI64 from ZDO payload)
                     // NOTE: if response has invalid status (no EUI64 available), response waiter will eventually time out
                     if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE>(result)) {
-                        this.zdoWaitress.resolve({sender: result[1].eui64, clusterId: apsHeader.clusterId, response: result, seqNum: apsPayload[0]});
+                        this.zdoWaitress.resolve({address: result[1].eui64, clusterId: apsHeader.clusterId, response: result, seqNum: apsPayload[0]});
                     }
                 } else {
                     // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                    this.zdoWaitress.resolve({sender: sender16!, clusterId: apsHeader.clusterId!, response: result, seqNum: apsPayload[0]});
+                    this.zdoWaitress.resolve({address: sender16!, clusterId: apsHeader.clusterId!, response: result, seqNum: apsPayload[0]});
                 }
 
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
@@ -811,7 +794,10 @@ export class ZoHAdapter extends Adapter {
                 destinationEndpoint: apsHeader.destEndpoint!,
             };
 
-            this.zclWaitress.resolve(payload);
+            if (payload.header !== undefined) {
+                this.zclWaitress.resolve(payload as ZclWaitressPayload);
+            }
+
             this.emit("zclPayload", payload);
         }
     }
@@ -879,7 +865,10 @@ export class ZoHAdapter extends Adapter {
             destinationEndpoint: ZSpec.GP_ENDPOINT,
         };
 
-        this.zclWaitress.resolve(zclPayload);
+        if (zclPayload.header !== undefined) {
+            this.zclWaitress.resolve(zclPayload as ZclWaitressPayload);
+        }
+
         this.emit("zclPayload", zclPayload);
     }
 
@@ -907,25 +896,8 @@ export class ZoHAdapter extends Adapter {
     onDeviceAuthorized(_source16: number, _source64: bigint): void {}
     /* v8 ignore stop */
 
-    private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {
-        return `Timeout after ${timeout}ms [sender=${matcher.sender} clusterId=${matcher.clusterId} cmdId=${matcher.commandId}]`;
-    }
-
-    private zclWaitressValidator(payload: ZclPayload, matcher: WaitressMatcher): boolean {
-        return (
-            // no sender in Touchlink
-            (matcher.sender === undefined || payload.address === matcher.sender) &&
-            payload.clusterID === matcher.clusterId &&
-            payload.endpoint === matcher.endpoint &&
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            payload.header!.commandIdentifier === matcher.commandId &&
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            (matcher.transactionSequenceNumber === undefined || payload.header!.transactionSequenceNumber === matcher.transactionSequenceNumber)
-        );
-    }
-
-    private zdoWaitressValidator(payload: ZdoResponse, matcher: WaitressMatcher): boolean {
-        return matcher.sender === payload.sender && matcher.clusterId === payload.clusterId && matcher.transactionSequenceNumber === payload.seqNum;
+    private zdoWaitressValidator(payload: ZdoResponse, matcher: ClusterWaitressMatcher): boolean {
+        return matcher.address === payload.address && matcher.clusterId === payload.clusterId && matcher.transactionSequenceNumber === payload.seqNum;
     }
     // #endregion
 }

@@ -1,7 +1,5 @@
 import assert from "node:assert";
-
 import debounce from "debounce";
-
 import type * as Models from "../../../models";
 import {Queue, Waitress, wait} from "../../../utils";
 import {logger} from "../../../utils/logger";
@@ -11,7 +9,7 @@ import type {Eui64} from "../../../zspec/tstypes";
 import * as Zcl from "../../../zspec/zcl";
 import * as Zdo from "../../../zspec/zdo";
 import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
-import Adapter from "../../adapter";
+import Adapter, {type ClusterWaitressMatcher, type ZclWaitressPayload} from "../../adapter";
 import type * as Events from "../../events";
 import type {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from "../../tstype";
 import * as Constants from "../constants";
@@ -29,16 +27,6 @@ const Type = UnpiConstants.Type;
 const {ZnpCommandStatus, AddressMode} = Constants.COMMON;
 
 const DataConfirmTimeout = 9999; // Not an actual code
-
-interface WaitressMatcher {
-    address?: number | string;
-    endpoint: number;
-    transactionSequenceNumber?: number;
-    frameType: Zcl.FrameType;
-    clusterID: number;
-    commandIdentifier: number;
-    direction: number;
-}
 
 class DataConfirmError extends Error {
     public code: number;
@@ -71,7 +59,7 @@ export class ZStackAdapter extends Adapter {
     private supportsLED?: boolean;
     private interpanLock: boolean;
     private interpanEndpointRegistered: boolean;
-    private waitress: Waitress<Events.ZclPayload, WaitressMatcher>;
+    private waitress: Waitress<ZclWaitressPayload, ClusterWaitressMatcher>;
 
     public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
         super(networkOptions, serialPortOptions, backupPath, adapterOptions);
@@ -85,7 +73,7 @@ export class ZStackAdapter extends Adapter {
         this.interpanLock = false;
         this.interpanEndpointRegistered = false;
         this.closing = false;
-        this.waitress = new Waitress<Events.ZclPayload, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
+        this.waitress = new Waitress(Adapter.zclWaitressValidator, Adapter.clusterWaitressTimeoutFormatter);
 
         this.znp.on("received", this.onZnpRecieved.bind(this));
         this.znp.on("close", this.onZnpClose.bind(this));
@@ -527,8 +515,6 @@ export class ZStackAdapter extends Adapter {
             response = this.waitForInternal(
                 networkAddress,
                 endpoint,
-                zclFrame.header.frameControl.frameType,
-                Zcl.Direction.SERVER_TO_CLIENT,
                 zclFrame.header.transactionSequenceNumber,
                 zclFrame.cluster.ID,
                 command.response,
@@ -538,8 +524,6 @@ export class ZStackAdapter extends Adapter {
             response = this.waitForInternal(
                 networkAddress,
                 endpoint,
-                Zcl.FrameType.GLOBAL,
-                Zcl.Direction.SERVER_TO_CLIENT,
                 zclFrame.header.transactionSequenceNumber,
                 zclFrame.cluster.ID,
                 Zcl.Foundation.defaultRsp.ID,
@@ -975,7 +959,11 @@ export class ZStackAdapter extends Adapter {
                                         wasBroadcast: object.payload.wasbroadcast === 1,
                                         destinationEndpoint: object.payload.dstendpoint,
                                     };
-                                    this.waitress.resolve(payload);
+
+                                    if (payload.header !== undefined) {
+                                        this.waitress.resolve(payload as ZclWaitressPayload);
+                                    }
+
                                     this.emit("zclPayload", payload);
                                 }
                             })
@@ -996,7 +984,10 @@ export class ZStackAdapter extends Adapter {
                             destinationEndpoint: object.payload.dstendpoint,
                         };
 
-                        this.waitress.resolve(payload);
+                        if (payload.header !== undefined) {
+                            this.waitress.resolve(payload as ZclWaitressPayload);
+                        }
+
                         this.emit("zclPayload", payload);
                     }
                 }
@@ -1074,16 +1065,7 @@ export class ZStackAdapter extends Adapter {
             let response: ReturnType<typeof this.waitForInternal> | undefined;
 
             if (!disableResponse && command.response !== undefined) {
-                response = this.waitForInternal(
-                    undefined,
-                    0xfe,
-                    zclFrame.header.frameControl.frameType,
-                    Zcl.Direction.SERVER_TO_CLIENT,
-                    undefined,
-                    zclFrame.cluster.ID,
-                    command.response,
-                    timeout,
-                );
+                response = this.waitForInternal(undefined, 0xfe, undefined, zclFrame.cluster.ID, command.response, timeout);
             }
 
             try {
@@ -1122,22 +1104,12 @@ export class ZStackAdapter extends Adapter {
     private waitForInternal(
         networkAddress: number | undefined,
         endpoint: number,
-        frameType: Zcl.FrameType,
-        direction: Zcl.Direction,
         transactionSequenceNumber: number | undefined,
-        clusterID: number,
-        commandIdentifier: number,
+        clusterId: number,
+        commandId: number,
         timeout: number,
     ): {start: () => {promise: Promise<Events.ZclPayload>}; cancel: () => void} {
-        const payload = {
-            address: networkAddress,
-            endpoint,
-            clusterID,
-            commandIdentifier,
-            frameType,
-            direction,
-            transactionSequenceNumber,
-        };
+        const payload = {address: networkAddress, endpoint, clusterId, commandId, transactionSequenceNumber};
 
         const waiter = this.waitress.waitFor(payload, timeout);
         const cancel = (): void => this.waitress.remove(waiter.ID);
@@ -1145,25 +1117,16 @@ export class ZStackAdapter extends Adapter {
     }
 
     public waitFor(
-        networkAddress: number | undefined,
+        networkAddress: number,
         endpoint: number,
-        frameType: Zcl.FrameType,
-        direction: Zcl.Direction,
+        _frameType: Zcl.FrameType,
+        _direction: Zcl.Direction,
         transactionSequenceNumber: number | undefined,
-        clusterID: number,
-        commandIdentifier: number,
+        clusterId: number,
+        commandId: number,
         timeout: number,
     ): {promise: Promise<Events.ZclPayload>; cancel: () => void} {
-        const waiter = this.waitForInternal(
-            networkAddress,
-            endpoint,
-            frameType,
-            direction,
-            transactionSequenceNumber,
-            clusterID,
-            commandIdentifier,
-            timeout,
-        );
+        const waiter = this.waitForInternal(networkAddress, endpoint, transactionSequenceNumber, clusterId, commandId, timeout);
 
         return {cancel: waiter.cancel, promise: waiter.start().promise};
     }
@@ -1296,27 +1259,6 @@ export class ZStackAdapter extends Adapter {
 
     private toAddressString(address: number | string): string {
         return typeof address === "number" ? `0x${address.toString(16).padStart(16, "0")}` : address.toString();
-    }
-
-    private waitressTimeoutFormatter(matcher: WaitressMatcher, timeout: number): string {
-        return (
-            `Timeout - ${matcher.address} - ${matcher.endpoint}` +
-            ` - ${matcher.transactionSequenceNumber} - ${matcher.clusterID}` +
-            ` - ${matcher.commandIdentifier} after ${timeout}ms`
-        );
-    }
-
-    private waitressValidator(payload: Events.ZclPayload, matcher: WaitressMatcher): boolean {
-        return Boolean(
-            payload.header &&
-                (!matcher.address || payload.address === matcher.address) &&
-                payload.endpoint === matcher.endpoint &&
-                (matcher.transactionSequenceNumber === undefined || payload.header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
-                payload.clusterID === matcher.clusterID &&
-                matcher.frameType === payload.header.frameControl.frameType &&
-                matcher.commandIdentifier === payload.header.commandIdentifier &&
-                matcher.direction === payload.header.frameControl.direction,
-        );
     }
 
     private checkInterpanLock(): void {

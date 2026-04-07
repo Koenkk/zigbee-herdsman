@@ -1705,7 +1705,7 @@ export class EmberAdapter extends Adapter {
 
     /** WARNING: Adapter impl. Starts timer immediately upon returning */
     public waitFor(
-        networkAddress: number | undefined,
+        networkAddress: number,
         endpoint: number,
         _frameType: Zcl.FrameType,
         _direction: Zcl.Direction,
