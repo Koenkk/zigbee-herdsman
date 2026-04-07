@@ -4278,7 +4278,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                 type: DataType.UINT16,
                 report: true,
                 required: true,
-                max: 65535,
+                max: 0xfffe,
                 default: 0,
                 special: [
                     ["TooLowToBeMeasured", "0000"],
