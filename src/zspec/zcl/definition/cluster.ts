@@ -3420,8 +3420,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             // custom
             // XXX: doesn't exist?
 
-            tuyaMovingState: {name: "tuyaMovingState", ID: 0xf000, type: DataType.ENUM8, write: true, max: 0xff},
-            tuyaCalibration: {name: "tuyaCalibration", ID: 0xf001, type: DataType.ENUM8, write: true, max: 0xff},
             stepPositionLift: {
                 name: "stepPositionLift",
                 ID: 0xf001,
@@ -3430,7 +3428,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                 write: true,
                 max: 0xff,
             },
-            tuyaMotorReversal: {name: "tuyaMotorReversal", ID: 0xf002, type: DataType.ENUM8, write: true, max: 0xff},
             calibrationMode: {
                 name: "calibrationMode",
                 ID: 0xf002,
@@ -3439,7 +3436,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                 write: true,
                 max: 0xff,
             },
-            moesCalibrationTime: {name: "moesCalibrationTime", ID: 0xf003, type: DataType.UINT16, write: true, max: 0xffff},
             targetPositionTiltPercentage: {
                 name: "targetPositionTiltPercentage",
                 ID: 0xf003,
