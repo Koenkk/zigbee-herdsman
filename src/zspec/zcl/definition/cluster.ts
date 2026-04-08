@@ -3417,7 +3417,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             windowCoveringMode: {name: "windowCoveringMode", ID: 0x0017, type: DataType.BITMAP8, write: true, required: true, default: 4},
             intermediateSetpointsLift: {name: "intermediateSetpointsLift", ID: 0x0018, type: DataType.OCTET_STR, write: true, default: "1,0x0000"},
             intermediateSetpointsTilt: {name: "intermediateSetpointsTilt", ID: 0x0019, type: DataType.OCTET_STR, write: true, default: "1,0x0000"},
-
         },
         commands: {
             upOpen: {name: "upOpen", ID: 0x00, parameters: [], required: true},
