@@ -3417,45 +3417,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
             windowCoveringMode: {name: "windowCoveringMode", ID: 0x0017, type: DataType.BITMAP8, write: true, required: true, default: 4},
             intermediateSetpointsLift: {name: "intermediateSetpointsLift", ID: 0x0018, type: DataType.OCTET_STR, write: true, default: "1,0x0000"},
             intermediateSetpointsTilt: {name: "intermediateSetpointsTilt", ID: 0x0019, type: DataType.OCTET_STR, write: true, default: "1,0x0000"},
-            // custom
-            // XXX: doesn't exist?
-
-            tuyaMovingState: {name: "tuyaMovingState", ID: 0xf000, type: DataType.ENUM8, write: true, max: 0xff},
-            tuyaCalibration: {name: "tuyaCalibration", ID: 0xf001, type: DataType.ENUM8, write: true, max: 0xff},
-            stepPositionLift: {
-                name: "stepPositionLift",
-                ID: 0xf001,
-                type: DataType.ENUM8,
-                manufacturerCode: ManufacturerCode.LEGRAND_GROUP,
-                write: true,
-                max: 0xff,
-            },
-            tuyaMotorReversal: {name: "tuyaMotorReversal", ID: 0xf002, type: DataType.ENUM8, write: true, max: 0xff},
-            calibrationMode: {
-                name: "calibrationMode",
-                ID: 0xf002,
-                type: DataType.ENUM8,
-                manufacturerCode: ManufacturerCode.LEGRAND_GROUP,
-                write: true,
-                max: 0xff,
-            },
-            moesCalibrationTime: {name: "moesCalibrationTime", ID: 0xf003, type: DataType.UINT16, write: true, max: 0xffff},
-            targetPositionTiltPercentage: {
-                name: "targetPositionTiltPercentage",
-                ID: 0xf003,
-                type: DataType.ENUM8,
-                manufacturerCode: ManufacturerCode.LEGRAND_GROUP,
-                write: true,
-                max: 0xff,
-            },
-            stepPositionTilt: {
-                name: "stepPositionTilt",
-                ID: 0xf004,
-                type: DataType.ENUM8,
-                manufacturerCode: ManufacturerCode.LEGRAND_GROUP,
-                write: true,
-                max: 0xff,
-            },
         },
         commands: {
             upOpen: {name: "upOpen", ID: 0x00, parameters: [], required: true},

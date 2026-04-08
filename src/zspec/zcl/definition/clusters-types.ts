@@ -2838,22 +2838,6 @@ export interface TClusters {
             intermediateSetpointsLift: Buffer;
             /** ID=0x0019 | type=OCTET_STR | write=true | default=1,0x0000 */
             intermediateSetpointsTilt: Buffer;
-            /** ID=0xf000 | type=ENUM8 | write=true | max=255 */
-            tuyaMovingState: number;
-            /** ID=0xf001 | type=ENUM8 | write=true | max=255 */
-            tuyaCalibration: number;
-            /** ID=0xf001 | type=ENUM8 | manufacturerCode=LEGRAND_GROUP(0x1021) | write=true | max=255 */
-            stepPositionLift?: number;
-            /** ID=0xf002 | type=ENUM8 | write=true | max=255 */
-            tuyaMotorReversal: number;
-            /** ID=0xf002 | type=ENUM8 | manufacturerCode=LEGRAND_GROUP(0x1021) | write=true | max=255 */
-            calibrationMode?: number;
-            /** ID=0xf003 | type=UINT16 | write=true | max=65535 */
-            moesCalibrationTime: number;
-            /** ID=0xf003 | type=ENUM8 | manufacturerCode=LEGRAND_GROUP(0x1021) | write=true | max=255 */
-            targetPositionTiltPercentage?: number;
-            /** ID=0xf004 | type=ENUM8 | manufacturerCode=LEGRAND_GROUP(0x1021) | write=true | max=255 */
-            stepPositionTilt?: number;
         };
         commands: {
             /** ID=0x00 | required=true */
