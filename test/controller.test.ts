@@ -508,6 +508,24 @@ const CUSTOM_CLUSTERS = {
         commands: {},
         commandsResponse: {},
     },
+    lightingColorCtrl: {
+        name: "lightingColorCtrl",
+        ID: Zcl.Clusters.lightingColorCtrl.ID,
+        attributes: {},
+        commands: {
+            tuyaMoveToHueAndSaturationBrightness: {
+                name: "tuyaMoveToHueAndSaturationBrightness",
+                ID: 0x06,
+                parameters: [
+                    {name: "hue", type: Zcl.DataType.UINT8, max: 0xff},
+                    {name: "saturation", type: Zcl.DataType.UINT8, max: 0xff},
+                    {name: "transtime", type: Zcl.DataType.UINT16, max: 0xffff},
+                    {name: "brightness", type: Zcl.DataType.UINT8, max: 0xff},
+                ],
+            },
+        },
+        commandsResponse: {},
+    },
 } satisfies CustomClusters;
 
 interface CustomClustersTypes extends Record<string, TCustomCluster> {
@@ -5463,6 +5481,7 @@ describe("Controller", () => {
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
+        device.addCustomCluster("lightingColorCtrl", CUSTOM_CLUSTERS.lightingColorCtrl);
         await endpoint.command("lightingColorCtrl", "tuyaMoveToHueAndSaturationBrightness", {hue: 1, saturation: 1, transtime: 0, brightness: 22});
         expect(mocksendZclFrameToEndpoint.mock.calls[0][0]).toBe("0x129");
         expect(mocksendZclFrameToEndpoint.mock.calls[0][1]).toBe(129);
