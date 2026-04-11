@@ -5480,7 +5480,6 @@ describe("Controller", () => {
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
         const device = controller.getDeviceByIeeeAddr("0x129")!;
         const endpoint = device.getEndpoint(1)!;
-        
         mocksendZclFrameToEndpoint.mockClear();
         device.addCustomCluster("lightingColorCtrl", CUSTOM_CLUSTERS.lightingColorCtrl);
         await endpoint.command("lightingColorCtrl", "tuyaMoveToHueAndSaturationBrightness", {hue: 1, saturation: 1, transtime: 0, brightness: 22});
