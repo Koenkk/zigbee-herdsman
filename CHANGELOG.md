@@ -1,5 +1,15 @@
 # Changelog
 
+## [10.0.7](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.6...v10.0.7) (2026-04-11)
+
+
+### Bug Fixes
+
+* **ignore:** bump @biomejs/biome from 2.4.10 to 2.4.11 in the minor-patch group ([#1740](https://github.com/Koenkk/zigbee-herdsman/issues/1740)) ([b613178](https://github.com/Koenkk/zigbee-herdsman/commit/b613178187b22d0550d2828dd7c7ca3c6baa4ab0))
+* **ignore:** bump typescript from 5.9.2 to 6.0.2 ([#1739](https://github.com/Koenkk/zigbee-herdsman/issues/1739)) ([6eeaaee](https://github.com/Koenkk/zigbee-herdsman/commit/6eeaaeee313add4a123f8fb3b3d5a53eb7c2577e))
+* Move Legrand and Tuya attributes from ZH to ZHC ([#1734](https://github.com/Koenkk/zigbee-herdsman/issues/1734)) ([9b9fb3b](https://github.com/Koenkk/zigbee-herdsman/commit/9b9fb3b5766d7a9f9dc6f38161208e919e5abd2e))
+* Move Tuya specific attributes in lightingColorCtrl cluster from ZH to ZHC ([#1743](https://github.com/Koenkk/zigbee-herdsman/issues/1743)) ([8506a42](https://github.com/Koenkk/zigbee-herdsman/commit/8506a426587193344481497d886ee5c6f143b6c7))
+
 ## [10.0.6](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.5...v10.0.6) (2026-04-07)
 
 
