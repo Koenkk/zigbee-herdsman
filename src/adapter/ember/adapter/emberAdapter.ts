@@ -6,6 +6,7 @@ import equals from "fast-deep-equal/es6";
 import type {Backup} from "../../../models";
 import {BackupUtils, Queue, wait} from "../../../utils";
 import {logger} from "../../../utils/logger";
+import {metrics} from "../../../utils/metrics";
 import * as ZSpec from "../../../zspec";
 import type {Eui64, ExtendedPanId, NodeId, PanId} from "../../../zspec/tstypes";
 import * as Zcl from "../../../zspec/zcl";
@@ -2007,8 +2008,10 @@ export class EmberAdapter extends Adapter {
                 }
 
                 if (status === SLStatus.ZIGBEE_MAX_MESSAGE_LIMIT_REACHED || status === SLStatus.BUSY) {
+                    metrics.adapterRetry("ember", ieeeAddr, SLStatus[status] ?? String(status));
                     await wait(QUEUE_BUSY_DEFER_MSEC);
                 } else if (status === SLStatus.NETWORK_DOWN) {
+                    metrics.adapterRetry("ember", ieeeAddr, "NETWORK_DOWN");
                     await wait(QUEUE_NETWORK_DOWN_DEFER_MSEC);
                 } else {
                     throw new Error(

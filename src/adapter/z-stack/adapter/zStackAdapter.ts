@@ -3,6 +3,7 @@ import debounce from "debounce";
 import type * as Models from "../../../models";
 import {Queue, Waitress, wait} from "../../../utils";
 import {logger} from "../../../utils/logger";
+import {metrics} from "../../../utils/metrics";
 import * as ZSpec from "../../../zspec";
 import type {BroadcastAddress} from "../../../zspec/enums";
 import type {Eui64} from "../../../zspec/tstypes";
@@ -584,6 +585,7 @@ export class ZStackAdapter extends Adapter {
                  * MAC_NO_RESOURCES: Operation could not be completed because no memory resources are available,
                  * wait some time and retry.
                  */
+                metrics.adapterRetry("zstack", ieeeAddr, ZnpCommandStatus[dataConfirmResult] ?? String(dataConfirmResult));
                 await wait(2000);
                 return await this.sendZclFrameToEndpointInternal(
                     ieeeAddr,
@@ -665,6 +667,7 @@ export class ZStackAdapter extends Adapter {
                 await wait(2000);
             }
 
+            metrics.adapterRetry("zstack", ieeeAddr, ZnpCommandStatus[dataConfirmResult] ?? String(dataConfirmResult));
             return await this.sendZclFrameToEndpointInternal(
                 ieeeAddr,
                 networkAddress,
@@ -716,6 +719,7 @@ export class ZStackAdapter extends Adapter {
                         });
                     }
                     // No response could be of invalid route, e.g. when message is send to wrong parent of end device.
+                    metrics.adapterRetry("zstack", ieeeAddr, "no_response");
                     await this.discoverRoute(networkAddress);
                     return await this.sendZclFrameToEndpointInternal(
                         ieeeAddr,
