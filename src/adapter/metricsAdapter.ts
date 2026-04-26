@@ -1,13 +1,10 @@
-import type {Adapter} from "./adapter.js";
 import {metrics} from "../utils/metrics.js";
+import type {Adapter} from "./adapter.js";
 
 type SendStatus = "success" | "failure";
 type AnyAsyncFn = (...args: unknown[]) => Promise<unknown>;
 
-function instrumentSend(
-    fn: AnyAsyncFn,
-    record: (args: unknown[], status: SendStatus, durationSeconds: number) => void,
-): AnyAsyncFn {
+function instrumentSend(fn: AnyAsyncFn, record: (args: unknown[], status: SendStatus, durationSeconds: number) => void): AnyAsyncFn {
     return async (...args) => {
         const start = Date.now();
         try {
@@ -58,7 +55,7 @@ export function wrapWithMetrics(adapter: Adapter): Adapter {
                 return dispatch.get(prop);
             }
             const value = Reflect.get(target, prop, target);
-            return typeof value === "function" ? (value as Function).bind(target) : value;
+            return typeof value === "function" ? (value as (...args: never) => unknown).bind(target) : value;
         },
     });
 }
