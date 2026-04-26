@@ -2,6 +2,7 @@ import assert from "node:assert";
 import events from "node:events";
 import fs from "node:fs";
 import {Adapter, type Events as AdapterEvents, type TsType as AdapterTsType} from "../adapter";
+import {wrapWithMetrics} from "../adapter/metricsAdapter";
 import type {ZclPayload} from "../adapter/events";
 import {BackupUtils, wait} from "../utils";
 import {logger} from "../utils/logger";
@@ -137,7 +138,9 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         Entity.injectDatabase(this.database);
 
         // Adapter (create and inject)
-        this.adapter = await Adapter.create(this.options.network, this.options.serialPort, this.options.backupPath, this.options.adapter);
+        this.adapter = wrapWithMetrics(
+            await Adapter.create(this.options.network, this.options.serialPort, this.options.backupPath, this.options.adapter),
+        );
 
         abortSignal?.throwIfAborted();
 
