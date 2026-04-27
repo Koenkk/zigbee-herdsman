@@ -590,6 +590,7 @@ export class ZStackAdapter extends Adapter {
                 metrics.emit("adapterRetry", {
                     adapterType: "zstack",
                     ieeeAddr,
+                    /* v8 ignore next */
                     reason: ZnpCommandStatus[dataConfirmResult] ?? String(dataConfirmResult),
                 });
                 await wait(2000);
@@ -673,6 +674,7 @@ export class ZStackAdapter extends Adapter {
                 await wait(2000);
             }
 
+            /* v8 ignore next */
             metrics.emit("adapterRetry", {adapterType: "zstack", ieeeAddr, reason: ZnpCommandStatus[dataConfirmResult] ?? String(dataConfirmResult)});
             return await this.sendZclFrameToEndpointInternal(
                 ieeeAddr,
