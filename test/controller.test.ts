@@ -607,6 +607,15 @@ describe("Controller", () => {
         restoreMocksendZclFrameToEndpoint();
     });
 
+    it("wraps adapter with metrics when enableMetrics is true", async () => {
+        const newOptions = deepClone(options);
+        newOptions.enableMetrics = true;
+        const metricsController = new Controller(newOptions);
+        await metricsController.start();
+        expect(mockAdapterStart).toHaveBeenCalled();
+        await metricsController.stop();
+    });
+
     it("Call controller constructor options mixed with default options", async () => {
         await controller.start();
         expect(ZStackAdapter).toHaveBeenCalledWith(

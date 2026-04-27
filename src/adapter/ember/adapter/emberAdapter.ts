@@ -2008,6 +2008,7 @@ export class EmberAdapter extends Adapter {
                 }
 
                 if (status === SLStatus.ZIGBEE_MAX_MESSAGE_LIMIT_REACHED || status === SLStatus.BUSY) {
+                    /* v8 ignore next */
                     metrics.emit("adapterRetry", {adapterType: "ember", ieeeAddr, reason: SLStatus[status] ?? String(status)});
                     await wait(QUEUE_BUSY_DEFER_MSEC);
                 } else if (status === SLStatus.NETWORK_DOWN) {
