@@ -21,6 +21,7 @@ import * as Zcl from "../src/zspec/zcl";
 import type {CustomClusters} from "../src/zspec/zcl/definition/tstype";
 import * as Zdo from "../src/zspec/zdo";
 import type {IEEEAddressResponse, NetworkAddressResponse} from "../src/zspec/zdo/definition/tstypes";
+import {metrics} from "../src/utils/metrics";
 import {DEFAULT_184_CHECKIN_INTERVAL, LQI_TABLE_ENTRY_DEFAULTS, MOCK_DEVICES, ROUTING_TABLE_ENTRY_DEFAULTS} from "./mockDevices";
 
 const globalSetImmediate = setImmediate;
@@ -10570,5 +10571,99 @@ describe("Controller", () => {
         ).rejects.toThrow("Cannot have attributes with different manufacturerCode in single 'readReportingConfig' call");
 
         expect(zclCommandSpy).toHaveBeenCalledTimes(0);
+    });
+
+    describe("Metrics", () => {
+        it("emits adapterReceiveZclPayload with ieeeAddr when address is a string", async () => {
+            const received: Parameters<Parameters<typeof metrics.on<"adapterReceiveZclPayload">>[1]>[0][] = [];
+            metrics.on("adapterReceiveZclPayload", (data) => received.push(data));
+            const frame = Zcl.Frame.create(0, 1, true, undefined, 10, "readRsp", 0, [{attrId: 5, status: 0, dataType: 66, attrData: "test"}], {});
+            await controller.start();
+            await mockAdapterEvents.zclPayload({
+                wasBroadcast: false,
+                address: "0x129",
+                clusterID: frame.cluster.ID,
+                data: frame.toBuffer(),
+                header: frame.header,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 1,
+                destinationEndpoint: 1,
+            });
+            metrics.removeAllListeners("adapterReceiveZclPayload");
+            expect(received).toHaveLength(1);
+            expect(received[0]).toEqual({ieeeAddr: "0x129", clusterID: frame.cluster.ID, wasBroadcast: false});
+        });
+
+        it("emits adapterReceiveZclPayload with ieeeAddr undefined when address is a number", async () => {
+            const received: Parameters<Parameters<typeof metrics.on<"adapterReceiveZclPayload">>[1]>[0][] = [];
+            metrics.on("adapterReceiveZclPayload", (data) => received.push(data));
+            const frame = Zcl.Frame.create(0, 1, true, undefined, 10, "readRsp", 0, [{attrId: 5, status: 0, dataType: 66, attrData: "test"}], {});
+            await controller.start();
+            await mockAdapterEvents.zclPayload({
+                wasBroadcast: true,
+                address: 129,
+                clusterID: frame.cluster.ID,
+                data: frame.toBuffer(),
+                header: frame.header,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 1,
+                destinationEndpoint: 1,
+            });
+            metrics.removeAllListeners("adapterReceiveZclPayload");
+            expect(received).toHaveLength(1);
+            expect(received[0]).toEqual({ieeeAddr: undefined, clusterID: frame.cluster.ID, wasBroadcast: true});
+        });
+
+        it("does not emit adapterReceiveZclPayload for touchlink cluster", async () => {
+            const received: unknown[] = [];
+            metrics.on("adapterReceiveZclPayload", (data) => received.push(data));
+            await controller.start();
+            await mockAdapterEvents.zclPayload({
+                wasBroadcast: false,
+                address: "0x129",
+                clusterID: Zcl.Clusters.touchlink.ID,
+                data: Buffer.from([]),
+                header: undefined,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 1,
+                destinationEndpoint: 1,
+            });
+            metrics.removeAllListeners("adapterReceiveZclPayload");
+            expect(received).toHaveLength(0);
+        });
+
+        it("emits adapterReceiveZdoResponse with clusterId", async () => {
+            const received: Parameters<Parameters<typeof metrics.on<"adapterReceiveZdoResponse">>[1]>[0][] = [];
+            metrics.on("adapterReceiveZdoResponse", (data) => received.push(data));
+            await controller.start();
+            await mockAdapterEvents.zdoResponse(Zdo.ClusterId.END_DEVICE_ANNOUNCE, [
+                Zdo.Status.SUCCESS,
+                {nwkAddress: 129, eui64: "0x129", capabilities: Zdo.Utils.getMacCapFlags(0x10)},
+            ]);
+            metrics.removeAllListeners("adapterReceiveZdoResponse");
+            expect(received).toHaveLength(1);
+            expect(received[0]).toEqual({clusterId: Zdo.ClusterId.END_DEVICE_ANNOUNCE});
+        });
+
+        it("emits adapterReceiveZdoResponse for each ZDO cluster received", async () => {
+            const received: Parameters<Parameters<typeof metrics.on<"adapterReceiveZdoResponse">>[1]>[0][] = [];
+            metrics.on("adapterReceiveZdoResponse", (data) => received.push(data));
+            await controller.start();
+            await mockAdapterEvents.zdoResponse(Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, [
+                Zdo.Status.SUCCESS,
+                {nwkAddress: 129, eui64: "0x129", startIndex: 0, assocDevList: []},
+            ]);
+            await mockAdapterEvents.zdoResponse(Zdo.ClusterId.IEEE_ADDRESS_RESPONSE, [
+                Zdo.Status.SUCCESS,
+                {nwkAddress: 129, eui64: "0x129", startIndex: 0, assocDevList: []},
+            ]);
+            metrics.removeAllListeners("adapterReceiveZdoResponse");
+            expect(received).toHaveLength(2);
+            expect(received[0]).toEqual({clusterId: Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE});
+            expect(received[1]).toEqual({clusterId: Zdo.ClusterId.IEEE_ADDRESS_RESPONSE});
+        });
     });
 });

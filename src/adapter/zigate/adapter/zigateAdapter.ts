@@ -369,7 +369,7 @@ export class ZiGateAdapter extends Adapter {
         } catch {
             if (responseAttempt < 1 && !disableRecovery) {
                 // @todo discover route
-                metrics.adapterRetry("zigate", ieeeAddr, "send_failure");
+                metrics.emit("adapterRetry", {adapterType: "zigate", ieeeAddr, reason: "send_failure"});
                 return await this.sendZclFrameToEndpointInternal(
                     ieeeAddr,
                     networkAddress,
@@ -397,7 +397,7 @@ export class ZiGateAdapter extends Adapter {
             } catch (error) {
                 logger.error(`Response error ${(error as Error).message} (${ieeeAddr}:${networkAddress},${responseAttempt})`, NS);
                 if (responseAttempt < 1 && !disableRecovery) {
-                    metrics.adapterRetry("zigate", ieeeAddr, "no_response");
+                    metrics.emit("adapterRetry", {adapterType: "zigate", ieeeAddr, reason: "no_response"});
                     return await this.sendZclFrameToEndpointInternal(
                         ieeeAddr,
                         networkAddress,

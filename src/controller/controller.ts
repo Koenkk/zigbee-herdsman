@@ -4,6 +4,7 @@ import fs from "node:fs";
 import {Adapter, type Events as AdapterEvents, type TsType as AdapterTsType} from "../adapter";
 import type {ZclPayload} from "../adapter/events";
 import {wrapWithMetrics} from "../adapter/metricsAdapter";
+import {metrics} from "../utils/metrics.js";
 import {BackupUtils, wait} from "../utils";
 import {logger} from "../utils/logger";
 import {isNumberArrayOfLength} from "../utils/utils";
@@ -36,6 +37,7 @@ interface Options {
     databaseBackupPath: string;
     backupPath: string;
     adapter: AdapterTsType.AdapterOptions;
+    enableMetrics?: boolean;
     /**
      * This lambda can be used by an application to explictly reject or accept an incoming device.
      * When false is returned zigbee-herdsman will not start the interview process and immidiately
@@ -138,9 +140,8 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         Entity.injectDatabase(this.database);
 
         // Adapter (create and inject)
-        this.adapter = wrapWithMetrics(
-            await Adapter.create(this.options.network, this.options.serialPort, this.options.backupPath, this.options.adapter),
-        );
+        const rawAdapter = await Adapter.create(this.options.network, this.options.serialPort, this.options.backupPath, this.options.adapter);
+        this.adapter = this.options.enableMetrics ? wrapWithMetrics(rawAdapter) : rawAdapter;
 
         abortSignal?.throwIfAborted();
 
@@ -907,6 +908,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
     }
 
     private onZdoResponse(clusterId: Zdo.ClusterId, response: ZdoTypes.GenericZdoResponse): void {
+        metrics.emit("adapterReceiveZdoResponse", {clusterId});
         logger.debug(
             `Received ZDO response: clusterId=${Zdo.ClusterId[clusterId]}, status=${Zdo.Status[response[0]]}, payload=${JSON.stringify(response[1])}`,
             NS,
@@ -945,6 +947,12 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             // This is handled by touchlink
             return;
         }
+
+        metrics.emit("adapterReceiveZclPayload", {
+            ieeeAddr: typeof payload.address === "string" ? payload.address : undefined,
+            clusterID: payload.clusterID,
+            wasBroadcast: payload.wasBroadcast,
+        });
 
         if (payload.clusterID === Zcl.Clusters.greenPower.ID) {
             try {

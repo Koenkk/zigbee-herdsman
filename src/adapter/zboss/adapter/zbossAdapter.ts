@@ -388,7 +388,7 @@ export class ZBOSSAdapter extends Adapter {
                 } catch (error) {
                     logger.debug(`Response timeout (${ieeeAddr}:${networkAddress},${responseAttempt})`, NS);
                     if (responseAttempt < 1 && !disableRecovery) {
-                        metrics.adapterRetry("zboss", ieeeAddr, "no_response");
+                        metrics.emit("adapterRetry", {adapterType: "zboss", ieeeAddr, reason: "no_response"});
                         return await this.sendZclFrameToEndpointInternal(
                             ieeeAddr,
                             networkAddress,
