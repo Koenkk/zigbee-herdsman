@@ -13,16 +13,12 @@ export class RequestQueue extends Set<Request> {
     private sendInProgress: boolean;
     private id: number;
     private deviceIeeeAddress: string;
-    // Declared without initializer so we can define it as non-enumerable below,
-    // keeping it out of deepClone/serialization.
-    private readonly enqueueTimes!: WeakMap<Request, number>;
 
     constructor(endpoint: Endpoint) {
         super();
         this.sendInProgress = false;
         this.id = endpoint.ID;
         this.deviceIeeeAddress = endpoint.deviceIeeeAddress;
-        Object.defineProperty(this, "enqueueTimes", {value: new WeakMap<Request, number>(), enumerable: false});
     }
 
     public async send(fastPolling: boolean): Promise<void> {
@@ -39,12 +35,11 @@ export class RequestQueue extends Set<Request> {
         for (const request of this) {
             if (now > request.expires) {
                 logger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.id}): discard after timeout. Size before: ${this.size}`, NS);
-                const enqueuedAt = this.enqueueTimes.get(request);
                 request.reject();
                 this.delete(request);
                 metrics.emit("requestQueueLength", {ieeeAddr: this.deviceIeeeAddress, endpointId: this.id, length: this.size});
-                if (enqueuedAt !== undefined) {
-                    metrics.emit("requestQueueDuration", {ieeeAddr: this.deviceIeeeAddress, endpointId: this.id, outcome: "expired", durationSeconds: (now - enqueuedAt) / 1000});
+                if (request.enqueuedAt !== undefined) {
+                    metrics.emit("requestQueueDuration", {ieeeAddr: this.deviceIeeeAddress, endpointId: this.id, outcome: "expired", durationSeconds: (now - request.enqueuedAt) / 1000});
                 }
             }
         }
@@ -54,14 +49,13 @@ export class RequestQueue extends Set<Request> {
         for (const request of this) {
             if (fastPolling || request.sendPolicy !== "bulk") {
                 try {
-                    const enqueuedAt = this.enqueueTimes.get(request);
                     const result = await request.send();
                     logger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.id}): send success`, NS);
                     request.resolve(result);
                     this.delete(request);
                     metrics.emit("requestQueueLength", {ieeeAddr: this.deviceIeeeAddress, endpointId: this.id, length: this.size});
-                    if (enqueuedAt !== undefined) {
-                        metrics.emit("requestQueueDuration", {ieeeAddr: this.deviceIeeeAddress, endpointId: this.id, outcome: "sent", durationSeconds: (Date.now() - enqueuedAt) / 1000});
+                    if (request.enqueuedAt !== undefined) {
+                        metrics.emit("requestQueueDuration", {ieeeAddr: this.deviceIeeeAddress, endpointId: this.id, outcome: "sent", durationSeconds: (Date.now() - request.enqueuedAt) / 1000});
                     }
                 } catch (error) {
                     logger.debug(
@@ -80,7 +74,7 @@ export class RequestQueue extends Set<Request> {
         return await new Promise((resolve, reject): void => {
             request.addCallbacks(resolve, reject);
             this.add(request);
-            this.enqueueTimes.set(request, Date.now());
+            request.enqueuedAt = Date.now();
             metrics.emit("requestQueueLength", {ieeeAddr: this.deviceIeeeAddress, endpointId: this.id, length: this.size});
         });
     }
