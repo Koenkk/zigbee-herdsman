@@ -39,7 +39,12 @@ export class RequestQueue extends Set<Request> {
                 this.delete(request);
                 metrics.emit("requestQueueLength", {ieeeAddr: this.deviceIeeeAddress, endpointId: this.id, length: this.size});
                 if (request.enqueuedAt !== undefined) {
-                    metrics.emit("requestQueueDuration", {ieeeAddr: this.deviceIeeeAddress, endpointId: this.id, outcome: "expired", durationSeconds: (now - request.enqueuedAt) / 1000});
+                    metrics.emit("requestQueueDuration", {
+                        ieeeAddr: this.deviceIeeeAddress,
+                        endpointId: this.id,
+                        outcome: "expired",
+                        durationSeconds: (now - request.enqueuedAt) / 1000,
+                    });
                 }
             }
         }
@@ -55,7 +60,12 @@ export class RequestQueue extends Set<Request> {
                     this.delete(request);
                     metrics.emit("requestQueueLength", {ieeeAddr: this.deviceIeeeAddress, endpointId: this.id, length: this.size});
                     if (request.enqueuedAt !== undefined) {
-                        metrics.emit("requestQueueDuration", {ieeeAddr: this.deviceIeeeAddress, endpointId: this.id, outcome: "sent", durationSeconds: (Date.now() - request.enqueuedAt) / 1000});
+                        metrics.emit("requestQueueDuration", {
+                            ieeeAddr: this.deviceIeeeAddress,
+                            endpointId: this.id,
+                            outcome: "sent",
+                            durationSeconds: (Date.now() - request.enqueuedAt) / 1000,
+                        });
                     }
                 } catch (error) {
                     logger.debug(

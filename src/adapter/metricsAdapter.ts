@@ -1,4 +1,4 @@
-import {type SendStatus, metrics} from "../utils/metrics.js";
+import {metrics, type SendStatus} from "../utils/metrics.js";
 import type {Adapter} from "./adapter.js";
 
 type AnyAsyncFn = (...args: unknown[]) => Promise<unknown>;
