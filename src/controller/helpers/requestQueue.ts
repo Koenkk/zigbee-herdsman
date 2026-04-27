@@ -42,9 +42,9 @@ export class RequestQueue extends Set<Request> {
                 const enqueuedAt = this.enqueueTimes.get(request);
                 request.reject();
                 this.delete(request);
-                metrics.requestQueueLength(this.deviceIeeeAddress, this.id, this.size);
+                metrics.emit("requestQueueLength", {ieeeAddr: this.deviceIeeeAddress, endpointId: this.id, length: this.size});
                 if (enqueuedAt !== undefined) {
-                    metrics.requestQueueDuration(this.deviceIeeeAddress, this.id, "expired", (now - enqueuedAt) / 1000);
+                    metrics.emit("requestQueueDuration", {ieeeAddr: this.deviceIeeeAddress, endpointId: this.id, outcome: "expired", durationSeconds: (now - enqueuedAt) / 1000});
                 }
             }
         }
@@ -59,9 +59,9 @@ export class RequestQueue extends Set<Request> {
                     logger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.id}): send success`, NS);
                     request.resolve(result);
                     this.delete(request);
-                    metrics.requestQueueLength(this.deviceIeeeAddress, this.id, this.size);
+                    metrics.emit("requestQueueLength", {ieeeAddr: this.deviceIeeeAddress, endpointId: this.id, length: this.size});
                     if (enqueuedAt !== undefined) {
-                        metrics.requestQueueDuration(this.deviceIeeeAddress, this.id, "sent", (Date.now() - enqueuedAt) / 1000);
+                        metrics.emit("requestQueueDuration", {ieeeAddr: this.deviceIeeeAddress, endpointId: this.id, outcome: "sent", durationSeconds: (Date.now() - enqueuedAt) / 1000});
                     }
                 } catch (error) {
                     logger.debug(
@@ -81,7 +81,7 @@ export class RequestQueue extends Set<Request> {
             request.addCallbacks(resolve, reject);
             this.add(request);
             this.enqueueTimes.set(request, Date.now());
-            metrics.requestQueueLength(this.deviceIeeeAddress, this.id, this.size);
+            metrics.emit("requestQueueLength", {ieeeAddr: this.deviceIeeeAddress, endpointId: this.id, length: this.size});
         });
     }
 

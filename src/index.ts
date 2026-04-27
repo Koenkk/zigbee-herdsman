@@ -8,8 +8,8 @@ export {getOtaFirmware, getOtaIndex, parseOtaHeader, parseOtaImage, parseOtaSubE
 export type * as Models from "./controller/model";
 export type * as Types from "./controller/tstype";
 export {setLogger} from "./utils/logger";
-export type {Metrics} from "./utils/metrics";
-export {noopMetrics, setMetrics} from "./utils/metrics";
+export type {MetricsEventMap} from "./utils/metrics";
+export {metrics} from "./utils/metrics";
 export {getTimeClusterAttributes} from "./utils/timeService";
 export * as ZSpec from "./zspec";
 export * as Zcl from "./zspec/zcl";
