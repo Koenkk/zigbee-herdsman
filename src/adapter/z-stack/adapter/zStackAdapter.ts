@@ -585,7 +585,11 @@ export class ZStackAdapter extends Adapter {
                  * MAC_NO_RESOURCES: Operation could not be completed because no memory resources are available,
                  * wait some time and retry.
                  */
-                metrics.emit("adapterRetry", {adapterType: "zstack", ieeeAddr, reason: ZnpCommandStatus[dataConfirmResult] ?? String(dataConfirmResult)});
+                metrics.emit("adapterRetry", {
+                    adapterType: "zstack",
+                    ieeeAddr,
+                    reason: ZnpCommandStatus[dataConfirmResult] ?? String(dataConfirmResult),
+                });
                 await wait(2000);
                 return await this.sendZclFrameToEndpointInternal(
                     ieeeAddr,
