@@ -647,7 +647,7 @@ export class ZoHAdapter extends Adapter {
                     if (disableRecovery || i === 1) {
                         throw error;
                     }
-                    metrics.adapterRetry("zoh", ieeeAddr, "send_failure");
+                    metrics.emit("adapterRetry", {adapterType: "zoh", ieeeAddr, reason: "send_failure"});
                 }
                 /* v8 ignore start */
             } // coverage detection failure

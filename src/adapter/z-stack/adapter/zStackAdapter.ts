@@ -585,7 +585,7 @@ export class ZStackAdapter extends Adapter {
                  * MAC_NO_RESOURCES: Operation could not be completed because no memory resources are available,
                  * wait some time and retry.
                  */
-                metrics.adapterRetry("zstack", ieeeAddr, ZnpCommandStatus[dataConfirmResult] ?? String(dataConfirmResult));
+                metrics.emit("adapterRetry", {adapterType: "zstack", ieeeAddr, reason: ZnpCommandStatus[dataConfirmResult] ?? String(dataConfirmResult)});
                 await wait(2000);
                 return await this.sendZclFrameToEndpointInternal(
                     ieeeAddr,
@@ -667,7 +667,7 @@ export class ZStackAdapter extends Adapter {
                 await wait(2000);
             }
 
-            metrics.adapterRetry("zstack", ieeeAddr, ZnpCommandStatus[dataConfirmResult] ?? String(dataConfirmResult));
+            metrics.emit("adapterRetry", {adapterType: "zstack", ieeeAddr, reason: ZnpCommandStatus[dataConfirmResult] ?? String(dataConfirmResult)});
             return await this.sendZclFrameToEndpointInternal(
                 ieeeAddr,
                 networkAddress,
@@ -719,7 +719,7 @@ export class ZStackAdapter extends Adapter {
                         });
                     }
                     // No response could be of invalid route, e.g. when message is send to wrong parent of end device.
-                    metrics.adapterRetry("zstack", ieeeAddr, "no_response");
+                    metrics.emit("adapterRetry", {adapterType: "zstack", ieeeAddr, reason: "no_response"});
                     await this.discoverRoute(networkAddress);
                     return await this.sendZclFrameToEndpointInternal(
                         ieeeAddr,

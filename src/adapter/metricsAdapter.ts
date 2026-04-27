@@ -1,7 +1,6 @@
-import {metrics} from "../utils/metrics.js";
+import {type SendStatus, metrics} from "../utils/metrics.js";
 import type {Adapter} from "./adapter.js";
 
-type SendStatus = "success" | "failure";
 type AnyAsyncFn = (...args: unknown[]) => Promise<unknown>;
 
 function instrumentSend(fn: AnyAsyncFn, record: (args: unknown[], status: SendStatus, durationSeconds: number) => void): AnyAsyncFn {
@@ -27,25 +26,27 @@ export function wrapWithMetrics(adapter: Adapter): Adapter {
     const dispatch = new Map<string, AnyAsyncFn>([
         [
             "sendZclFrameToEndpoint",
-            instrumentSend(asFn(adapter.sendZclFrameToEndpoint.bind(adapter)), ([ieeeAddr], status, dur) =>
-                metrics.adapterSendZclUnicast(ieeeAddr as string, status, dur),
+            instrumentSend(asFn(adapter.sendZclFrameToEndpoint.bind(adapter)), ([ieeeAddr], status, durationSeconds) =>
+                metrics.emit("adapterSendZclUnicast", {ieeeAddr: ieeeAddr as string, status, durationSeconds}),
             ),
         ],
         [
             "sendZdo",
-            instrumentSend(asFn(adapter.sendZdo.bind(adapter)), ([ieeeAddr, , clusterId], status, dur) =>
-                metrics.adapterSendZdo(ieeeAddr as string, clusterId as number, status, dur),
+            instrumentSend(asFn(adapter.sendZdo.bind(adapter)), ([ieeeAddr, , clusterId], status, durationSeconds) =>
+                metrics.emit("adapterSendZdo", {ieeeAddr: ieeeAddr as string, clusterId: clusterId as number, status, durationSeconds}),
             ),
         ],
         [
             "sendZclFrameToGroup",
-            instrumentSend(asFn(adapter.sendZclFrameToGroup.bind(adapter)), ([groupId], status, dur) =>
-                metrics.adapterSendZclGroup(groupId as number, status, dur),
+            instrumentSend(asFn(adapter.sendZclFrameToGroup.bind(adapter)), ([groupId], status, durationSeconds) =>
+                metrics.emit("adapterSendZclGroup", {groupId: groupId as number, status, durationSeconds}),
             ),
         ],
         [
             "sendZclFrameToAll",
-            instrumentSend(asFn(adapter.sendZclFrameToAll.bind(adapter)), (_args, status, dur) => metrics.adapterSendZclBroadcast(status, dur)),
+            instrumentSend(asFn(adapter.sendZclFrameToAll.bind(adapter)), (_args, status, durationSeconds) =>
+                metrics.emit("adapterSendZclBroadcast", {status, durationSeconds}),
+            ),
         ],
     ]);
 
