@@ -711,9 +711,9 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                 name: "moveToLevel",
                 ID: 0x00,
                 parameters: [
-                    {name: "level", type: DataType.UINT8, min: 0, max: 0xff},
+                    {name: "level", type: DataType.UINT8, max: 0xff},
                     // for genLevelCtrlForLighting:
-                    // {name: "level", type: DataType.UINT8, min: 1, max: 0xfe},
+                    // {name: "level", type: DataType.UINT8, max: 0xfe},
                     {name: "transtime", type: DataType.UINT16},
                     // XXX: behind bytes condition due to likely missing fields with many devices
                     {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
@@ -776,9 +776,9 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                 name: "moveToLevelWithOnOff",
                 ID: 0x04,
                 parameters: [
-                    {name: "level", type: DataType.UINT8, min: 0, max: 0xff},
+                    {name: "level", type: DataType.UINT8, max: 0xff},
                     // for genLevelCtrlForLighting:
-                    // {name: "level", type: DataType.UINT8, min: 1, max: 0xfe},
+                    // {name: "level", type: DataType.UINT8, max: 0xfe},
                     {name: "transtime", type: DataType.UINT16},
                     // XXX: behind bytes condition due to likely missing fields with many devices
                     {name: "optionsMask", type: DataType.BITMAP8, conditions: [{type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES, value: 1}]},
