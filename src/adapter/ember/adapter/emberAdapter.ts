@@ -2012,7 +2012,6 @@ export class EmberAdapter extends Adapter {
                     metrics.emit("adapterRetry", {adapterType: "ember", ieeeAddr, reason: SLStatus[status] ?? String(status)});
                     await wait(QUEUE_BUSY_DEFER_MSEC);
                 } else if (status === SLStatus.NETWORK_DOWN) {
-                    metrics.emit("adapterRetry", {adapterType: "ember", ieeeAddr, reason: "NETWORK_DOWN"});
                     await wait(QUEUE_NETWORK_DOWN_DEFER_MSEC);
                 } else {
                     throw new Error(
