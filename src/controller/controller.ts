@@ -150,8 +150,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         Entity.injectDatabase(this.database);
 
         // Adapter (create and inject)
-        const rawAdapter = await Adapter.create(this.options.network, this.options.serialPort, this.options.backupPath, this.options.adapter);
-        this.adapter = rawAdapter;
+        this.adapter = await Adapter.create(this.options.network, this.options.serialPort, this.options.backupPath, this.options.adapter);
 
         abortSignal?.throwIfAborted();
 
