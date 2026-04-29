@@ -513,6 +513,7 @@ describe("Ember Adapter Layer", () => {
             END_DEVICE_POLL_TIMEOUT: 12,
             TRANSIENT_KEY_TIMEOUT_S: 500,
             CCA_MODE: "SIGNAL_AND_RSSI",
+            SEND_MULTICASTS_TO_SLEEPY_ADDRESS: true,
         };
 
         writeFileSync(STACK_CONFIG_PATH, JSON.stringify(config, undefined, 2));
@@ -612,6 +613,7 @@ describe("Ember Adapter Layer", () => {
             END_DEVICE_POLL_TIMEOUT: 12,
             TRANSIENT_KEY_TIMEOUT_S: 500,
             CCA_MODE: "SIGNAL_AND_RSSI",
+            SEND_MULTICASTS_TO_SLEEPY_ADDRESS: true,
         };
 
         writeFileSync(STACK_CONFIG_PATH, JSON.stringify(config, undefined, 2));
@@ -625,6 +627,7 @@ describe("Ember Adapter Layer", () => {
         expect(mockEzspSetConfigurationValue).toHaveBeenCalledWith(EzspConfigId.MAX_END_DEVICE_CHILDREN, config.MAX_END_DEVICE_CHILDREN);
         expect(mockEzspSetConfigurationValue).toHaveBeenCalledWith(EzspConfigId.END_DEVICE_POLL_TIMEOUT, config.END_DEVICE_POLL_TIMEOUT);
         expect(mockEzspSetConfigurationValue).toHaveBeenCalledWith(EzspConfigId.TRANSIENT_KEY_TIMEOUT_S, config.TRANSIENT_KEY_TIMEOUT_S);
+        expect(mockEzspSetConfigurationValue).toHaveBeenCalledWith(EzspConfigId.SEND_MULTICASTS_TO_SLEEPY_ADDRESS, 1);
         expect(mockEzspSetConcentrator).toHaveBeenCalledWith(
             true,
             EMBER_LOW_RAM_CONCENTRATOR,
@@ -653,6 +656,26 @@ describe("Ember Adapter Layer", () => {
         await vi.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual("resumed");
         expect(mockEzspSetRadioIeee802154CcaMode).toHaveBeenCalledTimes(0);
+
+        // cleanup
+        unlinkSync(STACK_CONFIG_PATH);
+    });
+
+    it("Starts with custom stack config invalid SEND_MULTICASTS_TO_SLEEPY_ADDRESS", async () => {
+        const config = {
+            SEND_MULTICASTS_TO_SLEEPY_ADDRESS: 42,
+        };
+
+        writeFileSync(STACK_CONFIG_PATH, JSON.stringify(config, undefined, 2));
+
+        adapter = new EmberAdapter(DEFAULT_NETWORK_OPTIONS, DEFAULT_SERIAL_PORT_OPTIONS, backupPath, DEFAULT_ADAPTER_OPTIONS);
+        const result = adapter.start();
+
+        await vi.advanceTimersByTimeAsync(5000);
+        await expect(result).resolves.toStrictEqual("resumed");
+        expect(mockEzspSetConfigurationValue).not.toHaveBeenCalledWith(EzspConfigId.SEND_MULTICASTS_TO_SLEEPY_ADDRESS, 0);
+        expect(mockEzspSetConfigurationValue).not.toHaveBeenCalledWith(EzspConfigId.SEND_MULTICASTS_TO_SLEEPY_ADDRESS, 1);
+        expect(loggerSpies.error).toHaveBeenCalledWith("[STACK CONFIG] Invalid SEND_MULTICASTS_TO_SLEEPY_ADDRESS, ignoring.", "zh:ember");
 
         // cleanup
         unlinkSync(STACK_CONFIG_PATH);
