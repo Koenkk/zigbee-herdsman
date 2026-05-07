@@ -695,4 +695,22 @@ describe("Device", () => {
 
         delete process.env.DISABLE_TUYA_DEFAULT_RESPONSE;
     });
+
+    it("updateGenBasic preserves known values when payload contains undefined", () => {
+        // Models the multi-endpoint genBasic re-read during interview: endpoint 1 returns a real
+        // value, endpoint 2 returns UNSUPPORTED_ATTRIBUTE which surfaces as `undefined` through
+        // ZclFrameConverter.attributeKeyValue. The second update must not wipe the first.
+        device.updateGenBasic({swBuildId: "2.16", dateCode: "20240101"});
+        expect(device.softwareBuildID).toStrictEqual("2.16");
+        expect(device.dateCode).toStrictEqual("20240101");
+
+        device.updateGenBasic({swBuildId: undefined, dateCode: undefined});
+        expect(device.softwareBuildID).toStrictEqual("2.16");
+        expect(device.dateCode).toStrictEqual("20240101");
+
+        // Successful updates with real values still overwrite as before.
+        device.updateGenBasic({swBuildId: "2.17"});
+        expect(device.softwareBuildID).toStrictEqual("2.17");
+        expect(device.dateCode).toStrictEqual("20240101");
+    });
 });
