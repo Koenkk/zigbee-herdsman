@@ -343,15 +343,7 @@ export class Device extends Entity<ControllerEventMap> {
     }
 
     public updateGenBasic(data: TPartialClusterAttributes<"genBasic">): void {
-        // Skip `undefined` values so a non-success `readRsp` record (e.g. UNSUPPORTED_ATTRIBUTE on a
-        // secondary endpoint) cannot wipe out a previously known value from another endpoint.
-        for (const key in data) {
-            const value = data[key as keyof typeof data];
-            if (value !== undefined) {
-                // biome-ignore lint/suspicious/noExplicitAny: indexed write into typed partial
-                (this.#genBasic as any)[key] = value;
-            }
-        }
+        Object.assign(this.#genBasic, data);
     }
 
     public implicitCheckin(): void {
