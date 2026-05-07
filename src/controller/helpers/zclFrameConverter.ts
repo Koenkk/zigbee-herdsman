@@ -27,6 +27,15 @@ function attributeKeyValue<Cl extends number | string, Custom extends TCustomClu
     for (const item of frame.payload as TFoundation["report" | "write" | "readRsp"]) {
         const attribute = Zcl.Utils.getClusterAttribute(cluster, item.attrId, manufacturerCode);
 
+        // Per ZCL spec, non-success `readRsp` records carry no value; don't synthesize one.
+        if ("status" in item && item.status !== Zcl.Status.SUCCESS) {
+            logger.debug(
+                `Ignoring ${cluster.name}.${attribute?.name ?? item.attrId} from response: status=${Zcl.Status[item.status] ?? item.status}`,
+                NS,
+            );
+            continue;
+        }
+
         if (attribute) {
             try {
                 const attrData = Zcl.Utils.processAttributePostRead(attribute, item.attrData);
