@@ -8985,6 +8985,43 @@ describe("Controller", () => {
             expect(events.message[0].data).toMatchObject({calibrationMode: 4});
             expect(events.message[0].data).not.toMatchObject({tuyaMotorReversal: 4});
         });
+
+        it("Should drop non-success records from readRsp payloads", async () => {
+            await controller.start();
+            await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+            const device = controller.getDeviceByIeeeAddr("0x129")!;
+            device.updateGenBasic({swBuildId: "2.16"});
+
+            const frame = Zcl.Frame.create(
+                Zcl.FrameType.GLOBAL,
+                Zcl.Direction.SERVER_TO_CLIENT,
+                true,
+                undefined,
+                10,
+                "readRsp",
+                Zcl.Clusters.genBasic.ID,
+                [
+                    {attrId: 0x0005, status: Zcl.Status.SUCCESS, dataType: Zcl.DataType.CHAR_STR, attrData: "myModelID"},
+                    {attrId: 0x4000, status: Zcl.Status.UNSUPPORTED_ATTRIBUTE},
+                ],
+                {},
+            );
+            await mockAdapterEvents.zclPayload({
+                wasBroadcast: false,
+                address: "0x129",
+                clusterID: frame.cluster.ID,
+                data: frame.toBuffer(),
+                header: frame.header,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 0,
+            });
+
+            expect(events.message.length).toBe(1);
+            expect(events.message[0].data).toStrictEqual({modelId: "myModelID"});
+            expect(device.softwareBuildID).toStrictEqual("2.16");
+            expect(device.modelID).toStrictEqual("myModelID");
+        });
     });
 
     describe("ZCL frame converter attributeList", () => {
