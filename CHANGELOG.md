@@ -1,5 +1,16 @@
 # Changelog
 
+## [10.0.8](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.7...v10.0.8) (2026-05-08)
+
+
+### Bug Fixes
+
+* **ignore:** bump @biomejs/biome from 2.4.11 to 2.4.12 in the minor-patch group ([#1747](https://github.com/Koenkk/zigbee-herdsman/issues/1747)) ([d8a467f](https://github.com/Koenkk/zigbee-herdsman/commit/d8a467fa345633ab4252e3e283abe2e7cfa64140))
+* **ignore:** bump @biomejs/biome from 2.4.13 to 2.4.14 in the minor-patch group ([#1754](https://github.com/Koenkk/zigbee-herdsman/issues/1754)) ([ac05792](https://github.com/Koenkk/zigbee-herdsman/commit/ac057926458c6b199b50596d101825ef2be5d151))
+* **ignore:** bump the minor-patch group with 2 updates ([#1750](https://github.com/Koenkk/zigbee-herdsman/issues/1750)) ([5ad1810](https://github.com/Koenkk/zigbee-herdsman/commit/5ad18102282f0581c35b6909caabf70cbf622134))
+* MoveToLevel min and max ([#1752](https://github.com/Koenkk/zigbee-herdsman/issues/1752)) ([b7bf626](https://github.com/Koenkk/zigbee-herdsman/commit/b7bf6264d3f178fcbf53d02c2906b0fe52e941d8))
+* Preserve genBasic attributes when re-read returns undefined ([#1753](https://github.com/Koenkk/zigbee-herdsman/issues/1753)) ([9ab49a1](https://github.com/Koenkk/zigbee-herdsman/commit/9ab49a1868899cf724c00e8faf077b588c2842d0))
+
 ## [10.0.7](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.6...v10.0.7) (2026-04-11)
 
 
