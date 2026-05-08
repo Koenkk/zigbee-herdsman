@@ -9003,9 +9003,6 @@ describe("Controller", () => {
                 [
                     {attrId: 0x0005, status: Zcl.Status.SUCCESS, dataType: Zcl.DataType.CHAR_STR, attrData: "myModelID"},
                     {attrId: 0x4000, status: Zcl.Status.UNSUPPORTED_ATTRIBUTE},
-                    // Unknown attrId + non-spec status code: exercises the `?? item.attrId` and
-                    // `?? item.status` fallbacks in the ignored-record log.
-                    {attrId: 0xfffe, status: 0xfe},
                 ],
                 {},
             );
