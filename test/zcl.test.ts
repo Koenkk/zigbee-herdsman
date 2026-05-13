@@ -2128,6 +2128,7 @@ describe("Zcl", () => {
         ).toStrictEqual({
             manufacturerCode: 13330,
             clusterID: 65535,
+            clusterName: "65535",
             attributes: {
                 "0": 50462976,
                 "1": "ZIGBEE",

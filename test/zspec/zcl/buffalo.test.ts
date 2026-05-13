@@ -1132,19 +1132,14 @@ describe("ZCL Buffalo", () => {
 
         it("Reads attribute report", () => {
             const value = [
-                0x12,
-                0x34, // Manufacturer ID
-                0xff,
-                0xff, // Cluster ID
                 0x00,
+                0x00, // Cluster ID
+                0x01,
                 0x00, // Attribute ID
-                Zcl.DataType.UINT32, // Attribute Type
-                0x00,
+                Zcl.DataType.UINT8, // Attribute Type
+                0xff,
                 0x01,
-                0x02,
-                0x03,
-                0x01,
-                0x00,
+                0x10,
                 Zcl.DataType.CHAR_STR,
                 0x06,
                 0x5a,
@@ -1154,16 +1149,188 @@ describe("ZCL Buffalo", () => {
                 0x45,
                 0x45,
                 0x02,
+                0x10,
+                Zcl.DataType.BOOLEAN,
+                0x01,
+            ];
+            const buffalo = new BuffaloZcl(Buffer.from(value));
+
+            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xa0, payloadSize: value.length}})).toStrictEqual({
+                clusterID: 0x0000,
+                clusterName: "genBasic",
+                attributes: {appVersion: 0xff, 4097: "ZIGBEE", 4098: 1},
+            });
+        });
+
+        it("Reads manufacturer-specific attribute report", () => {
+            const value = [
+                0x12,
+                0x34, // Manufacturer ID
                 0x00,
+                0x00, // Cluster ID
+                0x00,
+                0x00, // Attribute ID
+                Zcl.DataType.UINT8, // Attribute Type
+                0x08,
+                0x01,
+                0x20,
+                Zcl.DataType.CHAR_STR,
+                0x06,
+                0x5a,
+                0x49,
+                0x47,
+                0x42,
+                0x45,
+                0x45,
+                0x02,
+                0x20,
                 Zcl.DataType.BOOLEAN,
                 0x01,
             ];
             const buffalo = new BuffaloZcl(Buffer.from(value));
 
             expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xa1, payloadSize: value.length}})).toStrictEqual({
-                manufacturerCode: 13330,
-                clusterID: 65535,
-                attributes: {"0": 50462976, "1": "ZIGBEE", "2": 1},
+                manufacturerCode: 0x3412,
+                clusterID: 0x0000,
+                clusterName: "genBasic",
+                attributes: {zclVersion: 8, 8193: "ZIGBEE", 8194: 1},
+            });
+        });
+
+        it("Reads multi-cluster attribute report", () => {
+            const value = [
+                0xff,
+                0xff, // Cluster ID
+                0x00,
+                0x00, // Attribute ID
+                Zcl.DataType.UINT32, // Attribute Type
+                0x00,
+                0x01,
+                0x02,
+                0x03,
+                0x00,
+                0x00, // Cluster ID
+                0x01,
+                0x00, // Attribute ID
+                Zcl.DataType.UINT8, // Attribute Type
+                0x10,
+            ];
+            const buffalo = new BuffaloZcl(Buffer.from(value));
+
+            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xa2, payloadSize: value.length}})).toStrictEqual({
+                reports: [
+                    {
+                        clusterID: 0xffff,
+                        clusterName: "65535",
+                        attribute: 0,
+                        attrData: 50462976,
+                    },
+                    {
+                        clusterID: 0x0000,
+                        clusterName: "genBasic",
+                        attribute: "appVersion",
+                        attrData: 0x10,
+                    },
+                ],
+            });
+        });
+
+        it("Reads manufacturer-specific multi-cluster attribute report", () => {
+            const value = [
+                0xef,
+                0xf3, // Manufacturer code
+                0x00,
+                0x00, // Cluster ID
+                0x00,
+                0x00, // Attribute ID
+                Zcl.DataType.UINT8, // Attribute Type
+                0x08,
+                0xff,
+                0xfe, // Cluster ID
+                0x00,
+                0x01, // Attribute ID
+                Zcl.DataType.UINT16, // Attribute Type
+                0x10,
+                0x11,
+            ];
+            const buffalo = new BuffaloZcl(Buffer.from(value));
+
+            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xa3, payloadSize: value.length}})).toStrictEqual({
+                manufacturerCode: 0xf3ef,
+                reports: [
+                    {
+                        clusterID: 0x0000,
+                        clusterName: "genBasic",
+                        attribute: "zclVersion",
+                        attrData: 8,
+                    },
+                    {
+                        clusterID: 0xfeff,
+                        clusterName: "65279",
+                        attribute: 0x0100,
+                        attrData: 4368,
+                    },
+                ],
+            });
+        });
+
+        it("Reads attribute request", () => {
+            const value = [
+                0x02, // Options
+                0xfe,
+                0xef, // Manufacturer code
+                0xff,
+                0xff, // Cluster ID
+                0x02, // Length
+                0x00,
+                0x00, // Attribute ID
+                0x00,
+                0x01, // Attribute ID
+            ];
+            const buffalo = new BuffaloZcl(Buffer.from(value));
+
+            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xa4, payloadSize: value.length}})).toStrictEqual({
+                options: 0x02,
+                manufacturerID: 0xeffe,
+                records: [{clusterID: 0xffff, attributes: [0x0000, 0x0100]}],
+            });
+        });
+
+        it("Reads attribute response", () => {
+            const value = [
+                0x02, // Options
+                0xfe,
+                0xef, // Manufacturer code
+                0x00,
+                0x00, // Cluster ID
+                0x02, // Length
+                0x00,
+                0x00, // Attribute ID
+                0x00, // Status
+                Zcl.DataType.UINT8, // Data type
+                0x08, // Attr data
+                0xfc,
+                0xff, // Attribute ID
+                0x00, // Status
+                Zcl.DataType.UINT16, // Data type
+                0x00,
+                0x10, // Attr data
+            ];
+            const buffalo = new BuffaloZcl(Buffer.from(value));
+
+            expect(buffalo.read(Zcl.BuffaloZclDataType.GPD_FRAME, {payload: {commandID: 0xa5, payloadSize: value.length}})).toStrictEqual({
+                options: 0x02,
+                manufacturerID: 0xeffe,
+                records: [
+                    {
+                        clusterID: 0x0000,
+                        clusterName: "genBasic",
+                        attributes: {
+                            zclVersion: {status: Zcl.Status.SUCCESS, attrData: 0x08},
+                            65532: {status: Zcl.Status.SUCCESS, attrData: 0x1000},
+                        },
+                    },
+                ],
             });
         });
 

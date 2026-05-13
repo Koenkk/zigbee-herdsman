@@ -540,12 +540,12 @@ export class BuffaloZcl extends Buffalo {
                     const attributeId = this.readUInt16();
                     const dataType = this.readUInt8();
                     const attributeNameOrId = getClusterAttribute(cluster, attributeId, undefined)?.name ?? attributeId;
-                    const attributeData = this.read(dataType, options);
+                    const attrData = this.read(dataType, options);
                     const report: GpdMultiClusterAttributeReport["reports"][number] = {
                         clusterID,
                         clusterName: cluster.name,
                         attribute: attributeNameOrId,
-                        attributeData,
+                        attrData,
                     };
 
                     frame.reports.push(report);
@@ -567,12 +567,12 @@ export class BuffaloZcl extends Buffalo {
                     const dataType = this.readUInt8();
                     // many times will fallback to ID since lots of unknown manu-specific attributes (handled in ZHC)
                     const attributeNameOrId = getClusterAttribute(cluster, attributeId, manufacturerCode)?.name ?? attributeId;
-                    const attributeData = this.read(dataType, options);
+                    const attrData = this.read(dataType, options);
                     const report: GpdManufMultiClusterAttributeReport["reports"][number] = {
                         clusterID,
                         clusterName: cluster.name,
                         attribute: attributeNameOrId,
-                        attributeData,
+                        attrData,
                     };
 
                     frame.reports.push(report);
@@ -630,6 +630,8 @@ export class BuffaloZcl extends Buffalo {
                             attrData: this.read(dataType, options),
                         };
                     }
+
+                    frame.records.push(record);
                 }
 
                 this.setPosition(startPosition + options.payload.payloadSize);

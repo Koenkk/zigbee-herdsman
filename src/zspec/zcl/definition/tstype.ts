@@ -131,7 +131,7 @@ export type GpdMultiClusterAttributeReport = {
         clusterID: number;
         clusterName: string;
         attribute: string | number;
-        attributeData: unknown;
+        attrData: unknown;
     }>;
 };
 
