@@ -602,7 +602,7 @@ export interface TClusters {
         commands: {
             /** ID=0x00 | required=true */
             moveToLevel: {
-                /** type=UINT8 */
+                /** type=UINT8 | max=255 */
                 level: number;
                 /** type=UINT16 */
                 transtime: number;
@@ -644,7 +644,7 @@ export interface TClusters {
             };
             /** ID=0x04 | required=true */
             moveToLevelWithOnOff: {
-                /** type=UINT8 */
+                /** type=UINT8 | max=255 */
                 level: number;
                 /** type=UINT16 */
                 transtime: number;
