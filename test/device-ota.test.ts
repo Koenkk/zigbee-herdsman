@@ -20,6 +20,7 @@ const OTA_CLUSTER_ID = Zcl.Clusters.genOta.ID;
 const QUERY_NEXT_IMAGE_REQUEST_ID = Zcl.Clusters.genOta.commands.queryNextImageRequest.ID;
 const UPGRADE_END_REQUEST_ID = Zcl.Clusters.genOta.commands.upgradeEndRequest.ID;
 const IMAGE_BLOCK_REQUEST_ID = Zcl.Clusters.genOta.commands.imageBlockRequest.ID;
+const IMAGE_BLOCK_RESPONSE_ID = Zcl.Clusters.genOta.commandsResponse.imageBlockResponse.ID;
 const IMAGE_PAGE_REQUEST_ID = Zcl.Clusters.genOta.commands.imagePageRequest.ID;
 
 type OtaDeviceBehavior = {
@@ -143,7 +144,7 @@ const createOtaDeviceWaitFor = (
                 transactionSequenceNumber ?? blockTsn,
                 "defaultRsp",
                 "genOta",
-                {cmdId: 5, statusCode: settings.triggerDefaultResponse},
+                {cmdId: IMAGE_BLOCK_RESPONSE_ID, statusCode: settings.triggerDefaultResponse},
                 {},
             );
             repeatLastBlock = true;
