@@ -31,6 +31,8 @@ type OtaDeviceBehavior = {
     useNonValueDataSize?: boolean;
     /** Mimick the device stopping image block/page requests at specified block (i.e. stalling) */
     stopAfterBlocks?: number;
+    /** Mimick a received default response after block 1. Will repeat last block. */
+    triggerDefaultResponse?: Zcl.Status;
     /** Mimick the device sending out-of-order offset for block/page request, block 2 swapped with block 3 */
     shuffleOffsets?: boolean;
     /**
@@ -130,6 +132,37 @@ const createOtaDeviceWaitFor = (
             repeatLastBlock = false;
             // revert offset to previous block
             ({offset: nextOffset} = previousBlock);
+        }
+
+        if (blocksServed === 1 && settings.triggerDefaultResponse) {
+            const frame = Zcl.Frame.create(
+                Zcl.FrameType.GLOBAL,
+                Zcl.Direction.CLIENT_TO_SERVER,
+                true,
+                undefined,
+                transactionSequenceNumber ?? blockTsn,
+                "defaultRsp",
+                "genOta",
+                {cmdId: 5, statusCode: settings.triggerDefaultResponse},
+                {},
+            );
+            repeatLastBlock = true;
+            settings.triggerDefaultResponse = undefined;
+
+            return {
+                promise: Promise.resolve({
+                    clusterID: OTA_CLUSTER_ID,
+                    header: frame.header,
+                    data: frame.toBuffer(),
+                    endpoint: endpointId,
+                    linkquality: 0,
+                    address: networkAddress,
+                    groupID: 0,
+                    wasBroadcast: false,
+                    destinationEndpoint: endpointId,
+                }),
+                cancel: () => {},
+            };
         }
 
         if (settings.stopAfterBlocks !== undefined && blocksServed >= settings.stopAfterBlocks) {
@@ -1223,6 +1256,36 @@ describe("Device OTA", () => {
             expect(from.fileVersion).toStrictEqual(requestPayload.fileVersion);
             expect(to?.fileVersion).toStrictEqual(image.header.fileVersion);
             expect(getResponses(endpoint, "imageBlockResponse").length).toStrictEqual(expectedBlocks);
+            expect(getResponses(endpoint, "upgradeEndResponse").length).toStrictEqual(1);
+            expect(device.otaInProgress).toStrictEqual(false);
+        });
+
+        it("handles receiving default response after block response", async () => {
+            const fileName = OTA_FILES[0];
+            const [image] = await loadImage(fileName);
+            firmwareBuffer = image.raw;
+            const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
+                fieldControl: 0,
+                manufacturerCode: image.header.manufacturerCode,
+                imageType: image.header.imageType,
+                fileVersion: image.header.fileVersion - 1,
+            };
+            const baseSize = 55;
+            const expectedBlocks = Math.ceil(image.header.totalImageSize / baseSize);
+
+            const {device, endpoint, run} = createDevice({
+                image,
+                source: {},
+                requestPayload,
+                dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
+                behavior: {baseSize, sendUpgradeEnd: true, triggerDefaultResponse: Zcl.Status.MALFORMED_COMMAND},
+            });
+
+            const [from, to] = await run();
+
+            expect(from.fileVersion).toStrictEqual(requestPayload.fileVersion);
+            expect(to?.fileVersion).toStrictEqual(image.header.fileVersion);
+            expect(getResponses(endpoint, "imageBlockResponse").length).toStrictEqual(expectedBlocks + 1);
             expect(getResponses(endpoint, "upgradeEndResponse").length).toStrictEqual(1);
             expect(device.otaInProgress).toStrictEqual(false);
         });
