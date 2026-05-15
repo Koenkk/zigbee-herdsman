@@ -206,6 +206,8 @@ export interface EmberEzspEventMap {
     ];
     /** @see Ezsp.ezspMessageSentHandler */
     messageSent: [status: SLStatus, type: EmberOutgoingMessageType, indexOrDestination: number, apsFrame: EmberApsFrame, messageTag: number];
+    /** @see Ezsp.ezspRawTransmitCompleteHandler */
+    rawTransmitComplete: [];
 }
 
 /**
@@ -5982,6 +5984,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
      */
     ezspRawTransmitCompleteHandler(messageContents: Buffer, status: SLStatus): void {
         logger.debug(`ezspRawTransmitCompleteHandler: messageContents=${messageContents.toString("hex")} status=${SLStatus[status]}`, NS);
+        this.emit("rawTransmitComplete");
     }
 
     /**

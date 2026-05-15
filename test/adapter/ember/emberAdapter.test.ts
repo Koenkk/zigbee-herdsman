@@ -271,7 +271,12 @@ const mockEzspSetRadioPower = vi.fn().mockResolvedValue(SLStatus.OK);
 const mockEzspImportTransientKey = vi.fn().mockResolvedValue(SLStatus.OK);
 const mockEzspClearTransientLinkKeys = vi.fn().mockResolvedValue(SLStatus.OK);
 const mockEzspSetLogicalAndRadioChannel = vi.fn().mockResolvedValue(SLStatus.OK);
-const mockEzspSendRawMessage = vi.fn().mockResolvedValue(SLStatus.OK);
+const mockEzspSendRawMessage = vi.fn().mockImplementation(() => {
+    process.nextTick(() => {
+        mockEzspEmitter.emit("rawTransmitComplete");
+    });
+    return SLStatus.OK;
+});
 const mockEzspSetNWKFrameCounter = vi.fn().mockResolvedValue(SLStatus.OK);
 const mockEzspSetAPSFrameCounter = vi.fn().mockResolvedValue(SLStatus.OK);
 
@@ -3435,6 +3440,8 @@ describe("Ember Adapter Layer", () => {
 
             mockEzspSendRawMessage.mockImplementationOnce(() => {
                 setTimeout(async () => {
+                    mockEzspEmitter.emit("rawTransmitComplete");
+                    await flushPromises();
                     mockEzspEmitter.emit("touchlinkMessage", sourcePanId, sourceAddress, groupId, lastHopLqi, messageContents);
                     await flushPromises();
                 }, 300);

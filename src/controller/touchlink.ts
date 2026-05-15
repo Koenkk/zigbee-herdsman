@@ -29,7 +29,7 @@ const createIdentifyRequestFrame = (transaction: number): Zcl.Frame =>
         0,
         "identifyRequest",
         "touchlink",
-        {transactionID: transaction, duration: 65535},
+        {transactionID: transaction, duration: 5},
         {},
     );
 
@@ -118,8 +118,12 @@ export class Touchlink {
 
             await this.setChannelInterPAN(channel);
 
-            await this.adapter.sendZclFrameInterPANBroadcast(createScanRequestFrame(transaction), 500, false);
-            logger.debug(`Got scan response on channel '${channel}'`, NS);
+            try {
+                await this.adapter.sendZclFrameInterPANBroadcast(createScanRequestFrame(transaction), 500, false);
+                logger.debug(`Got scan response on channel '${channel}'`, NS);
+            } catch (error) {
+                logger.warning(`Scan request on channel '${channel}' failed or was not answered, still attempting identify: '${error}'`, NS);
+            }
 
             logger.debug(`Identifying '${ieeeAddr}'`, NS);
             await this.adapter.sendZclFrameInterPANToIeeeAddr(createIdentifyRequestFrame(transaction), ieeeAddr);
@@ -136,8 +140,12 @@ export class Touchlink {
 
             await this.setChannelInterPAN(channel);
 
-            await this.adapter.sendZclFrameInterPANBroadcast(createScanRequestFrame(transaction), 500, false);
-            logger.debug(`Got scan response on channel '${channel}'`, NS);
+            try {
+                await this.adapter.sendZclFrameInterPANBroadcast(createScanRequestFrame(transaction), 500, false);
+                logger.debug(`Got scan response on channel '${channel}'`, NS);
+            } catch (error) {
+                logger.warning(`Scan request on channel '${channel}' failed or was not answered, still attempting factory reset: '${error}'`, NS);
+            }
 
             logger.debug(`Identifying '${ieeeAddr}'`, NS);
             await this.adapter.sendZclFrameInterPANToIeeeAddr(createIdentifyRequestFrame(transaction), ieeeAddr);
