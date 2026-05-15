@@ -535,7 +535,12 @@ export class Device extends Entity<ControllerEventMap> {
                             if (startedFastPolling) {
                                 // We *must* end fast-poll when we're done sending things. Otherwise we cause undue power-drain.
                                 logger.debug(`check-in from ${this.ieeeAddr}: stopping fast-poll`, NS);
-                                await endpoint.command(cluster.name as "genPollCtrl", "fastPollStop", {}, {sendPolicy: "immediate"});
+
+                                try {
+                                    await endpoint.command(cluster.name as "genPollCtrl", "fastPollStop", {}, {sendPolicy: "immediate"});
+                                } catch (error) {
+                                    logger.error(`Failed to stop fast poll for ${this.ieeeAddr} (${(error as Error).message})`, NS);
+                                }
                             }
                         }
                     }

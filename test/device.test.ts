@@ -407,6 +407,39 @@ describe("Device", () => {
         });
     });
 
+    it("fails to stop fast poll", async () => {
+        device.checkinInterval = undefined;
+        const frame = ZclFrame.create(FrameType.SPECIFIC, Direction.SERVER_TO_CLIENT, false, undefined, 1, "checkin", "genPollCtrl", {}, {});
+        const dataPayload: ZclPayload = {
+            clusterID: frame.cluster.ID,
+            address: 0x1234,
+            header: frame.header,
+            data: frame.toBuffer(),
+            endpoint: 1,
+            linkquality: 150,
+            groupID: 0,
+            wasBroadcast: false,
+            destinationEndpoint: 1,
+        };
+
+        readSpy.mockResolvedValueOnce({checkinInterval: 100});
+        commandSpy.mockImplementationOnce(() => {}).mockRejectedValueOnce(new Error("failure"));
+        await device.onZclData(dataPayload, frame, endpoint, undefined);
+
+        expect(readResponseSpy).toHaveBeenCalledTimes(0);
+        expect(commandSpy).toHaveBeenCalledTimes(2);
+        expect(commandSpy).toHaveBeenCalledWith(
+            "genPollCtrl",
+            "checkinRsp",
+            {startFastPolling: 1, fastPollTimeout: 0},
+            {transactionSequenceNumber: 1, disableDefaultResponse: true, sendPolicy: "immediate"},
+        );
+        expect(commandSpy).toHaveBeenNthCalledWith(2, "genPollCtrl", "fastPollStop", {}, {sendPolicy: "immediate"});
+        expect(readSpy).toHaveBeenCalledTimes(1);
+        expect(readSpy).toHaveBeenCalledWith("genPollCtrl", ["checkinInterval"], {sendPolicy: "immediate"});
+        expect(defaultResponseSpy).toHaveBeenCalledTimes(0);
+    });
+
     it("replies to GLOBAL with SUCCESS default response by default", async () => {
         const frame = ZclFrame.create(
             FrameType.GLOBAL,
