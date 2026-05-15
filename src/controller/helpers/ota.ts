@@ -6,7 +6,7 @@ import {performance} from "node:perf_hooks";
 import {logger} from "../../utils/logger";
 import * as Zcl from "../../zspec/zcl";
 import type {TClusterCommandPayload, TClusterPayload} from "../../zspec/zcl/definition/clusters-types";
-import type {TZclFrame} from "../../zspec/zcl/zclFrame";
+import type {TFoundationZclFrame, TZclFrame} from "../../zspec/zcl/zclFrame";
 import type Endpoint from "../model/endpoint";
 import type {OtaDataSettings, OtaImage, OtaImageElement, OtaImageHeader, OtaSource, ZigbeeOtaImageMeta} from "../tstype";
 
@@ -451,6 +451,11 @@ export class OtaSession {
 
         try {
             for await (const request of this.commandStream(upgradeEndRequest)) {
+                if (request.header.isGlobal) {
+                    // ignore default responses, device should continue requesting blocks
+                    continue;
+                }
+
                 if (request.command.ID === UPGRADE_END_REQUEST_ID) {
                     return request as TZclFrame<"genOta", "upgradeEndRequest">;
                 }
@@ -498,7 +503,7 @@ export class OtaSession {
     private async *commandStream(upgradeEndRequest: {
         promise: Promise<TZclFrame<"genOta", "upgradeEndRequest">>;
         cancel: () => void;
-    }): AsyncGenerator<OtaDataRequest | OtaUpgradeEndRequest> {
+    }): AsyncGenerator<OtaDataRequest | OtaUpgradeEndRequest | TFoundationZclFrame<"defaultRsp">> {
         while (true) {
             const imageBlockRequest = this.waitForOtaCommand<"imageBlockRequest">(
                 this.endpoint.ID,
