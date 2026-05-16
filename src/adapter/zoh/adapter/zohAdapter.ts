@@ -8,6 +8,7 @@ import type {ZigbeeAPSHeader, ZigbeeAPSPayload} from "zigbee-on-host/dist/zigbee
 import type {ZigbeeNWKGPHeader} from "zigbee-on-host/dist/zigbee/zigbee-nwkgp";
 import type {Backup} from "../../../models/backup";
 import {logger} from "../../../utils/logger";
+import {metrics} from "../../../utils/metrics";
 import {Queue} from "../../../utils/queue";
 import {wait} from "../../../utils/wait";
 import {Waitress} from "../../../utils/waitress";
@@ -646,6 +647,7 @@ export class ZoHAdapter extends Adapter {
                     if (disableRecovery || i === 1) {
                         throw error;
                     } // else retry
+                    metrics.emit("adapterRetry", {adapterType: "zoh", ieeeAddr, reason: "send_failure"});
                 }
                 /* v8 ignore start */
             } // coverage detection failure

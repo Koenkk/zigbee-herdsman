@@ -32,6 +32,7 @@ export class Request<Type = any> {
     private func: () => Promise<Type>;
     frame: Zcl.Frame;
     expires: number;
+    enqueuedAt: number | undefined;
     sendPolicy: SendPolicy | undefined;
     private resolveQueue: Array<(value: Type) => void>;
     private rejectQueue: Array<(error: Error) => void>;
@@ -49,6 +50,7 @@ export class Request<Type = any> {
         this.func = func;
         this.frame = frame;
         this.expires = timeout + Date.now();
+        this.enqueuedAt = undefined;
         this.sendPolicy = sendPolicy ?? (!frame.command ? undefined : Request.defaultSendPolicy[frame.command.ID]);
         this.resolveQueue = resolve === undefined ? ([] as ((value: Type) => void)[]) : new Array<(value: Type) => void>(resolve);
         this.rejectQueue = reject === undefined ? ([] as ((error: Error) => void)[]) : new Array<(error: Error) => void>(reject);

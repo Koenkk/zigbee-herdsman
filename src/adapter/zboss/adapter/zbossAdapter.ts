@@ -4,6 +4,7 @@ import assert from "node:assert";
 import type {Backup} from "../../../models";
 import {Queue, Waitress} from "../../../utils";
 import {logger} from "../../../utils/logger";
+import {metrics} from "../../../utils/metrics";
 import * as ZSpec from "../../../zspec";
 import * as Zcl from "../../../zspec/zcl";
 import * as Zdo from "../../../zspec/zdo";
@@ -387,6 +388,7 @@ export class ZBOSSAdapter extends Adapter {
                 } catch (error) {
                     logger.debug(`Response timeout (${ieeeAddr}:${networkAddress},${responseAttempt})`, NS);
                     if (responseAttempt < 1 && !disableRecovery) {
+                        metrics.emit("adapterRetry", {adapterType: "zboss", ieeeAddr, reason: "no_response"});
                         return await this.sendZclFrameToEndpointInternal(
                             ieeeAddr,
                             networkAddress,

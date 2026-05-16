@@ -1,5 +1,6 @@
 import equal from "fast-deep-equal/es6";
 import {logger} from "../../utils/logger";
+import {metrics} from "../../utils/metrics";
 import type * as Zcl from "../../zspec/zcl";
 import type {Endpoint} from "../model";
 import type Request from "./request";
@@ -36,6 +37,15 @@ export class RequestQueue extends Set<Request> {
                 logger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.id}): discard after timeout. Size before: ${this.size}`, NS);
                 request.reject();
                 this.delete(request);
+                metrics.emit("requestQueueLength", {ieeeAddr: this.deviceIeeeAddress, endpointId: this.id, length: this.size});
+                if (request.enqueuedAt !== undefined) {
+                    metrics.emit("requestQueueDuration", {
+                        ieeeAddr: this.deviceIeeeAddress,
+                        endpointId: this.id,
+                        outcome: "expired",
+                        durationSeconds: (now - request.enqueuedAt) / 1000,
+                    });
+                }
             }
         }
 
@@ -48,6 +58,15 @@ export class RequestQueue extends Set<Request> {
                     logger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.id}): send success`, NS);
                     request.resolve(result);
                     this.delete(request);
+                    metrics.emit("requestQueueLength", {ieeeAddr: this.deviceIeeeAddress, endpointId: this.id, length: this.size});
+                    if (request.enqueuedAt !== undefined) {
+                        metrics.emit("requestQueueDuration", {
+                            ieeeAddr: this.deviceIeeeAddress,
+                            endpointId: this.id,
+                            outcome: "sent",
+                            durationSeconds: (Date.now() - request.enqueuedAt) / 1000,
+                        });
+                    }
                 } catch (error) {
                     logger.debug(
                         `Request Queue (${this.deviceIeeeAddress}/${this.id}): send failed, expires in ` +
@@ -65,6 +84,8 @@ export class RequestQueue extends Set<Request> {
         return await new Promise((resolve, reject): void => {
             request.addCallbacks(resolve, reject);
             this.add(request);
+            request.enqueuedAt = Date.now();
+            metrics.emit("requestQueueLength", {ieeeAddr: this.deviceIeeeAddress, endpointId: this.id, length: this.size});
         });
     }
 
