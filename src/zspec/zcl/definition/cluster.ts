@@ -2964,6 +2964,43 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
         commands: {},
         commandsResponse: {},
     },
+    zigbeeDirectConfiguration: {
+        // NOTE: only accepts unicast
+        name: "zigbeeDirectConfiguration",
+        ID: 0x003d,
+        attributes: {
+            /** 0: disabled, 1: enabled, other: reserved */
+            interfaceState: {name: "interfaceState", ID: 0x0000, type: DataType.BITMAP8, max: 0xff, required: true},
+            anonymousJoinTimeout: {name: "anonymousJoinTimeout", ID: 0x0001, type: DataType.UINT24, max: 0x100000, required: true},
+        },
+        commands: {
+            configureInterface: {
+                name: "configureInterface",
+                ID: 0x00,
+                response: 0x00,
+                parameters: [{name: "interfaceState", type: DataType.BITMAP8, max: 0xff}],
+                required: true,
+            },
+            configureAnonymousJoinTimeout: {
+                name: "configureAnonymousJoinTimeout",
+                ID: 0x01,
+                // response: defaultRsp
+                parameters: [{name: "anonymousJoinTimeout", type: DataType.UINT24, max: 0x100000}],
+                required: true,
+            },
+        },
+        commandsResponse: {
+            configureInterfaceRsp: {
+                name: "configureInterfaceRsp",
+                ID: 0x00,
+                parameters: [
+                    {name: "status", type: DataType.ENUM8},
+                    {name: "interfaceState", type: DataType.BITMAP8, max: 0xff},
+                ],
+                required: true,
+            },
+        },
+    },
     closuresShadeCfg: {
         name: "closuresShadeCfg",
         ID: 0x0100,
