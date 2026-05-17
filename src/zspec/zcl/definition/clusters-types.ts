@@ -2297,6 +2297,35 @@ export interface TClusters {
         commands: never;
         commandResponses: never;
     };
+    zigbeeDirectConfig: {
+        attributes: {
+            /** ID=0x0000 | type=BITMAP8 | max=255 | required=true */
+            interfaceState: number;
+            /** ID=0x0001 | type=UINT24 | max=1048576 | required=true */
+            anonymousJoinTimeout: number;
+        };
+        commands: {
+            /** ID=0x00 | response=0 | required=true */
+            configureInterface: {
+                /** type=BITMAP8 | max=255 */
+                interfaceState: number;
+            };
+            /** ID=0x01 | required=true */
+            configureAnonymousJoinTimeout: {
+                /** type=UINT24 | max=1048576 */
+                anonymousJoinTimeout: number;
+            };
+        };
+        commandResponses: {
+            /** ID=0x00 | required=true */
+            configureInterfaceRsp: {
+                /** type=ENUM8 */
+                status: number;
+                /** type=BITMAP8 | max=255 */
+                interfaceState: number;
+            };
+        };
+    };
     closuresShadeCfg: {
         attributes: {
             /** ID=0x0000 | type=UINT16 | min=1 | max=65534 */
