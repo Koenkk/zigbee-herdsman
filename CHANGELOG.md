@@ -1,5 +1,20 @@
 # Changelog
 
+## [10.1.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.8...v10.1.0) (2026-05-17)
+
+
+### Features
+
+* add parsing for more GreenPower frames ([#1732](https://github.com/Koenkk/zigbee-herdsman/issues/1732)) ([3f8e4b4](https://github.com/Koenkk/zigbee-herdsman/commit/3f8e4b40ecf9709dc92a29d839380381125a0c04))
+* add support for Zigbee Direct cluster ([#1761](https://github.com/Koenkk/zigbee-herdsman/issues/1761)) ([89e40f8](https://github.com/Koenkk/zigbee-herdsman/commit/89e40f830941fb40d47b879ee4f86081088557b4))
+
+
+### Bug Fixes
+
+* Fix uncaught error in device ZCL event ([#1755](https://github.com/Koenkk/zigbee-herdsman/issues/1755)) ([ffd9a89](https://github.com/Koenkk/zigbee-herdsman/commit/ffd9a896707a535cf7630ae294e8808d69973c6a))
+* ignore default response during OTA blocks sending ([#1756](https://github.com/Koenkk/zigbee-herdsman/issues/1756)) ([2ff4428](https://github.com/Koenkk/zigbee-herdsman/commit/2ff44284975e04269e1060aa050e5384c2be1bec))
+* **ignore:** bump the minor-patch group with 2 updates ([#1757](https://github.com/Koenkk/zigbee-herdsman/issues/1757)) ([594804a](https://github.com/Koenkk/zigbee-herdsman/commit/594804aed19b0a9e8f06fc151f991a61e17180dd))
+
 ## [10.0.8](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.7...v10.0.8) (2026-05-08)
 
 
