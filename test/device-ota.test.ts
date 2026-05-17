@@ -25,31 +25,33 @@ const IMAGE_PAGE_REQUEST_ID = Zcl.Clusters.genOta.commands.imagePageRequest.ID;
 
 type OtaDeviceBehavior = {
     baseSize: number;
-    /** Mimick the device sending image page requests instead of image block requests */
+    /** Mimic the device sending image page requests instead of image block requests */
     usePageRequests?: boolean;
     pageSize?: number;
-    /** Mimick the device sending non-value (0xff) as `maximumDataSize` */
+    /** Mimic the device sending non-value (0xff) as `maximumDataSize` */
     useNonValueDataSize?: boolean;
-    /** Mimick the device stopping image block/page requests at specified block (i.e. stalling) */
+    /** Mimic the device stopping image block/page requests at specified block (i.e. stalling) */
     stopAfterBlocks?: number;
-    /** Mimick a received default response after block 1. Will repeat last block. */
+    /** Mimic a received default response after block 1. Will repeat last block. */
     triggerDefaultResponse?: Zcl.Status;
-    /** Mimick the device sending out-of-order offset for block/page request, block 2 swapped with block 3 */
+    /** Trigger abort after block 1. */
+    abort?: boolean;
+    /** Mimic the device sending out-of-order offset for block/page request, block 2 swapped with block 3 */
     shuffleOffsets?: boolean;
     /**
      * TODO: implement this
-     * Mimick the device sending block/page request with an offset that is lower or higher than expected flow of "previous offset+data size" at block 2:
+     * Mimic the device sending block/page request with an offset that is lower or higher than expected flow of "previous offset+data size" at block 2:
      * - normal flow would be something like: block1=[offset=0, dataSize=50], block2=[offset=50, dataSize=50], block3=[offset=100, dataSize=50]
      * - with this block2 has this applied to offset: block1=[offset=0, dataSize=50], block2=[offset=(dataSize-misalignedOffset), dataSize=50], block3=[offset=(dataSize*2-misalignedOffset), dataSize=50]
      */
     misalignedOffset?: number;
-    /** Mimick failing block 2 response (mimick device sending new image block/page request for same offset) */
-    failBlockResponse?: boolean;
-    /** Mimick the device sending or not of `upgradeEndRequest` (at end of block/page requests, or as specified by other behaviors) */
+    /** Mimic failing given block response (mimic device sending new image block/page request for same offset OR failure to abort) */
+    failBlockResponse?: number;
+    /** Mimic the device sending or not of `upgradeEndRequest` (at end of block/page requests, or as specified by other behaviors) */
     sendUpgradeEnd?: boolean;
-    /** Mimick the device sending that specific status in `upgradeEndRequest` */
+    /** Mimic the device sending that specific status in `upgradeEndRequest` */
     upgradeEndStatus?: Zcl.Status;
-    /** Mimick the device sending `upgradeEndRequest` after that specific block/page request */
+    /** Mimic the device sending `upgradeEndRequest` after that specific block/page request */
     upgradeEndAfterBlocks?: number;
 };
 
@@ -68,6 +70,7 @@ const createEndpointStub = () => {
 };
 
 const createOtaDeviceWaitFor = (
+    device: Device,
     endpoint: Endpoint,
     image: OtaImage,
     current: TClusterCommandPayload<"genOta", "queryNextImageRequest">,
@@ -113,10 +116,10 @@ const createOtaDeviceWaitFor = (
         });
     };
 
-    if (settings.failBlockResponse) {
+    if (settings.failBlockResponse !== undefined) {
         endpoint.commandResponse = vi.fn((_clusterKey, commandKey, _payload, _options, _transactionSequenceNumber) => {
             if (commandKey === "imageBlockResponse") {
-                if (blocksServed === 1) {
+                if (blocksServed === settings.failBlockResponse) {
                     repeatLastBlock = true;
                     return Promise.reject(new Error("block-fail"));
                 }
@@ -218,6 +221,10 @@ const createOtaDeviceWaitFor = (
             maybeScheduleUpgradeEnd();
         } else if (nextOffset >= image.header.totalImageSize && settings.sendUpgradeEnd) {
             maybeScheduleUpgradeEnd();
+        }
+
+        if (blocksServed === 2 && settings.abort) {
+            device.abortOta();
         }
 
         return {
@@ -567,6 +574,7 @@ const createDevice = ({
     database.write = () => {};
     Entity.injectDatabase(database);
 
+    const device = Device.create("Router", "0x1", 0x1001, 1, manufacturerName, "Mains", modelID, InterviewState.Successful, undefined);
     const endpoint = createEndpointStub();
     const currentPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = requestPayload ?? {
         fieldControl: 0,
@@ -574,11 +582,9 @@ const createDevice = ({
         imageType: image.header.imageType,
         fileVersion: image.header.fileVersion + (source?.downgrade ? 1 : -1),
     };
-    const waitFor = createOtaDeviceWaitFor(endpoint, image, currentPayload, {baseSize: dataSettings.baseSize, ...behavior});
+    const waitFor = createOtaDeviceWaitFor(device, endpoint, image, currentPayload, {baseSize: dataSettings.baseSize, ...behavior});
     const adapter = {waitFor, hasZdoMessageOverhead: false} as unknown as Adapter;
     Entity.injectAdapter(adapter);
-
-    const device = Device.create("Router", "0x1", 0x1001, 1, manufacturerName, "Mains", modelID, InterviewState.Successful, undefined);
 
     if (autoAnnounce) {
         const originalOnce = device.once.bind(device);
@@ -1197,6 +1203,61 @@ describe("Device OTA", () => {
             expect(debugCalls[2]).toMatch("OTA downgrade image availability for 0x1");
             expect(debugCalls[3]).toMatch(`Reading firmware image from '${filePath}'`);
             expect(debugCalls[4]).toMatch(`Parsed image from '${filePath}' for 0x1`);
+            expect(device.otaInProgress).toStrictEqual(false);
+        });
+
+        it("aborts an in-progress update", async () => {
+            const fileName = OTA_FILES[0];
+            const [image] = await loadImage(fileName);
+            firmwareBuffer = image.raw;
+            const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
+                fieldControl: 0,
+                manufacturerCode: image.header.manufacturerCode,
+                imageType: image.header.imageType,
+                fileVersion: image.header.fileVersion - 1,
+            };
+            const baseSize = 55;
+
+            const {device, endpoint, run} = createDevice({
+                image,
+                source: {},
+                requestPayload,
+                dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
+                behavior: {baseSize, sendUpgradeEnd: true, abort: true},
+            });
+
+            await expect(run()).rejects.toThrow(/OTA.*was aborted/);
+            const calls = getResponses(endpoint, "imageBlockResponse");
+            expect(getResponses(endpoint, "imageBlockResponse").length).toStrictEqual(2);
+            expect(calls[1][2]).toStrictEqual({status: Zcl.Status.ABORT});
+            expect(device.otaInProgress).toStrictEqual(false);
+        });
+
+        it("fails to abort an in-progress update", async () => {
+            // this is same as success for ZH, only the device may not have aborted itself
+            const fileName = OTA_FILES[0];
+            const [image] = await loadImage(fileName);
+            firmwareBuffer = image.raw;
+            const requestPayload: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
+                fieldControl: 0,
+                manufacturerCode: image.header.manufacturerCode,
+                imageType: image.header.imageType,
+                fileVersion: image.header.fileVersion - 1,
+            };
+            const baseSize = 55;
+
+            const {device, endpoint, run} = createDevice({
+                image,
+                source: {},
+                requestPayload,
+                dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
+                behavior: {baseSize, sendUpgradeEnd: true, abort: true, failBlockResponse: 2},
+            });
+
+            await expect(run()).rejects.toThrow(/OTA.*was aborted/);
+            const calls = getResponses(endpoint, "imageBlockResponse");
+            expect(getResponses(endpoint, "imageBlockResponse").length).toStrictEqual(2);
+            expect(calls[1][2]).toStrictEqual({status: Zcl.Status.ABORT});
             expect(device.otaInProgress).toStrictEqual(false);
         });
 
@@ -2202,7 +2263,7 @@ describe("Device OTA", () => {
                 image,
                 source: {},
                 dataSettings,
-                behavior: {baseSize, sendUpgradeEnd: true, failBlockResponse: true},
+                behavior: {baseSize, sendUpgradeEnd: true, failBlockResponse: 1},
             });
 
             const [from, to] = await run();
