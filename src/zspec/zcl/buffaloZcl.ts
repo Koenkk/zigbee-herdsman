@@ -1,5 +1,4 @@
 import {Buffalo} from "../../buffalo";
-import {logger} from "../../utils/logger";
 import {isNumberArray} from "../../utils/utils";
 import {Clusters} from "./definition/cluster";
 import {ZCL_TYPE_INVALID_BY_TYPE, ZclType} from "./definition/datatypes";
@@ -9,11 +8,16 @@ import type {
     ExtensionFieldSet,
     Gpd,
     GpdAttributeReport,
+    GpdAttributeReporting,
     GpdChannelConfiguration,
     GpdChannelRequest,
     GpdCommissioningReply,
     GpdCustomReply,
-    KeyZclValue,
+    GpdManufAttributeReport,
+    GpdManufMultiClusterAttributeReport,
+    GpdMultiClusterAttributeReport,
+    GpdReadAttributeResponse,
+    GpdRequestAttribute,
     MiboxerZone,
     Struct,
     StructuredSelector,
@@ -26,8 +30,6 @@ import type {
 } from "./definition/tstype";
 import * as Utils from "./utils";
 import {getClusterAttribute} from "./utils";
-
-const NS = "zh:zcl:buffalo";
 
 const UINT8_NON_VALUE = ZCL_TYPE_INVALID_BY_TYPE[ZclType.Uint8] as number;
 const UINT16_NON_VALUE = ZCL_TYPE_INVALID_BY_TYPE[ZclType.Uint16] as number;
@@ -396,7 +398,9 @@ export class BuffaloZcl extends Buffalo {
         // 0xf6: ZCL Tunneling
     }
 
-    private readGpdFrame(options: BuffaloZclOptions): Gpd | GpdChannelRequest | GpdAttributeReport | {raw: Buffer} | Record<string, never> {
+    private readGpdFrame(
+        options: BuffaloZclOptions,
+    ): Gpd | GpdChannelRequest | GpdAttributeReporting | GpdRequestAttribute | GpdReadAttributeResponse | {raw: Buffer} | Record<string, never> {
         if (options.payload?.payloadSize === undefined) {
             throw new Error("Cannot read GPD_FRAME without required payload options specified");
         }
@@ -408,137 +412,258 @@ export class BuffaloZcl extends Buffalo {
         // ensure offset by options.payload.payloadSize (if any) at end of parsing to not cause issues with spec changes (until supported)
         const startPosition = this.position;
 
-        if (options.payload.commandID === 0xe0) {
-            // Commisioning
-            const frame = {
-                deviceID: this.readUInt8(),
-                options: this.readUInt8(),
-                extendedOptions: 0,
-                securityKey: Buffer.alloc(16) as Buffer<ArrayBufferLike>,
-                keyMic: 0,
-                outgoingCounter: 0,
-                applicationInfo: 0,
-                manufacturerID: 0,
-                modelID: 0,
-                numGpdCommands: 0,
-                gpdCommandIdList: Buffer.alloc(0) as Buffer<ArrayBufferLike>,
-                numServerClusters: 0,
-                numClientClusters: 0,
-                gpdServerClusters: Buffer.alloc(0) as Buffer<ArrayBufferLike>,
-                gpdClientClusters: Buffer.alloc(0) as Buffer<ArrayBufferLike>,
-                genericSwitchConfig: 0,
-                currentContactStatus: 0,
-            };
+        switch (options.payload.commandID) {
+            case 0xe0: {
+                // Commisioning
+                const frame: Gpd = {
+                    deviceID: this.readUInt8(),
+                    options: this.readUInt8(),
+                    extendedOptions: 0,
+                    securityKey: Buffer.alloc(16) as Buffer<ArrayBufferLike>,
+                    keyMic: 0,
+                    outgoingCounter: 0,
+                    applicationInfo: 0,
+                    manufacturerID: 0,
+                    modelID: 0,
+                    numGpdCommands: 0,
+                    gpdCommandIdList: Buffer.alloc(0) as Buffer<ArrayBufferLike>,
+                    numServerClusters: 0,
+                    numClientClusters: 0,
+                    gpdServerClusters: Buffer.alloc(0) as Buffer<ArrayBufferLike>,
+                    gpdClientClusters: Buffer.alloc(0) as Buffer<ArrayBufferLike>,
+                    genericSwitchConfig: 0,
+                    currentContactStatus: 0,
+                };
 
-            if (frame.options & 0x80) {
-                frame.extendedOptions = this.readUInt8();
-            }
-
-            if (frame.extendedOptions & 0x20) {
-                frame.securityKey = this.readBuffer(16);
-            }
-
-            if (frame.extendedOptions & 0x40) {
-                frame.keyMic = this.readUInt32();
-            }
-
-            if (frame.extendedOptions & 0x80) {
-                frame.outgoingCounter = this.readUInt32();
-            }
-
-            if (frame.options & 0x04) {
-                frame.applicationInfo = this.readUInt8();
-            }
-
-            if (frame.applicationInfo & 0x01) {
-                frame.manufacturerID = this.readUInt16();
-            }
-
-            if (frame.applicationInfo & 0x02) {
-                frame.modelID = this.readUInt16();
-            }
-
-            if (frame.applicationInfo & 0x04) {
-                frame.numGpdCommands = this.readUInt8();
-                frame.gpdCommandIdList = this.readBuffer(frame.numGpdCommands);
-            }
-
-            if (frame.applicationInfo & 0x08) {
-                const len = this.readUInt8();
-                frame.numServerClusters = len & 0xf;
-                frame.numClientClusters = (len >> 4) & 0xf;
-
-                frame.gpdServerClusters = this.readBuffer(2 * frame.numServerClusters);
-                frame.gpdClientClusters = this.readBuffer(2 * frame.numClientClusters);
-            }
-
-            if (frame.applicationInfo & 0x10) {
-                const len = this.readUInt8();
-
-                if (len >= 1) {
-                    frame.genericSwitchConfig = this.readUInt8();
+                if (frame.options & 0x80) {
+                    frame.extendedOptions = this.readUInt8();
                 }
 
-                if (len >= 2) {
-                    frame.currentContactStatus = this.readUInt8();
-                }
-            }
-
-            this.setPosition(startPosition + options.payload.payloadSize);
-
-            return frame;
-        }
-
-        if (options.payload.commandID === 0xe3) {
-            // Channel Request
-            const channelOpts = this.readUInt8();
-
-            this.setPosition(startPosition + options.payload.payloadSize);
-
-            return {
-                nextChannel: channelOpts & 0xf,
-                nextNextChannel: channelOpts >> 4,
-            };
-        }
-
-        if (options.payload.commandID === 0xa1) {
-            // Manufacturer-specific Attribute Reporting
-            const start = this.position;
-            const frame = {
-                manufacturerCode: this.readUInt16(),
-                clusterID: this.readUInt16(),
-                attributes: {} as KeyZclValue,
-            };
-
-            const cluster = Utils.getCluster(frame.clusterID, frame.manufacturerCode, {});
-
-            while (this.position - start < options.payload.payloadSize) {
-                const attributeID = this.readUInt16();
-                const type = this.readUInt8();
-                /* v8 ignore next */
-                let attribute: string | undefined | number = getClusterAttribute(cluster, attributeID, frame.manufacturerCode)?.name;
-
-                // number type is only used when going into this if
-                if (!attribute) {
-                    // this is spammy because of the many manufacturer-specific attributes not currently used
-                    logger.debug(`Unknown attribute ${attributeID} in cluster ${cluster.name}`, NS);
-
-                    attribute = attributeID;
+                if (frame.extendedOptions & 0x20) {
+                    frame.securityKey = this.readBuffer(16);
                 }
 
-                frame.attributes[attribute] = this.read(type, options);
+                if (frame.extendedOptions & 0x40) {
+                    frame.keyMic = this.readUInt32();
+                }
+
+                if (frame.extendedOptions & 0x80) {
+                    frame.outgoingCounter = this.readUInt32();
+                }
+
+                if (frame.options & 0x04) {
+                    frame.applicationInfo = this.readUInt8();
+                }
+
+                if (frame.applicationInfo & 0x01) {
+                    frame.manufacturerID = this.readUInt16();
+                }
+
+                if (frame.applicationInfo & 0x02) {
+                    frame.modelID = this.readUInt16();
+                }
+
+                if (frame.applicationInfo & 0x04) {
+                    frame.numGpdCommands = this.readUInt8();
+                    frame.gpdCommandIdList = this.readBuffer(frame.numGpdCommands);
+                }
+
+                if (frame.applicationInfo & 0x08) {
+                    const len = this.readUInt8();
+                    frame.numServerClusters = len & 0xf;
+                    frame.numClientClusters = (len >> 4) & 0xf;
+
+                    frame.gpdServerClusters = this.readBuffer(2 * frame.numServerClusters);
+                    frame.gpdClientClusters = this.readBuffer(2 * frame.numClientClusters);
+                }
+
+                if (frame.applicationInfo & 0x10) {
+                    const len = this.readUInt8();
+
+                    if (len >= 1) {
+                        frame.genericSwitchConfig = this.readUInt8();
+                    }
+
+                    if (len >= 2) {
+                        frame.currentContactStatus = this.readUInt8();
+                    }
+                }
+
+                this.setPosition(startPosition + options.payload.payloadSize);
+
+                return frame;
             }
+            case 0xe3: {
+                // Channel Request
+                const channelOpts = this.readUInt8();
 
-            this.setPosition(startPosition + options.payload.payloadSize);
+                this.setPosition(startPosition + options.payload.payloadSize);
 
-            return frame;
+                return {
+                    nextChannel: channelOpts & 0xf,
+                    nextNextChannel: channelOpts >> 4,
+                } satisfies GpdChannelRequest;
+            }
+            case 0xa0: {
+                // Attribute Reporting
+                const clusterID = this.readUInt16();
+                const cluster = Utils.getCluster(clusterID, undefined, {});
+                const frame: GpdAttributeReport = {
+                    clusterID,
+                    clusterName: cluster.name,
+                    attributes: {},
+                };
+
+                while (this.position - startPosition < options.payload.payloadSize) {
+                    const attributeId = this.readUInt16();
+                    const dataType = this.readUInt8();
+                    const attributeNameOrId = getClusterAttribute(cluster, attributeId, undefined)?.name ?? attributeId;
+                    frame.attributes[attributeNameOrId] = this.read(dataType, options);
+                }
+
+                this.setPosition(startPosition + options.payload.payloadSize);
+
+                return frame;
+            }
+            case 0xa1: {
+                // Manufacturer-specific Attribute Reporting
+                const manufacturerCode = this.readUInt16();
+                const clusterID = this.readUInt16();
+                const cluster = Utils.getCluster(clusterID, manufacturerCode, {});
+                const frame: GpdManufAttributeReport = {
+                    manufacturerCode,
+                    clusterID,
+                    clusterName: cluster.name,
+                    attributes: {},
+                };
+
+                while (this.position - startPosition < options.payload.payloadSize) {
+                    const attributeId = this.readUInt16();
+                    const dataType = this.readUInt8();
+                    // many times will fallback to ID since lots of unknown manu-specific attributes (handled in ZHC)
+                    const attributeNameOrId = getClusterAttribute(cluster, attributeId, manufacturerCode)?.name ?? attributeId;
+                    frame.attributes[attributeNameOrId] = this.read(dataType, options);
+                }
+
+                this.setPosition(startPosition + options.payload.payloadSize);
+
+                return frame;
+            }
+            case 0xa2: {
+                // Multi-Cluster Reporting
+                const frame: GpdMultiClusterAttributeReport = {reports: []};
+
+                while (this.position - startPosition < options.payload.payloadSize) {
+                    const clusterID = this.readUInt16();
+                    const cluster = Utils.getCluster(clusterID, undefined, {});
+                    const attributeId = this.readUInt16();
+                    const dataType = this.readUInt8();
+                    const attributeNameOrId = getClusterAttribute(cluster, attributeId, undefined)?.name ?? attributeId;
+                    const attrData = this.read(dataType, options);
+                    const report: GpdMultiClusterAttributeReport["reports"][number] = {
+                        clusterID,
+                        clusterName: cluster.name,
+                        attribute: attributeNameOrId,
+                        attrData,
+                    };
+
+                    frame.reports.push(report);
+                }
+
+                this.setPosition(startPosition + options.payload.payloadSize);
+
+                return frame;
+            }
+            case 0xa3: {
+                // Manufacturer-specific Multi-Cluster Reporting
+                const manufacturerCode = this.readUInt16();
+                const frame: GpdManufMultiClusterAttributeReport = {manufacturerCode, reports: []};
+
+                while (this.position - startPosition < options.payload.payloadSize) {
+                    const clusterID = this.readUInt16();
+                    const cluster = Utils.getCluster(clusterID, manufacturerCode, {});
+                    const attributeId = this.readUInt16();
+                    const dataType = this.readUInt8();
+                    // many times will fallback to ID since lots of unknown manu-specific attributes (handled in ZHC)
+                    const attributeNameOrId = getClusterAttribute(cluster, attributeId, manufacturerCode)?.name ?? attributeId;
+                    const attrData = this.read(dataType, options);
+                    const report: GpdManufMultiClusterAttributeReport["reports"][number] = {
+                        clusterID,
+                        clusterName: cluster.name,
+                        attribute: attributeNameOrId,
+                        attrData,
+                    };
+
+                    frame.reports.push(report);
+                }
+
+                this.setPosition(startPosition + options.payload.payloadSize);
+
+                return frame;
+            }
+            case 0xa4: {
+                // Request Attributes
+                const frame: GpdRequestAttribute = {options: this.readUInt8(), manufacturerID: undefined, records: []};
+
+                // ignore multi-record bit, while loop automatically handles it
+
+                if (frame.options & 0x02) {
+                    frame.manufacturerID = this.readUInt16();
+                }
+
+                while (this.position - startPosition < options.payload.payloadSize) {
+                    const clusterID = this.readUInt16();
+                    const recordsLength = this.readUInt8();
+                    const attributes = this.readListUInt16(recordsLength);
+
+                    frame.records.push({clusterID, attributes});
+                }
+
+                this.setPosition(startPosition + options.payload.payloadSize);
+
+                return frame;
+            }
+            case 0xa5: {
+                // Read Attributes Response
+                const frame: GpdReadAttributeResponse = {options: this.readUInt8(), manufacturerID: undefined, records: []};
+
+                // ignore multi-record bit, while loop automatically handles it
+
+                if (frame.options & 0x02) {
+                    frame.manufacturerID = this.readUInt16();
+                }
+
+                while (this.position - startPosition < options.payload.payloadSize) {
+                    const clusterID = this.readUInt16();
+                    const cluster = Utils.getCluster(clusterID, frame.manufacturerID, {});
+                    const recordsLength = this.readUInt8();
+                    const record: GpdReadAttributeResponse["records"][number] = {clusterID, clusterName: cluster.name, attributes: {}};
+
+                    for (let i = 0; i < recordsLength; i++) {
+                        const attributeId = this.readUInt16();
+                        const status = this.readUInt8();
+                        const dataType = this.readUInt8();
+                        const attributeNameOrId = getClusterAttribute(cluster, attributeId, frame.manufacturerID)?.name ?? attributeId;
+                        record.attributes[attributeNameOrId] = {
+                            status,
+                            attrData: this.read(dataType, options),
+                        };
+                    }
+
+                    frame.records.push(record);
+                }
+
+                this.setPosition(startPosition + options.payload.payloadSize);
+
+                return frame;
+            }
         }
 
         // might contain `gppNwkAddr`, `gppGpdLink` & `mic` from ZCL cluster after this, so limit by `payloadSize`
         return {raw: this.readBuffer(options.payload.payloadSize)};
     }
 
-    private writeStructuredSelector(value: StructuredSelector): void {
+    public writeStructuredSelector(value: StructuredSelector): void {
         if (value != null) {
             const indexes = value.indexes || [];
             const indicatorType = value.indicatorType || StructuredIndicatorType.Whole;
@@ -552,7 +677,7 @@ export class BuffaloZcl extends Buffalo {
         }
     }
 
-    private readStructuredSelector(): StructuredSelector {
+    public readStructuredSelector(): StructuredSelector {
         /** [0-15] range */
         const indicator = this.readUInt8();
 

@@ -1,14 +1,15 @@
+import type {Foundation} from "./foundation";
 import type {
     ExtensionFieldSet,
     Gpd,
-    GpdAttributeReport,
+    GpdAttributeReporting,
     GpdChannelConfiguration,
     GpdChannelRequest,
     GpdCommissioningReply,
     GpdCustomReply,
-    MiboxerZone,
+    GpdReadAttributeResponse,
+    GpdRequestAttribute,
     Struct,
-    StructuredSelector,
     ThermoTransition,
     TuyaDataPointValue,
     ZclArray,
@@ -64,8 +65,6 @@ export interface TClusters {
         commands: {
             /** ID=0x00 */
             resetFactDefault: Record<string, never>;
-            /** ID=0xf0 */
-            tuyaSetup: Record<string, never>;
         };
         commandResponses: never;
     };
@@ -233,18 +232,6 @@ export interface TClusters {
                 /** type=ENUM8 */
                 effectvariant: number;
             };
-            /** ID=0x02 */
-            ezmodeInvoke: {
-                /** type=UINT8 | max=255 */
-                action: number;
-            };
-            /** ID=0x03 */
-            updateCommissionState: {
-                /** type=UINT8 | max=255 */
-                action: number;
-                /** type=UINT8 | max=255 */
-                commstatemask: number;
-            };
         };
         commandResponses: {
             /** ID=0x00 | required=true */
@@ -292,11 +279,6 @@ export interface TClusters {
                 groupid: number;
                 /** type=CHAR_STR */
                 groupname: string;
-            };
-            /** ID=0xf0 */
-            miboxerSetZones: {
-                /** type=LIST_MIBOXER_ZONES */
-                zones: MiboxerZone[];
             };
         };
         commandResponses: {
@@ -436,23 +418,6 @@ export interface TClusters {
                 /** type=UINT8 */
                 sceneidto: number;
             };
-            /** ID=0x07 */
-            tradfriArrowSingle: {
-                /** type=UINT16 | max=65535 */
-                value: number;
-                /** type=UINT16 | max=65535 */
-                value2: number;
-            };
-            /** ID=0x08 */
-            tradfriArrowHold: {
-                /** type=UINT16 | max=65535 */
-                value: number;
-            };
-            /** ID=0x09 */
-            tradfriArrowRelease: {
-                /** type=UINT16 | max=65535 */
-                value: number;
-            };
         };
         commandResponses: {
             /** ID=0x00 | required=true */
@@ -564,16 +529,6 @@ export interface TClusters {
             offWaitTime: number;
             /** ID=0x4003 | type=ENUM8 | write=true | max=255 | special=SetToPreviousValue,ff */
             startUpOnOff: number;
-            /** ID=0x0001 | type=UINT16 | manufacturerCode=NODON(0x128b) | write=true | max=65535 */
-            nodonTransitionTime?: number;
-            /** ID=0x5000 | type=ENUM8 | write=true | max=255 */
-            tuyaBacklightSwitch: number;
-            /** ID=0x8001 | type=ENUM8 | write=true | max=255 */
-            tuyaBacklightMode: number;
-            /** ID=0x8002 | type=ENUM8 | write=true | max=255 */
-            moesStartUpOnOff: number;
-            /** ID=0x8004 | type=ENUM8 | write=true | max=255 */
-            tuyaOperationMode: number;
         };
         commands: {
             /** ID=0x00 | required=true */
@@ -599,18 +554,6 @@ export interface TClusters {
                 ontime: number;
                 /** type=UINT16 */
                 offwaittime: number;
-            };
-            /** ID=0xfc */
-            tuyaAction2: {
-                /** type=UINT8 | max=255 */
-                value: number;
-            };
-            /** ID=0xfd */
-            tuyaAction: {
-                /** type=UINT8 | max=255 */
-                value: number;
-                /** type=BUFFER */
-                data: Buffer;
             };
         };
         commandResponses: never;
@@ -659,7 +602,7 @@ export interface TClusters {
         commands: {
             /** ID=0x00 | required=true */
             moveToLevel: {
-                /** type=UINT8 */
+                /** type=UINT8 | max=255 */
                 level: number;
                 /** type=UINT16 */
                 transtime: number;
@@ -701,7 +644,7 @@ export interface TClusters {
             };
             /** ID=0x04 | required=true */
             moveToLevelWithOnOff: {
-                /** type=UINT8 */
+                /** type=UINT8 | max=255 */
                 level: number;
                 /** type=UINT16 */
                 transtime: number;
@@ -746,13 +689,6 @@ export interface TClusters {
                 /** type=UINT16 */
                 frequency: number;
             };
-            /** ID=0xf0 */
-            moveToLevelTuya: {
-                /** type=UINT16 | max=65535 */
-                level: number;
-                /** type=UINT16 | max=65535 */
-                transtime: number;
-            };
         };
         commandResponses: never;
     };
@@ -775,8 +711,6 @@ export interface TClusters {
             getAlarm: Record<string, never>;
             /** ID=0x03 */
             resetLog: Record<string, never>;
-            /** ID=0x04 */
-            publishEventLog: Record<string, never>;
         };
         commandResponses: {
             /** ID=0x00 | required=true */
@@ -797,8 +731,6 @@ export interface TClusters {
                 /** type=UINT32 | conditions=[{fieldEquals field=status value=0}] */
                 timestamp?: number;
             };
-            /** ID=0x02 */
-            getEventLog: Record<string, never>;
         };
     };
     genTime: {
@@ -2064,14 +1996,16 @@ export interface TClusters {
                 commandFrame?:
                     | Gpd
                     | GpdChannelRequest
-                    | GpdAttributeReport
+                    | GpdAttributeReporting
+                    | GpdCommissioningReply
+                    | GpdChannelConfiguration
+                    | GpdCustomReply
+                    | GpdReadAttributeResponse
+                    | GpdRequestAttribute
                     | {
                           raw: Buffer;
                       }
-                    | Record<string, never>
-                    | GpdCommissioningReply
-                    | GpdChannelConfiguration
-                    | GpdCustomReply;
+                    | Record<string, never>;
                 /** type=UINT16 | conditions=[{bitMaskSet param=options mask=16384}] */
                 gppNwkAddr?: number;
                 /** type=BITMAP8 | conditions=[{bitMaskSet param=options mask=16384}] */
@@ -2125,14 +2059,16 @@ export interface TClusters {
                 commandFrame?:
                     | Gpd
                     | GpdChannelRequest
-                    | GpdAttributeReport
+                    | GpdAttributeReporting
+                    | GpdCommissioningReply
+                    | GpdChannelConfiguration
+                    | GpdCustomReply
+                    | GpdReadAttributeResponse
+                    | GpdRequestAttribute
                     | {
                           raw: Buffer;
                       }
-                    | Record<string, never>
-                    | GpdCommissioningReply
-                    | GpdChannelConfiguration
-                    | GpdCustomReply;
+                    | Record<string, never>;
                 /** type=UINT16 | conditions=[{bitMaskSet param=options mask=2048}] */
                 gppNwkAddr?: number;
                 /** type=BITMAP8 | conditions=[{bitMaskSet param=options mask=2048}] */
@@ -2262,14 +2198,16 @@ export interface TClusters {
                 gpdPayload:
                     | Gpd
                     | GpdChannelRequest
-                    | GpdAttributeReport
+                    | GpdAttributeReporting
+                    | GpdCommissioningReply
+                    | GpdChannelConfiguration
+                    | GpdCustomReply
+                    | GpdReadAttributeResponse
+                    | GpdRequestAttribute
                     | {
                           raw: Buffer;
                       }
-                    | Record<string, never>
-                    | GpdCommissioningReply
-                    | GpdChannelConfiguration
-                    | GpdCustomReply;
+                    | Record<string, never>;
             };
             /** ID=0x08 */
             translationTableRsp: {
@@ -2907,28 +2845,6 @@ export interface TClusters {
             intermediateSetpointsLift: Buffer;
             /** ID=0x0019 | type=OCTET_STR | write=true | default=1,0x0000 */
             intermediateSetpointsTilt: Buffer;
-            /** ID=0x000a | type=BITMAP8 */
-            operationalStatus: number;
-            /** ID=0xf000 | type=ENUM8 | write=true | max=255 */
-            tuyaMovingState: number;
-            /** ID=0xf001 | type=ENUM8 | write=true | max=255 */
-            tuyaCalibration: number;
-            /** ID=0xf001 | type=ENUM8 | manufacturerCode=LEGRAND_GROUP(0x1021) | write=true | max=255 */
-            stepPositionLift?: number;
-            /** ID=0xf002 | type=ENUM8 | write=true | max=255 */
-            tuyaMotorReversal: number;
-            /** ID=0xf002 | type=ENUM8 | manufacturerCode=LEGRAND_GROUP(0x1021) | write=true | max=255 */
-            calibrationMode?: number;
-            /** ID=0xf003 | type=UINT16 | write=true | max=65535 */
-            moesCalibrationTime: number;
-            /** ID=0xf003 | type=ENUM8 | manufacturerCode=LEGRAND_GROUP(0x1021) | write=true | max=255 */
-            targetPositionTiltPercentage?: number;
-            /** ID=0xf004 | type=ENUM8 | manufacturerCode=LEGRAND_GROUP(0x1021) | write=true | max=255 */
-            stepPositionTilt?: number;
-            /** ID=0xfcc1 | type=UINT16 | manufacturerCode=NIKO_NV(0x125f) | write=true | max=65535 */
-            nikoCalibrationTimeUp?: number;
-            /** ID=0xfcc2 | type=UINT16 | manufacturerCode=NIKO_NV(0x125f) | write=true | max=65535 */
-            nikoCalibrationTimeDown?: number;
         };
         commands: {
             /** ID=0x00 | required=true */
@@ -3150,80 +3066,6 @@ export interface TClusters {
             acCollTemp: number;
             /** ID=0x0047 | type=ENUM8 | write=true | default=0 */
             acCapacityFormat: number;
-            /** ID=0x0101 | type=UINT16 | manufacturerCode=ASTREL_GROUP_SRL(0x1071) | write=true | max=65535 */
-            fourNoksHysteresisHigh?: number;
-            /** ID=0x0102 | type=UINT16 | manufacturerCode=ASTREL_GROUP_SRL(0x1071) | write=true | max=65535 */
-            fourNoksHysteresisLow?: number;
-            /** ID=0x4000 | type=ENUM8 | manufacturerCode=VIESSMANN_ELEKTRONIK_GMBH(0x1221) | write=true | max=255 */
-            viessmannWindowOpenInternal?: number;
-            /** ID=0x4000 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossWindowOpenInternal?: number;
-            /** ID=0x4001 | type=INT16 | write=true | min=-32768 | max=32767 */
-            StelproOutdoorTemp: number;
-            /** ID=0x4003 | type=BOOLEAN | manufacturerCode=VIESSMANN_ELEKTRONIK_GMBH(0x1221) | write=true */
-            viessmannWindowOpenForce?: number;
-            /** ID=0x4003 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossWindowOpenExternal?: number;
-            /** ID=0x4010 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossDayOfWeek?: number;
-            /** ID=0x4011 | type=UINT16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=65535 */
-            danfossTriggerTime?: number;
-            /** ID=0x4012 | type=BOOLEAN | manufacturerCode=VIESSMANN_ELEKTRONIK_GMBH(0x1221) | write=true */
-            viessmannAssemblyMode?: number;
-            /** ID=0x4012 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossMountedModeActive?: number;
-            /** ID=0x4013 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossMountedModeControl?: number;
-            /** ID=0x4014 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossThermostatOrientation?: number;
-            /** ID=0x4015 | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | min=-32768 | max=32767 */
-            danfossExternalMeasuredRoomSensor?: number;
-            /** ID=0x4016 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossRadiatorCovered?: number;
-            /** ID=0x401c | type=ENUM8 | write=true | max=255 */
-            StelproSystemMode: number;
-            /** ID=0x4020 | type=UINT8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossAlgorithmScaleFactor?: number;
-            /** ID=0x4030 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossHeatAvailable?: number;
-            /** ID=0x4031 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossHeatRequired?: number;
-            /** ID=0x4032 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossLoadBalancingEnable?: number;
-            /** ID=0x4040 | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | min=-32768 | max=32767 */
-            danfossLoadRoomMean?: number;
-            /** ID=0x404a | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | min=-32768 | max=32767 */
-            danfossLoadEstimate?: number;
-            /** ID=0x404b | type=INT8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | min=-128 | max=127 */
-            danfossRegulationSetpointOffset?: number;
-            /** ID=0x404c | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossAdaptionRunControl?: number;
-            /** ID=0x404d | type=BITMAP8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossAdaptionRunStatus?: number;
-            /** ID=0x404e | type=BITMAP8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossAdaptionRunSettings?: number;
-            /** ID=0x404f | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossPreheatStatus?: number;
-            /** ID=0x4050 | type=UINT32 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossPreheatTime?: number;
-            /** ID=0x4051 | type=BOOLEAN | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossWindowOpenFeatureEnable?: number;
-            /** ID=0x4100 | type=BITMAP16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossRoomStatusCode?: number;
-            /** ID=0x4110 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossOutputStatus?: number;
-            /** ID=0x4120 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossRoomFloorSensorMode?: number;
-            /** ID=0x4121 | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | min=-32768 | max=32767 */
-            danfossFloorMinSetpoint?: number;
-            /** ID=0x4122 | type=INT16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | min=-32768 | max=32767 */
-            danfossFloorMaxSetpoint?: number;
-            /** ID=0x4130 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossScheduleTypeUsed?: number;
-            /** ID=0x4131 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossIcon2PreHeat?: number;
-            /** ID=0x414f | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossIcon2PreHeatStatus?: number;
         };
         commands: {
             /** ID=0x00 | required=true */
@@ -3255,15 +3097,6 @@ export interface TClusters {
             clearWeeklySchedule: Record<string, never>;
             /** ID=0x04 | response=1 */
             getRelayStatusLog: Record<string, never>;
-            /** ID=0x40 */
-            danfossSetpointCommand: {
-                /** type=ENUM8 | max=255 */
-                setpointType: number;
-                /** type=INT16 | min=-32768 | max=32767 */
-                setpoint: number;
-            };
-            /** ID=0xa0 */
-            plugwiseCalibrateValve: Record<string, never>;
         };
         commandResponses: {
             /** ID=0x00 */
@@ -3334,8 +3167,6 @@ export interface TClusters {
             keypadLockout: number;
             /** ID=0x0002 | type=ENUM8 | write=true | max=1 | default=0 */
             programmingVisibility: number;
-            /** ID=0x4000 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossViewingDirection?: number;
         };
         commands: never;
         commandResponses: never;
@@ -3446,10 +3277,6 @@ export interface TClusters {
             coupleColorTempToLevelMin: number;
             /** ID=0x4010 | type=UINT16 | write=true | max=65279 | special=SetColorTempToPreviousValue,ffff */
             startUpColorTemperature: number;
-            /** ID=0xf000 | type=UINT8 | write=true | max=255 */
-            tuyaRgbMode: number;
-            /** ID=0xf001 | type=UINT8 | write=true | max=255 */
-            tuyaBrightness: number;
         };
         commands: {
             /** ID=0x00 */
@@ -3691,57 +3518,6 @@ export interface TClusters {
                 /** type=BITMAP8 | conditions=[{minimumRemainingBufferBytes value=1}] */
                 optionsOverride?: number;
             };
-            /** ID=0x06 */
-            tuyaMoveToHueAndSaturationBrightness: {
-                /** type=UINT8 | max=255 */
-                hue: number;
-                /** type=UINT8 | max=255 */
-                saturation: number;
-                /** type=UINT16 | max=65535 */
-                transtime: number;
-                /** type=UINT8 | max=255 */
-                brightness: number;
-            };
-            /** ID=0xe0 */
-            tuyaSetMinimumBrightness: {
-                /** type=UINT16 | max=65535 */
-                minimum: number;
-            };
-            /** ID=0xe1 */
-            tuyaMoveToHueAndSaturationBrightness2: {
-                /** type=UINT16 | max=65535 */
-                hue: number;
-                /** type=UINT16 | max=65535 */
-                saturation: number;
-                /** type=UINT16 | max=65535 */
-                brightness: number;
-            };
-            /** ID=0xf0 */
-            tuyaRgbMode: {
-                /** type=UINT8 | max=255 */
-                enable: number;
-            };
-            /** ID=0xf9 */
-            tuyaOnStartUp: {
-                /** type=UINT16 | max=65535 */
-                mode: number;
-                /** type=LIST_UINT8 */
-                data: number[];
-            };
-            /** ID=0xfa */
-            tuyaDoNotDisturb: {
-                /** type=UINT8 | max=255 */
-                enable: number;
-            };
-            /** ID=0xfb */
-            tuyaOnOffTransitionTime: {
-                /** type=UINT8 | max=255 */
-                unknown: number;
-                /** type=BIG_ENDIAN_UINT24 */
-                onTransitionTime: number;
-                /** type=BIG_ENDIAN_UINT24 */
-                offTransitionTime: number;
-            };
         };
         commandResponses: never;
     };
@@ -3785,7 +3561,7 @@ export interface TClusters {
     };
     msIlluminanceMeasurement: {
         attributes: {
-            /** ID=0x0000 | type=UINT16 | report=true | required=true | max=65535 | default=0 | special=TooLowToBeMeasured,0000,Invalid,ffff */
+            /** ID=0x0000 | type=UINT16 | report=true | required=true | max=65534 | default=0 | special=TooLowToBeMeasured,0000,Invalid,ffff */
             measuredValue: number;
             /** ID=0x0001 | type=UINT16 | required=true | min=1 | max=65533 */
             minMeasuredValue: number;
@@ -3821,12 +3597,6 @@ export interface TClusters {
             maxMeasuredValue: number;
             /** ID=0x0003 | type=UINT16 | max=2048 */
             tolerance: number;
-            /** ID=0x0010 | type=UNKNOWN | write=true */
-            minPercentChange: never;
-            /** ID=0x0011 | type=UNKNOWN | write=true */
-            minAbsoluteChange: never;
-            /** ID=0x6600 | type=INT16 | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true | min=-32768 | max=32767 */
-            sprutTemperatureOffset?: number;
         };
         commands: never;
         commandResponses: never;
@@ -3879,8 +3649,6 @@ export interface TClusters {
             maxMeasuredValue: number;
             /** ID=0x0003 | type=UINT16 | max=2048 */
             tolerance: number;
-            /** ID=0x6600 | type=BOOLEAN | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true */
-            sprutHeater?: number;
         };
         commands: never;
         commandResponses: never;
@@ -3911,10 +3679,6 @@ export interface TClusters {
             contactUToODelay: number;
             /** ID=0x0032 | type=UINT8 | write=true | min=1 | max=254 | default=1 */
             contactUToOThreshold: number;
-            /** ID=0x6600 | type=UINT16 | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true | max=65535 */
-            sprutOccupancyLevel?: number;
-            /** ID=0x6601 | type=UINT16 | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true | max=65535 */
-            sprutOccupancySensitivity?: number;
         };
         commands: never;
         commandResponses: never;
@@ -4013,10 +3777,6 @@ export interface TClusters {
             maxMeasuredValue: number;
             /** ID=0x0003 | type=SINGLE_PREC */
             tolerance: number;
-            /** ID=0x6600 | type=BOOLEAN | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true */
-            sprutCO2Calibration?: number;
-            /** ID=0x6601 | type=BOOLEAN | manufacturerCode=CUSTOM_SPRUT_DEVICE(0x6666) | write=true */
-            sprutCO2AutoCalibration?: number;
         };
         commands: never;
         commandResponses: never;
@@ -4457,8 +4217,6 @@ export interface TClusters {
             numZoneSensitivityLevelsSupported: number;
             /** ID=0x0013 | type=UINT8 | write=true | max=255 | default=0 */
             currentZoneSensitivityLevel: number;
-            /** ID=0x8001 | type=UINT16 | manufacturerCode=DEVELCO(0x1015) | write=true | max=65535 */
-            develcoAlarmOffDelay?: number;
         };
         commands: {
             /** ID=0x00 | required=true */
@@ -5622,76 +5380,6 @@ export interface TClusters {
             projectedBillTimeStampReceived: number;
             /** ID=0x0a14 | type=BITMAP8 */
             billReceivedTrailingDigit: number;
-            /** ID=0x2000 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
-            owonL1PhasePower?: number;
-            /** ID=0x2001 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
-            owonL2PhasePower?: number;
-            /** ID=0x2002 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
-            owonL3PhasePower?: number;
-            /** ID=0x2100 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
-            owonL1PhaseReactivePower?: number;
-            /** ID=0x2101 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
-            owonL2PhaseReactivePower?: number;
-            /** ID=0x2102 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
-            owonL3PhaseReactivePower?: number;
-            /** ID=0x2103 | type=INT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-8388608 | max=8388607 */
-            owonReactivePowerSum?: number;
-            /** ID=0x3000 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
-            owonL1PhaseVoltage?: number;
-            /** ID=0x3001 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
-            owonL2PhaseVoltage?: number;
-            /** ID=0x3002 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
-            owonL3PhaseVoltage?: number;
-            /** ID=0x3100 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
-            owonL1PhaseCurrent?: number;
-            /** ID=0x3101 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
-            owonL2PhaseCurrent?: number;
-            /** ID=0x3102 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
-            owonL3PhaseCurrent?: number;
-            /** ID=0x3103 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
-            owonCurrentSum?: number;
-            /** ID=0x3104 | type=UINT24 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=16777215 */
-            owonLeakageCurrent?: number;
-            /** ID=0x4000 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=281474976710655 */
-            owonL1Energy?: number;
-            /** ID=0x4001 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=281474976710655 */
-            owonL2Energy?: number;
-            /** ID=0x4002 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=281474976710655 */
-            owonL3Energy?: number;
-            /** ID=0x4100 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=281474976710655 */
-            owonL1ReactiveEnergy?: number;
-            /** ID=0x4101 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=281474976710655 */
-            owonL2ReactiveEnergy?: number;
-            /** ID=0x4102 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=281474976710655 */
-            owonL3ReactiveEnergy?: number;
-            /** ID=0x4103 | type=UINT48 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=281474976710655 */
-            owonReactiveEnergySum?: number;
-            /** ID=0x4104 | type=INT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-128 | max=127 */
-            owonL1PowerFactor?: number;
-            /** ID=0x4105 | type=INT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-128 | max=127 */
-            owonL2PowerFactor?: number;
-            /** ID=0x4106 | type=INT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | min=-128 | max=127 */
-            owonL3PowerFactor?: number;
-            /** ID=0x5005 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=255 */
-            owonFrequency?: number;
-            /** ID=0x1000 | type=BITMAP8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true */
-            owonReportMap?: number;
-            /** ID=0x5000 | type=UINT32 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=4294967295 */
-            owonLastHistoricalRecordTime?: number;
-            /** ID=0x5001 | type=UINT32 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=4294967295 */
-            owonOldestHistoricalRecordTime?: number;
-            /** ID=0x5002 | type=UINT32 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=4294967295 */
-            owonMinimumReportCycle?: number;
-            /** ID=0x5003 | type=UINT32 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=4294967295 */
-            owonMaximumReportCycle?: number;
-            /** ID=0x5004 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=255 */
-            owonSentHistoricalRecordState?: number;
-            /** ID=0x5006 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=255 */
-            owonAccumulativeEnergyThreshold?: number;
-            /** ID=0x5007 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=255 */
-            owonReportMode?: number;
-            /** ID=0x5008 | type=UINT8 | manufacturerCode=OWON_TECHNOLOGY_INC(0x113c) | write=true | max=255 */
-            owonPercentChangeInPower?: number;
         };
         commands: {
             /** ID=0x00 | response=0 */
@@ -5835,10 +5523,6 @@ export interface TClusters {
                 /** type=UINT16 */
                 measurementPeriod: number;
             };
-            /** ID=0x20 */
-            owonGetHistoryRecord: Record<string, never>;
-            /** ID=0x21 */
-            owonStopSendingHistoricalRecord: Record<string, never>;
         };
         commandResponses: {
             /** ID=0x00 */
@@ -5971,8 +5655,6 @@ export interface TClusters {
                 /** type=UINT16 */
                 sampleId: number;
             };
-            /** ID=0x20 */
-            owonGetHistoryRecordRsp: Record<string, never>;
         };
     };
     seTunneling: {
@@ -6885,18 +6567,6 @@ export interface TClusters {
             lastMessageLqi: number;
             /** ID=0x011d | type=INT8 | min=-127 | max=127 | default=0 */
             lastMessageRssi: number;
-            /** ID=0x4000 | type=BITMAP16 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true */
-            danfossSystemStatusCode?: number;
-            /** ID=0x4031 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossHeatSupplyRequest?: number;
-            /** ID=0x4200 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossSystemStatusWater?: number;
-            /** ID=0x4201 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossMultimasterRole?: number;
-            /** ID=0x4210 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossIconApplication?: number;
-            /** ID=0x4220 | type=ENUM8 | manufacturerCode=DANFOSS_A_S(0x1246) | write=true | max=255 */
-            danfossIconForcedHeatingCooling?: number;
         };
         commands: never;
         commandResponses: never;
@@ -7325,54 +6995,6 @@ export interface TClusters {
             };
         };
     };
-    manuSpecificTuya2: {
-        attributes: {
-            /** ID=0xd00a | type=INT16 | write=true | min=-32768 | max=32767 */
-            alarm_temperature_max: number;
-            /** ID=0xd00b | type=INT16 | write=true | min=-32768 | max=32767 */
-            alarm_temperature_min: number;
-            /** ID=0xd00d | type=INT16 | write=true | min=-32768 | max=32767 */
-            alarm_humidity_max: number;
-            /** ID=0xd00e | type=INT16 | write=true | min=-32768 | max=32767 */
-            alarm_humidity_min: number;
-            /** ID=0xd00f | type=ENUM8 | write=true | max=255 */
-            alarm_humidity: number;
-            /** ID=0xd006 | type=ENUM8 | write=true | max=255 */
-            alarm_temperature: number;
-            /** ID=0xd010 | type=UINT8 | write=true | max=255 */
-            unknown: number;
-        };
-        commands: never;
-        commandResponses: never;
-    };
-    manuSpecificTuya3: {
-        attributes: {
-            /** ID=0xd010 | type=ENUM8 | write=true | max=255 */
-            powerOnBehavior: number;
-            /** ID=0xd020 | type=ENUM8 | write=true | max=255 */
-            switchMode: number;
-            /** ID=0xd030 | type=ENUM8 | write=true | max=255 */
-            switchType: number;
-        };
-        commands: {
-            /** ID=0xe5 */
-            setOptions1: {
-                /** type=BUFFER */
-                data: Buffer;
-            };
-            /** ID=0xe6 */
-            setOptions2: {
-                /** type=BUFFER */
-                data: Buffer;
-            };
-            /** ID=0xe7 */
-            setOptions3: {
-                /** type=BUFFER */
-                data: Buffer;
-            };
-        };
-        commandResponses: never;
-    };
     manuSpecificAmazonWWAH: {
         attributes: {
             /** ID=0x0002 | type=BOOLEAN | write=true */
@@ -7424,239 +7046,52 @@ export interface TClusters {
 
 export interface TFoundation {
     /** ID: 0 */
-    read: {
-        /** Type: DATA16 */
-        attrId: number;
-    }[];
+    read: ReturnType<typeof Foundation.read.parse>;
     /** ID: 1 */
-    readRsp: {
-        /** Type: DATA16 */
-        attrId: number;
-        /** Type: DATA8 */
-        status: number;
-        /** Type: DATA8 conditions=[{fieldEquals field=status value=0}] */
-        dataType?: number;
-        /** Type: USE_DATA_TYPE conditions=[{fieldEquals field=status value=0}] */
-        attrData?: unknown;
-    }[];
+    readRsp: ReturnType<typeof Foundation.readRsp.parse>;
     /** ID: 2 */
-    write: {
-        /** Type: DATA16 */
-        attrId: number;
-        /** Type: DATA8 */
-        dataType: number;
-        /** Type: USE_DATA_TYPE */
-        attrData: unknown;
-    }[];
+    write: ReturnType<typeof Foundation.write.parse>;
     /** ID: 3 */
-    writeUndiv: {
-        /** Type: DATA16 */
-        attrId: number;
-        /** Type: DATA8 */
-        dataType: number;
-        /** Type: USE_DATA_TYPE */
-        attrData: unknown;
-    }[];
+    writeUndiv: ReturnType<typeof Foundation.writeUndiv.parse>;
     /** ID: 4 */
-    writeRsp: {
-        /** Type: ENUM8 */
-        status: number;
-        /** Type: DATA16 conditions=[{fieldEquals field=status reversed=true value=0}] */
-        attrId?: number;
-    }[];
+    writeRsp: ReturnType<typeof Foundation.writeRsp.parse>;
     /** ID: 5 */
-    writeNoRsp: {
-        /** Type: DATA16 */
-        attrId: number;
-        /** Type: DATA8 */
-        dataType: number;
-        /** Type: USE_DATA_TYPE */
-        attrData: unknown;
-    }[];
+    writeNoRsp: ReturnType<typeof Foundation.writeNoRsp.parse>;
     /** ID: 6 */
-    configReport: {
-        /** Type: DATA8 */
-        direction: number;
-        /** Type: DATA16 */
-        attrId: number;
-        /** Type: DATA8 conditions=[{fieldEquals field=direction value=0}] */
-        dataType?: number;
-        /** Type: DATA16 conditions=[{fieldEquals field=direction value=0}] */
-        minRepIntval?: number;
-        /** Type: DATA16 conditions=[{fieldEquals field=direction value=0}] */
-        maxRepIntval?: number;
-        /** Type: USE_DATA_TYPE conditions=[{fieldEquals field=direction value=0}{dataTypeValueTypeEquals value=ANALOG}] */
-        repChange?: unknown;
-        /** Type: DATA16 conditions=[{fieldEquals field=direction value=1}] */
-        timeout?: number;
-    }[];
+    configReport: ReturnType<typeof Foundation.configReport.parse>;
     /** ID: 7 */
-    configReportRsp: {
-        /** Type: ENUM8 */
-        status: number;
-        /** Type: DATA8 conditions=[{minimumRemainingBufferBytes value=3}] */
-        direction?: number;
-        /** Type: DATA16 conditions=[{minimumRemainingBufferBytes value=2}] */
-        attrId?: number;
-    }[];
+    configReportRsp: ReturnType<typeof Foundation.configReportRsp.parse>;
     /** ID: 8 */
-    readReportConfig: {
-        /** Type: DATA8 */
-        direction: number;
-        /** Type: DATA16 */
-        attrId: number;
-    }[];
+    readReportConfig: ReturnType<typeof Foundation.readReportConfig.parse>;
     /** ID: 9 */
-    readReportConfigRsp: {
-        /** Type: ENUM8 */
-        status: number;
-        /** Type: DATA8 */
-        direction: number;
-        /** Type: DATA16 */
-        attrId: number;
-        /** Type: DATA8 conditions=[{fieldEquals field=status value=0}{fieldEquals field=direction value=0}] */
-        dataType?: number;
-        /** Type: DATA16 conditions=[{fieldEquals field=status value=0}{fieldEquals field=direction value=0}] */
-        minRepIntval?: number;
-        /** Type: DATA16 conditions=[{fieldEquals field=status value=0}{fieldEquals field=direction value=0}] */
-        maxRepIntval?: number;
-        /** Type: USE_DATA_TYPE conditions=[{fieldEquals field=status value=0}{fieldEquals field=direction value=0}{dataTypeValueTypeEquals value=ANALOG}] */
-        repChange?: unknown;
-        /** Type: DATA16 conditions=[{fieldEquals field=status value=0}{fieldEquals field=direction value=1}] */
-        timeout?: number;
-    }[];
+    readReportConfigRsp: ReturnType<typeof Foundation.readReportConfigRsp.parse>;
     /** ID: 10 */
-    report: {
-        /** Type: DATA16 */
-        attrId: number;
-        /** Type: DATA8 */
-        dataType: number;
-        /** Type: USE_DATA_TYPE */
-        attrData: unknown;
-    }[];
+    report: ReturnType<typeof Foundation.report.parse>;
     /** ID: 11 */
-    defaultRsp: {
-        /** Type: DATA8 */
-        cmdId: number;
-        /** Type: ENUM8 */
-        statusCode: number;
-    };
+    defaultRsp: ReturnType<typeof Foundation.defaultRsp.parse>;
     /** ID: 12 */
-    discover: {
-        /** Type: DATA16 */
-        startAttrId: number;
-        /** Type: DATA8 */
-        maxAttrIds: number;
-    };
+    discover: ReturnType<typeof Foundation.discover.parse>;
     /** ID: 13 */
-    discoverRsp: {
-        /** Type: UINT8 */
-        discComplete: number;
-        attrInfos: {
-            /** Type: DATA16 */
-            attrId: number;
-            /** Type: DATA8 */
-            dataType: number;
-        }[];
-    };
+    discoverRsp: ReturnType<typeof Foundation.discoverRsp.parse>;
     /** ID: 14 */
-    readStructured: {
-        /** Type: DATA16 */
-        attrId: number;
-        /** Type: STRUCTURED_SELECTOR */
-        selector: StructuredSelector;
-    }[];
+    readStructured: ReturnType<typeof Foundation.readStructured.parse>;
     /** ID: 15 */
-    writeStructured: {
-        /** Type: DATA16 */
-        attrId: number;
-        /** Type: STRUCTURED_SELECTOR */
-        selector: StructuredSelector;
-        /** Type: DATA8 */
-        dataType: number;
-        /** Type: USE_DATA_TYPE */
-        elementData: unknown;
-    }[];
+    writeStructured: ReturnType<typeof Foundation.writeStructured.parse>;
     /** ID: 16 */
-    writeStructuredRsp: {
-        /** Type: ENUM8 */
-        status: number;
-        /** Type: DATA16 conditions=[{fieldEquals field=status reversed=true value=0}] */
-        attrId?: number;
-        /** Type: STRUCTURED_SELECTOR conditions=[{fieldEquals field=status reversed=true value=0}] */
-        selector?: StructuredSelector;
-    }[];
+    writeStructuredRsp: ReturnType<typeof Foundation.writeStructuredRsp.parse>;
     /** ID: 17 */
-    discoverCommands: {
-        /** Type: DATA8 */
-        startCmdId: number;
-        /** Type: DATA8 */
-        maxCmdIds: number;
-    };
+    discoverCommands: ReturnType<typeof Foundation.discoverCommands.parse>;
     /** ID: 18 */
-    discoverCommandsRsp: {
-        /** Type: UINT8 */
-        discComplete: number;
-        attrInfos: {
-            /** Type: DATA8 */
-            cmdId: number;
-        }[];
-    };
+    discoverCommandsRsp: ReturnType<typeof Foundation.discoverCommandsRsp.parse>;
     /** ID: 19 */
-    discoverCommandsGen: {
-        /** Type: DATA8 */
-        startCmdId: number;
-        /** Type: DATA8 */
-        maxCmdIds: number;
-    };
+    discoverCommandsGen: ReturnType<typeof Foundation.discoverCommandsGen.parse>;
     /** ID: 20 */
-    discoverCommandsGenRsp: {
-        /** Type: UINT8 */
-        discComplete: number;
-        attrInfos: {
-            /** Type: DATA8 */
-            cmdId: number;
-        }[];
-    };
+    discoverCommandsGenRsp: ReturnType<typeof Foundation.discoverCommandsGenRsp.parse>;
     /** ID: 21 */
-    discoverExt: {
-        /** Type: DATA16 */
-        startAttrId: number;
-        /** Type: DATA8 */
-        maxAttrIds: number;
-    };
+    discoverExt: ReturnType<typeof Foundation.discoverExt.parse>;
     /** ID: 22 */
-    discoverExtRsp: {
-        /** Type: UINT8 */
-        discComplete: number;
-        attrInfos: {
-            /** Type: DATA16 */
-            attrId: number;
-            /** Type: DATA8 */
-            dataType: number;
-            /** Type: DATA8 */
-            access: number;
-        }[];
-    };
+    discoverExtRsp: ReturnType<typeof Foundation.discoverExtRsp.parse>;
 }
-
-export type TFoundationRepetitive =
-    | "read"
-    | "readRsp"
-    | "write"
-    | "writeUndiv"
-    | "writeRsp"
-    | "writeNoRsp"
-    | "configReport"
-    | "configReportRsp"
-    | "readReportConfig"
-    | "readReportConfigRsp"
-    | "report"
-    | "readStructured"
-    | "writeStructured"
-    | "writeStructuredRsp";
-export type TFoundationFlat = "defaultRsp" | "discover" | "discoverCommands" | "discoverCommandsGen" | "discoverExt";
-export type TFoundationOneOf = "discoverRsp" | "discoverCommandsRsp" | "discoverCommandsGenRsp" | "discoverExtRsp";
 
 // Clusters
 export type TClusterAttributeKeys<Cl extends number | string> = Cl extends keyof TClusters
@@ -7705,8 +7140,5 @@ export type TClusterPayload<Cl extends number | string, Co extends number | stri
 
 // Foundation
 export type TFoundationGenericPayload = TFoundation[keyof TFoundation];
-export type TFoundationRepetitivePayload = TFoundation[TFoundationRepetitive];
-export type TFoundationFlatPayload = TFoundation[TFoundationFlat];
-export type TFoundationOneOfPayload = TFoundation[TFoundationOneOf];
 
 export type TFoundationPayload<Co extends number | string> = Co extends keyof TFoundation ? TFoundation[Co] : TFoundationGenericPayload;

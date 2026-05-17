@@ -13,9 +13,6 @@ updates:
                   - patch
       commit-message:
         prefix: fix(ignore)
-      ignore:
-          # https://github.com/Koenkk/zigbee-herdsman/pull/1471
-          - dependency-name: typescript
     - package-ecosystem: github-actions
       directory: /
       schedule:

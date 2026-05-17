@@ -25,6 +25,11 @@ function attributeKeyValue<Cl extends number | string, Custom extends TCustomClu
 
     // TODO: remove this type once Zcl.Frame is typed
     for (const item of frame.payload as TFoundation["report" | "write" | "readRsp"]) {
+        // Per ZCL spec, non-success `readRsp` records carry no value; don't synthesize one.
+        if ("status" in item && item.status !== Zcl.Status.SUCCESS) {
+            continue;
+        }
+
         const attribute = Zcl.Utils.getClusterAttribute(cluster, item.attrId, manufacturerCode);
 
         if (attribute) {

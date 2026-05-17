@@ -13,6 +13,18 @@ const MANU_SPE_CUSTOM_CLUSTERS = {
     },
 };
 
+const MIBOXER_GROUPS_CUSTOM_CLUSTER = {
+    genGroups: {
+        name: "genGroups",
+        ID: Zcl.Clusters.genGroups.ID,
+        attributes: {},
+        commands: {
+            miboxerSetZones: {name: "miboxerSetZones", ID: 0xf0, parameters: [{name: "zones", type: BuffaloZclDataType.LIST_MIBOXER_ZONES}]},
+        },
+        commandsResponse: {},
+    },
+};
+
 describe("Zcl", () => {
     it("Get cluster by name", () => {
         const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
@@ -46,9 +58,9 @@ describe("Zcl", () => {
 
     it("Get specific command by name", () => {
         const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
-        const command = Zcl.Utils.getClusterCommand(cluster, "ezmodeInvoke");
-        expect(command.ID).toBe(2);
-        expect(command.name).toBe("ezmodeInvoke");
+        const command = Zcl.Utils.getClusterCommand(cluster, "identify");
+        expect(command.ID).toBe(0);
+        expect(command.name).toBe("identify");
     });
 
     it("Get global command by name", () => {
@@ -81,8 +93,8 @@ describe("Zcl", () => {
 
     it("Get specific command by ID", () => {
         const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
-        const command = Zcl.Utils.getClusterCommand(cluster, 2);
-        expect(command).toStrictEqual(Zcl.Utils.getClusterCommand(cluster, "ezmodeInvoke"));
+        const command = Zcl.Utils.getClusterCommand(cluster, 0);
+        expect(command).toStrictEqual(Zcl.Utils.getClusterCommand(cluster, "identify"));
     });
 
     it("Get specific command by name server to client", () => {
@@ -97,13 +109,6 @@ describe("Zcl", () => {
             const cluster = Zcl.Utils.getCluster("genIdentify", undefined, {});
             Zcl.Utils.getClusterCommandResponse(cluster, "nonexisting");
         }).toThrow("Status 'UNSUP_COMMAND' response genIdentify:nonexisting");
-    });
-
-    it("Get discrete or analog of unkown type", () => {
-        expect(() => {
-            // @ts-expect-error invalid on purpose
-            Zcl.Utils.getDataTypeClass(99999);
-        }).toThrow("Status 'INVALID_DATA_TYPE' 9999");
     });
 
     it("ZclFrame from buffer parse payload with unknown frame type", () => {
@@ -143,30 +148,6 @@ describe("Zcl", () => {
         expect(frame.header.isSpecific).toBe(false);
         expect(frame.isCluster("genAnalogInput")).toBe(true);
         expect(frame.isCommand("report")).toBe(true);
-    });
-
-    it("ZclFrame from buffer tradfriArrowSingle", () => {
-        const buffer = Buffer.from([0x05, 0x7c, 0x11, 0x1d, 0x07, 0x00, 0x01, 0x0d, 0x00]);
-        const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genScenes.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
-        const header = new Zcl.Header(
-            {
-                reservedBits: 0,
-                direction: 0,
-                disableDefaultResponse: false,
-                frameType: 1,
-                manufacturerSpecific: true,
-            },
-            4476,
-            29,
-            7,
-        );
-
-        const payload = {value: 256, value2: 13};
-
-        expect(frame.header).toStrictEqual(header);
-        expect(frame.payload).toStrictEqual(payload);
-        expect(frame.command.ID).toStrictEqual(7);
-        expect(frame.command.name).toStrictEqual("tradfriArrowSingle");
     });
 
     it("ZclFrame from buffer genGroups getMembership", () => {
@@ -258,7 +239,7 @@ describe("Zcl", () => {
     });
 
     it("ZclFrame from buffer configReportRsp - long", () => {
-        const buffer = Buffer.from([0x08, 0x01, 0x07, 0x00, 0x01, 0x34, 0x12, 0x01, 0x01, 0x35, 0x12]);
+        const buffer = Buffer.from([0x08, 0x01, 0x07, 0x02, 0x01, 0x34, 0x12, 0x01, 0x01, 0x35, 0x12]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.genPowerCfg.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
             {
@@ -274,7 +255,7 @@ describe("Zcl", () => {
         );
 
         const payload = [
-            {status: 0, direction: 1, attrId: 0x1234},
+            {status: 2, direction: 1, attrId: 0x1234},
             {status: 1, direction: 1, attrId: 0x1235},
         ];
 
@@ -283,7 +264,7 @@ describe("Zcl", () => {
     });
 
     it("ZclFrame from buffer configReportRsp (hvacThermostat)", () => {
-        const buffer = Buffer.from([0x18, 0x03, 0x07, 0x00, 0x00, 0x12, 0x00]);
+        const buffer = Buffer.from([0x18, 0x03, 0x07, 0x00]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.hvacThermostat.ID, Zcl.Header.fromBuffer(buffer)!, buffer, {});
         const header = new Zcl.Header(
             {
@@ -298,7 +279,7 @@ describe("Zcl", () => {
             7,
         );
 
-        const payload = [{status: 0, direction: 0, attrId: 18}];
+        const payload = [{status: 0}];
 
         expect(frame.payload).toStrictEqual(payload);
         expect(frame.header).toStrictEqual(header);
@@ -560,15 +541,6 @@ describe("Zcl", () => {
             {
                 attrId: 65282,
                 dataType: 76,
-                numElms: 6,
-                structElms: [
-                    {elmType: 16, elmVal: 1},
-                    {elmType: 33, elmVal: 3022},
-                    {elmType: 33, elmVal: 17320},
-                    {elmType: 36, elmVal: 1},
-                    {elmType: 33, elmVal: 560},
-                    {elmType: 32, elmVal: 86},
-                ],
                 attrData: [
                     {elmType: 16, elmVal: 1},
                     {elmType: 33, elmVal: 3022},
@@ -1525,15 +1497,6 @@ describe("Zcl", () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
-    it("ZclFrame to buffer tradfriArrowSingle", () => {
-        const expected = Buffer.from([0x05, 0x7c, 0x11, 0x1d, 0x07, 0x00, 0x01, 0x0d, 0x00]);
-        const payload = {value: 256, value2: 13};
-
-        const frame = Zcl.Frame.create(FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, false, 4476, 29, 7, 5, payload, {});
-
-        expect(frame.toBuffer()).toStrictEqual(expected);
-    });
-
     it("ZclFrame to buffer readRsp failed", () => {
         const expected = Buffer.from([8, 1, 1, 1, 0, 2]);
         const payload = [{status: 2, attrId: 1}];
@@ -1952,7 +1915,24 @@ describe("Zcl", () => {
     });
 
     it("Zcl utils get cluster attributes manufacturerCode", () => {
-        const cluster = Zcl.Utils.getCluster("closuresWindowCovering", 0x1021, {});
+        const cluster = Zcl.Utils.getCluster("closuresWindowCovering", 0x1021, {
+            closuresWindowCovering: {
+                ID: Zcl.Clusters.closuresWindowCovering.ID,
+                name: "closuresWindowCovering",
+                attributes: {
+                    stepPositionTilt: {
+                        name: "stepPositionTilt",
+                        ID: 0xf004,
+                        type: DataType.ENUM8,
+                        manufacturerCode: Zcl.ManufacturerCode.LEGRAND_GROUP,
+                        write: true,
+                        max: 0xff,
+                    },
+                },
+                commands: {},
+                commandsResponse: {},
+            },
+        });
         const attribute = Zcl.Utils.getClusterAttribute(cluster, 0xf004, 0x1021);
         expect(attribute).toStrictEqual(expect.objectContaining({ID: 0xf004, manufacturerCode: 0x1021, name: "stepPositionTilt", type: 48}));
     });
@@ -2148,6 +2128,7 @@ describe("Zcl", () => {
         ).toStrictEqual({
             manufacturerCode: 13330,
             clusterID: 65535,
+            clusterName: "65535",
             attributes: {
                 "0": 50462976,
                 "1": "ZIGBEE",
@@ -2310,7 +2291,12 @@ describe("Zcl", () => {
             0x11, 0x01, 0xf0, 0x08, 0x84, 0x2b, 0x01, 0x98, 0x2b, 0x02, 0xac, 0x2b, 0x03, 0xc0, 0x2b, 0x04, 0xd4, 0x2b, 0x05, 0xe8, 0x2b, 0x06, 0xfc,
             0x2b, 0x07, 0x10, 0x2c, 0x08,
         ]);
-        const zoneConfigFrame = Zcl.Frame.fromBuffer(Zcl.Clusters.genGroups.ID, Zcl.Header.fromBuffer(zoneConfigPayload)!, zoneConfigPayload, {});
+        const zoneConfigFrame = Zcl.Frame.fromBuffer(
+            Zcl.Clusters.genGroups.ID,
+            Zcl.Header.fromBuffer(zoneConfigPayload)!,
+            zoneConfigPayload,
+            MIBOXER_GROUPS_CUSTOM_CLUSTER,
+        );
         expect(zoneConfigFrame.payload.zones).toStrictEqual([
             {zoneNum: 1, groupId: 0x2b84},
             {zoneNum: 2, groupId: 0x2b98},
@@ -2342,7 +2328,7 @@ describe("Zcl", () => {
             "miboxerSetZones",
             Zcl.Clusters.genGroups.ID,
             {zones: testZones},
-            {},
+            MIBOXER_GROUPS_CUSTOM_CLUSTER,
         );
         expect(zoneConfigFrame.toBuffer()).toStrictEqual(
             Buffer.from([

@@ -59,7 +59,7 @@ export class AdapterBackup {
 
         /* get adapter ieee address */
         const ieeeAddressResponse = await this.znp.requestWithReply(Subsystem.SYS, "getExtAddr", {});
-        if (!ieeeAddressResponse.payload.extaddress || !ieeeAddressResponse.payload.extaddress.startsWith("0x")) {
+        if (!ieeeAddressResponse.payload.extaddress?.startsWith("0x")) {
             throw new Error("Failed to read adapter IEEE address");
         }
         const ieeeAddress = Buffer.from(ieeeAddressResponse.payload.extaddress.split("0x")[1], "hex");

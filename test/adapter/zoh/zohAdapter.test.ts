@@ -572,7 +572,7 @@ describe("Zigbee on Host", () => {
 
         const sendUnicastSpy = vi.spyOn(adapter.driver, "sendUnicast");
 
-        const zclPayload = Buffer.from([16, 123, Zcl.Foundation.read.ID]);
+        const zclPayload = Buffer.from([16, 123, Zcl.Foundation.read.ID, 0x12, 0x34]);
         const zclFrame = Zcl.Frame.fromBuffer(Zcl.Clusters.genGroups.ID, Zcl.Header.fromBuffer(zclPayload), zclPayload, {});
 
         const p1 = adapter.sendZclFrameToEndpoint("0x00000000000004d2", 0x9876, 1, zclFrame, 10000, false, false, 2);
@@ -634,7 +634,7 @@ describe("Zigbee on Host", () => {
         await expect(p2).resolves.toStrictEqual(undefined);
         expect(sendUnicastSpy).toHaveBeenLastCalledWith(zclFrame.toBuffer(), ZSpec.HA_PROFILE_ID, Zcl.Clusters.genGroups.ID, 0x9876, undefined, 1, 1);
 
-        const zclPayloadDefRsp = Buffer.from([0, 123, Zcl.Foundation.read.ID]);
+        const zclPayloadDefRsp = Buffer.from([0, 123, Zcl.Foundation.read.ID, 0x12, 0x34]);
         const zclFrameDefRsp = Zcl.Frame.fromBuffer(Zcl.Clusters.genGroups.ID, Zcl.Header.fromBuffer(zclPayloadDefRsp), zclPayloadDefRsp, {});
 
         sendUnicastSpy.mockResolvedValueOnce(3);
@@ -770,7 +770,7 @@ describe("Zigbee on Host", () => {
 
         const sendGroupcastSpy = vi.spyOn(adapter.driver, "sendGroupcast").mockResolvedValueOnce(1).mockResolvedValueOnce(1).mockResolvedValueOnce(1);
 
-        const zclPayload = Buffer.from([0, 123, Zcl.Foundation.read.ID]);
+        const zclPayload = Buffer.from([0, 123, Zcl.Foundation.read.ID, 0x12, 0x34]);
         const zclFrame = Zcl.Frame.fromBuffer(Zcl.Clusters.genGroups.ID, Zcl.Header.fromBuffer(zclPayload), zclPayload, {});
 
         const p1 = adapter.sendZclFrameToGroup(123, zclFrame, 5);
@@ -791,7 +791,7 @@ describe("Zigbee on Host", () => {
 
         const sendBroadcastSpy = vi.spyOn(adapter.driver, "sendBroadcast").mockResolvedValueOnce(1).mockResolvedValueOnce(1);
 
-        const zclPayload = Buffer.from([0, 123, Zcl.Foundation.read.ID]);
+        const zclPayload = Buffer.from([0, 123, Zcl.Foundation.read.ID, 0x12, 0x34]);
         const zclFrame = Zcl.Frame.fromBuffer(Zcl.Clusters.genAlarms.ID, Zcl.Header.fromBuffer(zclPayload), zclPayload, {});
 
         const p = adapter.sendZclFrameToAll(3, zclFrame, 1, 0xfffc);

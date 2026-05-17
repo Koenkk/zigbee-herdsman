@@ -1,5 +1,71 @@
 # Changelog
 
+## [10.0.8](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.7...v10.0.8) (2026-05-08)
+
+
+### Bug Fixes
+
+* **ignore:** bump @biomejs/biome from 2.4.11 to 2.4.12 in the minor-patch group ([#1747](https://github.com/Koenkk/zigbee-herdsman/issues/1747)) ([d8a467f](https://github.com/Koenkk/zigbee-herdsman/commit/d8a467fa345633ab4252e3e283abe2e7cfa64140))
+* **ignore:** bump @biomejs/biome from 2.4.13 to 2.4.14 in the minor-patch group ([#1754](https://github.com/Koenkk/zigbee-herdsman/issues/1754)) ([ac05792](https://github.com/Koenkk/zigbee-herdsman/commit/ac057926458c6b199b50596d101825ef2be5d151))
+* **ignore:** bump the minor-patch group with 2 updates ([#1750](https://github.com/Koenkk/zigbee-herdsman/issues/1750)) ([5ad1810](https://github.com/Koenkk/zigbee-herdsman/commit/5ad18102282f0581c35b6909caabf70cbf622134))
+* MoveToLevel min and max ([#1752](https://github.com/Koenkk/zigbee-herdsman/issues/1752)) ([b7bf626](https://github.com/Koenkk/zigbee-herdsman/commit/b7bf6264d3f178fcbf53d02c2906b0fe52e941d8))
+* Preserve genBasic attributes when re-read returns undefined ([#1753](https://github.com/Koenkk/zigbee-herdsman/issues/1753)) ([9ab49a1](https://github.com/Koenkk/zigbee-herdsman/commit/9ab49a1868899cf724c00e8faf077b588c2842d0))
+
+## [10.0.7](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.6...v10.0.7) (2026-04-11)
+
+
+### Bug Fixes
+
+* **ignore:** bump @biomejs/biome from 2.4.10 to 2.4.11 in the minor-patch group ([#1740](https://github.com/Koenkk/zigbee-herdsman/issues/1740)) ([b613178](https://github.com/Koenkk/zigbee-herdsman/commit/b613178187b22d0550d2828dd7c7ca3c6baa4ab0))
+* **ignore:** bump typescript from 5.9.2 to 6.0.2 ([#1739](https://github.com/Koenkk/zigbee-herdsman/issues/1739)) ([6eeaaee](https://github.com/Koenkk/zigbee-herdsman/commit/6eeaaeee313add4a123f8fb3b3d5a53eb7c2577e))
+* Move Legrand and Tuya attributes from ZH to ZHC ([#1734](https://github.com/Koenkk/zigbee-herdsman/issues/1734)) ([9b9fb3b](https://github.com/Koenkk/zigbee-herdsman/commit/9b9fb3b5766d7a9f9dc6f38161208e919e5abd2e))
+* Move Tuya specific attributes in lightingColorCtrl cluster from ZH to ZHC ([#1743](https://github.com/Koenkk/zigbee-herdsman/issues/1743)) ([8506a42](https://github.com/Koenkk/zigbee-herdsman/commit/8506a426587193344481497d886ee5c6f143b6c7))
+
+## [10.0.6](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.5...v10.0.6) (2026-04-07)
+
+
+### Bug Fixes
+
+* `defaultRsp` command ID matching when sending ([#1720](https://github.com/Koenkk/zigbee-herdsman/issues/1720)) ([5ef90a5](https://github.com/Koenkk/zigbee-herdsman/commit/5ef90a5d59c35bdd00583abaa5da926e01405f1b))
+* **ignore:** bump the minor-patch group across 1 directory with 2 updates ([#1735](https://github.com/Koenkk/zigbee-herdsman/issues/1735)) ([016961d](https://github.com/Koenkk/zigbee-herdsman/commit/016961d6882cc63708535ea1815c2367cf3806a3))
+* Move custom attributes  (fournoks) and command (plugwise) from ZH to ZHC ([#1726](https://github.com/Koenkk/zigbee-herdsman/issues/1726)) ([913f140](https://github.com/Koenkk/zigbee-herdsman/commit/913f140e76840cc0dabb57521b038ac9aee71c10))
+* Move more custom attributes and commands from ZH to ZHC ([#1728](https://github.com/Koenkk/zigbee-herdsman/issues/1728)) ([4a3d508](https://github.com/Koenkk/zigbee-herdsman/commit/4a3d508e9de844079c664cbc85e90341d873ffc0))
+* Proper `readRsp` & `defaultRsp` spec behavior ([#1716](https://github.com/Koenkk/zigbee-herdsman/issues/1716)) ([d127f9a](https://github.com/Koenkk/zigbee-herdsman/commit/d127f9a8347e071073236fcf56e1127dff94bf53))
+* Set max illuminance measured value to 0xfffe ([#1736](https://github.com/Koenkk/zigbee-herdsman/issues/1736)) ([dbbb976](https://github.com/Koenkk/zigbee-herdsman/commit/dbbb976a0296fc4ea00444afee0abe6dd1f0390c))
+
+## [10.0.5](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.4...v10.0.5) (2026-03-31)
+
+
+### Bug Fixes
+
+* Move "Tradfri" commands used in ZHC to ZHC / ikea.ts ([#1714](https://github.com/Koenkk/zigbee-herdsman/issues/1714)) ([599cd08](https://github.com/Koenkk/zigbee-herdsman/commit/599cd082d8e4470d6e49f59e1a0b84555bb22ec4))
+* Move cluster attribute develcoAlarmOffDelay from ZH to ZHC ([#1725](https://github.com/Koenkk/zigbee-herdsman/issues/1725)) ([b224e13](https://github.com/Koenkk/zigbee-herdsman/commit/b224e134495333df8049691b00e47aeebd37366c))
+* Move Sprut attributes from ZH to ZHC ([#1713](https://github.com/Koenkk/zigbee-herdsman/issues/1713)) ([5a1276e](https://github.com/Koenkk/zigbee-herdsman/commit/5a1276eeb0eb0142ea90da197ae21195e8456170))
+* Move two Stelpro attributes in hvacThermostat from ZH to ZHC ([#1722](https://github.com/Koenkk/zigbee-herdsman/issues/1722)) ([9ad65bf](https://github.com/Koenkk/zigbee-herdsman/commit/9ad65bf5d57781d0e830d81fe0491ac94de7b469))
+* Move Viessmann attributes from ZH to ZHC ([#1724](https://github.com/Koenkk/zigbee-herdsman/issues/1724)) ([3594433](https://github.com/Koenkk/zigbee-herdsman/commit/3594433a174705285bc52e56195340e999fd629b))
+* Remove custom attributes and commands not used in ZHC ([#1723](https://github.com/Koenkk/zigbee-herdsman/issues/1723)) ([8527a0e](https://github.com/Koenkk/zigbee-herdsman/commit/8527a0eb2cfce28afb9cf2b694e77c82c8c7b988))
+* Remove custom attributes/commandsResponses not used in ZHC ([#1715](https://github.com/Koenkk/zigbee-herdsman/issues/1715)) ([124640f](https://github.com/Koenkk/zigbee-herdsman/commit/124640f04379719441359d7a7deabd167aea7cfb))
+
+## [10.0.4](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.3...v10.0.4) (2026-03-22)
+
+
+### Bug Fixes
+
+* Device onZclData optimizations ([#1711](https://github.com/Koenkk/zigbee-herdsman/issues/1711)) ([02cc145](https://github.com/Koenkk/zigbee-herdsman/commit/02cc145c9f192f3306385e3c65f61106c0787b5a))
+* Move manuSpecificTuya2 and 3 from ZH to ZHC ([#1710](https://github.com/Koenkk/zigbee-herdsman/issues/1710)) ([6cada34](https://github.com/Koenkk/zigbee-herdsman/commit/6cada34f54b0e003e25e1a888f9857c4d0994f97))
+
+## [10.0.3](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.2...v10.0.3) (2026-03-19)
+
+
+### Bug Fixes
+
+* better handling for ZCL default response ([#1694](https://github.com/Koenkk/zigbee-herdsman/issues/1694)) ([909bda4](https://github.com/Koenkk/zigbee-herdsman/commit/909bda49e130e257645416004f84bc4f6b2f9a70))
+* **ignore:** better test replacement for 374f0a ([#1707](https://github.com/Koenkk/zigbee-herdsman/issues/1707)) ([527e7a4](https://github.com/Koenkk/zigbee-herdsman/commit/527e7a4a3471b1882cb2b266ce781229e46b3d6c))
+* Move Danfoss custom attributes from ZH to ZHC ([#1709](https://github.com/Koenkk/zigbee-herdsman/issues/1709)) ([0a11cd0](https://github.com/Koenkk/zigbee-herdsman/commit/0a11cd0ca4d50a8e0d24e19c742caf25d21b86d5))
+* Move OwonSeMetering attributes from ZH to ZHC ([#1708](https://github.com/Koenkk/zigbee-herdsman/issues/1708)) ([490a13e](https://github.com/Koenkk/zigbee-herdsman/commit/490a13e6e9d63fe0a54642f675ec4e642ddec86b))
+* optimize ZCL foundation parse/write ([#1699](https://github.com/Koenkk/zigbee-herdsman/issues/1699)) ([0d19a7e](https://github.com/Koenkk/zigbee-herdsman/commit/0d19a7e6a82a3ff5b055e2d3a6770ff2ee9a1fd8))
+* Remove Schneider Electric-specific attributes from ZH cluster definitions that are not utilized in ZHC ([#1703](https://github.com/Koenkk/zigbee-herdsman/issues/1703)) ([374f0ae](https://github.com/Koenkk/zigbee-herdsman/commit/374f0ae470945fd3c0eb6c6d3c307501ca8fd301))
+
 ## [10.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.1...v10.0.2) (2026-03-16)
 
 

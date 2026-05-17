@@ -160,7 +160,6 @@ export enum ParameterCondition {
     MINIMUM_REMAINING_BUFFER_BYTES = "minimumRemainingBufferBytes",
     BITMASK_SET = "bitMaskSet",
     BITFIELD_ENUM = "bitFieldEnum",
-    DATA_TYPE_CLASS_EQUAL = "dataTypeValueTypeEquals",
     FIELD_EQUAL = "fieldEquals",
     FIELD_GT = "fieldGT",
 }

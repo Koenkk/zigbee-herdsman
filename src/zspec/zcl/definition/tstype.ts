@@ -1,4 +1,5 @@
-import type {BuffaloZclDataType, DataType, DataTypeClass, Direction, FrameType, ParameterCondition, StructuredIndicatorType} from "./enums";
+import type {BuffaloZclDataType, DataType, Direction, FrameType, ParameterCondition, StructuredIndicatorType} from "./enums";
+import type {Status} from "./status";
 
 export interface BuffaloZclOptions {
     length?: number;
@@ -20,10 +21,6 @@ export interface ZclArray {
 export interface StructuredSelector {
     indexes?: number[];
     indicatorType?: StructuredIndicatorType;
-}
-
-export interface KeyZclValue {
-    [s: string | number]: number | string;
 }
 
 export interface Struct {
@@ -120,11 +117,46 @@ export interface GpdCustomReply {
     buffer: Buffer;
 }
 
-export interface GpdAttributeReport {
-    manufacturerCode: number;
+export type GpdAttributeReport = {
     clusterID: number;
-    attributes: KeyZclValue;
-}
+    clusterName: string;
+    attributes: Record<string | number, unknown>;
+};
+
+export type GpdManufAttributeReport = {
+    manufacturerCode: number;
+} & GpdAttributeReport;
+
+export type GpdMultiClusterAttributeReport = {
+    reports: Array<{
+        clusterID: number;
+        clusterName: string;
+        attribute: string | number;
+        attrData: unknown;
+    }>;
+};
+
+export type GpdManufMultiClusterAttributeReport = {
+    manufacturerCode: number;
+} & GpdMultiClusterAttributeReport;
+
+export type GpdAttributeReporting =
+    | GpdAttributeReport
+    | GpdManufAttributeReport
+    | GpdMultiClusterAttributeReport
+    | GpdManufMultiClusterAttributeReport;
+
+export type GpdRequestAttribute = {
+    options: number;
+    manufacturerID: number | undefined;
+    records: Array<{clusterID: number; attributes: Array<number>}>;
+};
+
+export type GpdReadAttributeResponse = {
+    options: number;
+    manufacturerID: number | undefined;
+    records: Array<{clusterID: number; clusterName: string; attributes: Record<string | number, {status: Status; attrData: unknown}>}>;
+};
 
 export interface TuyaDataPointValue {
     dp: number;
@@ -226,7 +258,6 @@ export type Parameter = Readonly<{
         | {type: ParameterCondition.MINIMUM_REMAINING_BUFFER_BYTES; value: number}
         | {type: ParameterCondition.BITMASK_SET; param: string; mask: number /* not set */; reversed?: boolean}
         | {type: ParameterCondition.BITFIELD_ENUM; param: string; offset: number; size: number; value: number}
-        | {type: ParameterCondition.DATA_TYPE_CLASS_EQUAL; value: DataTypeClass}
         | {type: ParameterCondition.FIELD_EQUAL; field: string; value: unknown; reversed?: boolean}
         | {type: ParameterCondition.FIELD_GT; field: string; value: number /*; reversed?: boolean*/}
     )[];
@@ -399,6 +430,4 @@ export type ClusterName =
     | "haDiagnostic"
     | "touchlink"
     | "manuSpecificTuya"
-    | "manuSpecificTuya2"
-    | "manuSpecificTuya3"
     | "manuSpecificAmazonWWAH";

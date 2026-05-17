@@ -535,10 +535,15 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
                     logger.debug(`[APP_DESCRIPTION] ${logStr}`, NS);
                     break;
                 }
-                case 0xa1: {
-                    // GP Manufacturer-specific Attribute Reporting
-                    break;
-                }
+                case 0xa0: // Attribute Reporting
+                case 0xa1: // Manufacturer-Specific Attribute Reporting
+                case 0xa2: // Multi-Cluster Reporting
+                case 0xa3: // Manufacturer-specific Multi-Cluster Reporting
+                case 0xa4: // Request Attributes => TODO: handle response
+                case 0xa5: // Read Attributes Response
+                    {
+                        break;
+                    }
                 /* v8 ignore stop */
                 default: {
                     // NOTE: this is spammy because it logs everything that is handed back to Controller without special processing here
