@@ -26,7 +26,7 @@ import type {
     OtaUpdateAvailableResult,
     ZigbeeOtaImageMeta,
 } from "../tstype";
-import Endpoint, {type BindInternal, type Clusters} from "./endpoint";
+import Endpoint, {type BindInternal} from "./endpoint";
 import Entity from "./entity";
 
 const NS = "zh:controller:device";
