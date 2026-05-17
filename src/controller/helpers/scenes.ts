@@ -1,19 +1,15 @@
-import {Zcl} from "src";
+import * as Zcl from "../../zspec/zcl";
 import type {ExtensionFieldSet} from "../../zspec/zcl/definition/tstype";
 import type {Clusters, Scene} from "../model/endpoint";
 import type {Immutable, ImmutableArray} from "../tstype";
 
-/**
- * Deep-clone a Scene object
- */
+/** Deep-clone a Scene object */
 export function cloneScene(existing: Scene): Scene {
     const clonedScene: Scene = {name: existing.name, state: {}, enhanced: existing.enhanced, transitionTime: existing.transitionTime};
 
     for (const cluster in existing.state) {
-        // @ts-expect-error dynamic cloning
-        clonedScene.state[cluster as keyof typeof existing.state] = {
-            ...existing.state[cluster as keyof typeof existing.state],
-        };
+        const sourceState = existing.state[cluster as keyof typeof existing.state];
+        (clonedScene.state[cluster as keyof typeof existing.state] as typeof sourceState) = sourceState === undefined ? undefined : {...sourceState};
     }
 
     return clonedScene;
