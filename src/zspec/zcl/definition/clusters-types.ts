@@ -2297,7 +2297,7 @@ export interface TClusters {
         commands: never;
         commandResponses: never;
     };
-    zigbeeDirectConfig: {
+    zigbeeDirectConfiguration: {
         attributes: {
             /** ID=0x0000 | type=BITMAP8 | max=255 | required=true */
             interfaceState: number;

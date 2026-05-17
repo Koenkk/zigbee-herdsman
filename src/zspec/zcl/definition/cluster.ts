@@ -2964,9 +2964,9 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
         commands: {},
         commandsResponse: {},
     },
-    zigbeeDirectConfig: {
+    zigbeeDirectConfiguration: {
         // NOTE: only accepts unicast
-        name: "zigbeeDirectConfig",
+        name: "zigbeeDirectConfiguration",
         ID: 0x003d,
         attributes: {
             /** 0: disabled, 1: enabled, other: reserved */

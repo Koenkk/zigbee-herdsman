@@ -335,7 +335,7 @@ export type ClusterName =
     | "neighborCleaning"
     | "nearestGateway"
     | "keepAlive"
-    | "zigbeeDirectConfig"
+    | "zigbeeDirectConfiguration"
     | "closuresShadeCfg"
     | "closuresDoorLock"
     | "closuresWindowCovering"
