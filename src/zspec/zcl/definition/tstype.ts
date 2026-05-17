@@ -58,7 +58,8 @@ export interface ZoneInfo {
 export interface ExtensionFieldSet {
     clstId: number;
     len: number;
-    extField: unknown[];
+    /** current spec has only numbers for supported fields */
+    extField: number[];
 }
 
 export interface ThermoTransition {

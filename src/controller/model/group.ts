@@ -1,8 +1,9 @@
 import assert from "node:assert";
 import {logger} from "../../utils/logger";
 import * as Zcl from "../../zspec/zcl";
-import type {TFoundation} from "../../zspec/zcl/definition/clusters-types";
-import type {CustomClusters} from "../../zspec/zcl/definition/tstype";
+import type {TClusterCommandResponsePayload, TFoundation} from "../../zspec/zcl/definition/clusters-types";
+import type {CustomClusters, ExtensionFieldSet} from "../../zspec/zcl/definition/tstype";
+import {cloneScene} from "../helpers/scenes";
 import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
 import type {
     ClusterOrRawAttributeKeys,
@@ -145,9 +146,8 @@ export class Group extends ZigbeeEntity {
 
     public static create(groupID: number): Group {
         assert(typeof groupID === "number", "GroupID must be a number");
-        // Don't allow groupID 0, from the spec:
-        // "Scene identifier 0x00, along with group identifier 0x0000, is reserved for the global scene used by the OnOff cluster"
-        assert(groupID >= 1, "GroupID must be at least 1");
+        // per spec
+        assert(groupID >= 0x0001 && groupID <= 0xfff7, "Invalid group ID");
 
         Group.loadFromDatabaseIfNecessary();
 
@@ -207,6 +207,171 @@ export class Group extends ZigbeeEntity {
 
     public hasMember(endpoint: Endpoint): boolean {
         return this._members.includes(endpoint);
+    }
+
+    public syncSceneFromZigbee(
+        payload: TClusterCommandResponsePayload<"genScenes", "viewRsp" | "enhancedViewRsp">,
+        overrideSceneName: string,
+        enhanced: boolean,
+    ): void {
+        for (const member of this._members) {
+            member.syncSceneFromZigbee(payload, overrideSceneName, enhanced);
+        }
+    }
+
+    public syncSceneFromState(sceneId: number, sceneName: string, enhanced: boolean, transTime: number): void {
+        for (const member of this._members) {
+            member.syncSceneFromState(this.groupID, sceneId, sceneName, enhanced, transTime);
+        }
+    }
+
+    public syncStateFromScene(sceneId: number): void {
+        for (const member of this._members) {
+            member.syncStateFromScene(this.groupID, sceneId);
+        }
+    }
+
+    /**
+     * Add a scene.
+     * Can be done without specifying extension field sets (empty array), to only "setup" a scene name/transition time (followed by a `storeScene`).
+     * Note: If name not supported by cluster, will be discarded by devices (then returned as null string if requested).
+     * Syncing is done locally to avoid many requests.
+     */
+    public async addScene(
+        sceneId: number,
+        transTime: number,
+        sceneName: string,
+        extensionFieldSets: ExtensionFieldSet[],
+        options?: Options,
+    ): Promise<void> {
+        assert(sceneName.length > 16, "Scene name too long");
+
+        const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER, undefined);
+        const enhanced = Number.isInteger(transTime);
+
+        await this.command(
+            "genScenes",
+            enhanced ? "add" : "enhancedAdd",
+            {groupid: this.groupID, sceneid: sceneId, transtime: transTime, scenename: sceneName, extensionfieldsets: extensionFieldSets},
+            optionsWithDefaults,
+        );
+
+        // syncing from device's would be expensive for group
+        if (extensionFieldSets) {
+            // workaround: mock a Zigbee frame to avoid dupe functions
+            this.syncSceneFromZigbee(
+                {
+                    groupid: this.groupID,
+                    sceneid: sceneId,
+                    scenename: sceneName,
+                    transtime: transTime,
+                    extensionfieldsets: extensionFieldSets,
+                    status: Zcl.Status.SUCCESS,
+                },
+                sceneName,
+                enhanced,
+            );
+        } else {
+            this.syncSceneFromState(sceneId, sceneName, enhanced, transTime);
+        }
+    }
+
+    /**
+     * Store a scene, let the device determine the extension field sets based on its current state
+     * Syncing is done locally to avoid many requests.
+     */
+    public async storeScene(sceneId: number, sceneName: string, options?: Options): Promise<void> {
+        const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER, undefined);
+
+        await this.command("genScenes", "store", {groupid: this.groupID, sceneid: sceneId}, optionsWithDefaults);
+
+        // syncing from device's would be expensive for group
+        this.syncSceneFromState(sceneId, sceneName, false, 0);
+    }
+
+    /**
+     * Copy all or specific scenes.
+     * If mode is `all`, `fromSceneId` and `toSceneId` will be ignored.
+     * Syncing is done locally to avoid many requests.
+     */
+    public async copyScene(mode: "one", fromSceneId: number, toGroupId: number, toSceneId: number, options?: Options): Promise<void>;
+    public async copyScene(mode: "all", fromSceneId: number, toGroupId: number, toSceneId: 0xff, options?: Options): Promise<void>;
+    public async copyScene(mode: "one" | "all", fromSceneId: number, toGroupId: number, toSceneId: number, options?: Options): Promise<void> {
+        assert(toGroupId >= 0x0000 && toGroupId <= 0xfff7, "Invalid to group ID");
+        assert(toGroupId !== 0x0000 || toSceneId !== 0x00, "Invalid to group/scene ID combination (reserved)");
+
+        const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER, undefined);
+
+        await this.command(
+            "genScenes",
+            "copy",
+            {mode: mode === "all" ? 1 : 0, groupidfrom: this.groupID, sceneidfrom: fromSceneId, groupidto: toGroupId, sceneidto: toSceneId},
+            optionsWithDefaults,
+        );
+
+        // syncing from device's would be expensive for group
+        // workaround: mock a Zigbee frame to avoid dupe functions
+        for (const member of this._members) {
+            if (mode === "all") {
+                for (const [key, scene] of member.scenes) {
+                    if (!key.endsWith(`_${this.groupID}`)) {
+                        continue;
+                    }
+
+                    const sceneId = key.slice(0, key.indexOf("_"));
+
+                    member.scenes.set(`${sceneId}_${toGroupId}`, cloneScene(scene));
+                }
+            } else if (mode === "one") {
+                const existing = member.scenes.get(`${fromSceneId}_${this.groupID}`);
+
+                if (existing) {
+                    member.scenes.set(`${toSceneId}_${toGroupId}`, cloneScene(existing));
+                }
+            }
+        }
+    }
+
+    /**
+     * Recall the given scene with optional transition time override (0xffff to ignore).
+     * Syncing is done locally to avoid many requests.
+     */
+    public async recallScene(sceneId: number, transTime: number, options?: Options): Promise<void> {
+        const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER, undefined);
+
+        await this.command("genScenes", "recall", {groupid: this.groupID, sceneid: sceneId, transitionTime: transTime}, optionsWithDefaults);
+
+        this.syncStateFromScene(sceneId);
+    }
+
+    /**
+     * Remove given scene.
+     */
+    public async removeScene(sceneId: number, options?: Options): Promise<void> {
+        const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER, undefined);
+
+        await this.command("genScenes", "remove", {groupid: this.groupID, sceneid: sceneId}, optionsWithDefaults);
+
+        for (const member of this._members) {
+            member.scenes.delete(`${sceneId}_${this.groupID}`);
+        }
+    }
+
+    /**
+     * Remove all scenes.
+     */
+    public async removeAllScenes(options?: Options): Promise<void> {
+        const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER, undefined);
+
+        await this.command("genScenes", "removeAll", {groupid: this.groupID}, optionsWithDefaults);
+
+        for (const member of this._members) {
+            for (const [key] of member.scenes) {
+                if (key.endsWith(`_${this.groupID}`)) {
+                    member.scenes.delete(key);
+                }
+            }
+        }
     }
 
     #identifyCustomClusters(): [input: CustomClusters, output: CustomClusters] {
