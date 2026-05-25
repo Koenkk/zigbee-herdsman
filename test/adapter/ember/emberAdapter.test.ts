@@ -3263,7 +3263,7 @@ describe("Ember Adapter Layer", () => {
                 clusterId: zclFrame.cluster.ID,
                 sourceEndpoint,
                 destinationEndpoint: endpoint,
-                options: DEFAULT_APS_OPTIONS & |EmberApsOption.ENCRYPTION,
+                options: DEFAULT_APS_OPTIONS | EmberApsOption.ENCRYPTION,
                 groupId: 0,
                 sequence: 0, // set by stack
             };
