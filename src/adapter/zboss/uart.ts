@@ -208,7 +208,20 @@ export class ZBOSSUart extends EventEmitter {
     }
 
     private async onPackage(data: Buffer): Promise<void> {
-        if (this.inReset) return;
+        // Do not drop frames while `inReset` is set.
+        //
+        // `inReset` is set by `reset()` and only cleared by `onPortClose`
+        // (after a 3s wait + reopen). On some NCP transports the underlying
+        // port does not reliably close around `esp_restart()` (e.g. ESP32-C6
+        // USB-Serial-JTAG re-attaches the same CDC descriptor essentially
+        // instantly), so `onPortClose` never fires, `inReset` never clears,
+        // and the device's tsn-matching NCP_RESET response plus the
+        // post-reboot boot-ready frame both get silently dropped here.
+        // `Driver.execCommand(NCP_RESET, ...)` already uses an undefined-tsn
+        // waitress matcher, so either frame would resolve the pending
+        // promise if it reached the `"frame"` emitter. The CRC8/CRC16 checks below
+        // reject any garbage (ROM banner ASCII, partial frames, electrical
+        // noise) that legitimately arrives during the reset window.
         const len = data.readUInt16LE(0);
         const pType = data.readUInt8(2);
         const pFlags = data.readUInt8(3);
