@@ -3236,7 +3236,6 @@ describe("Ember Adapter Layer", () => {
             expect(mockEzspSend).toHaveBeenCalledWith(EmberOutgoingMessageType.DIRECT, networkAddress, apsFrame, zclFrame.toBuffer(), 0, 0);
         });
 
-                
         it("Adapter impl: sendZclFrameToEndpoint with encryption", async () => {
             const networkAddress: NodeId = 1234;
             const endpoint: number = 232;
