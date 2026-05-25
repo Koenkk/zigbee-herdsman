@@ -3236,6 +3236,41 @@ describe("Ember Adapter Layer", () => {
             expect(mockEzspSend).toHaveBeenCalledWith(EmberOutgoingMessageType.DIRECT, networkAddress, apsFrame, zclFrame.toBuffer(), 0, 0);
         });
 
+                
+        it("Adapter impl: sendZclFrameToEndpoint with encryption", async () => {
+            const networkAddress: NodeId = 1234;
+            const endpoint: number = 232;
+            const sourceEndpoint = FIXED_ENDPOINTS[0].endpoint;
+            const zclFrame = Zcl.Frame.create(
+                Zcl.FrameType.GLOBAL,
+                Zcl.Direction.CLIENT_TO_SERVER,
+                true,
+                undefined,
+                3,
+                "read",
+                "zigbeeDirectConfiguration",
+                [{attrId: 0}],
+                {},
+            );
+
+            const p = adapter.sendZclFrameToEndpoint("0x1122334455667788", networkAddress, endpoint, zclFrame, 10000, true, false, sourceEndpoint);
+
+            await vi.advanceTimersByTimeAsync(5000);
+            await expect(p).resolves.toStrictEqual(undefined);
+
+            const apsFrame: EmberApsFrame = {
+                profileId: FIXED_ENDPOINTS[0].profileId,
+                clusterId: zclFrame.cluster.ID,
+                sourceEndpoint,
+                destinationEndpoint: endpoint,
+                options: DEFAULT_APS_OPTIONS & |EmberApsOption.ENCRYPTION,
+                groupId: 0,
+                sequence: 0, // set by stack
+            };
+
+            expect(mockEzspSend).toHaveBeenCalledWith(EmberOutgoingMessageType.DIRECT, networkAddress, apsFrame, zclFrame.toBuffer(), 0, 0);
+        });
+
         it("Adapter impl: sendZclFrameToGroup with source endpoint", async () => {
             const groupId: number = 32;
             const zclFrame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 1, 1, 0, [{}], {});
