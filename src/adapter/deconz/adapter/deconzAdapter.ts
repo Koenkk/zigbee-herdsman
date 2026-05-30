@@ -352,7 +352,12 @@ export class DeconzAdapter extends Adapter {
         // TODO(mpi): Enable APS ACKs for tricky devices, maintain a list of those, or keep at least a few slots free for non APS ACK requests.
         //const txOptions = 0x4; // 0x00 normal, 0x04 APS ACK
         // TODO(mpi): Disable APS ACKs for now until we find a better solution to not block queues.
-        const txOptions = 0;
+        let txOptions = 0x00;
+
+        // Zigbee Direct cluster, enable APS layer encryption
+        if (zclFrame.cluster.ID === Zcl.Clusters.zigbeeDirectConfiguration.ID) {
+            txOptions |= 0x01;
+        }
 
         const request: ApsDataRequest = {
             requestId: transactionID,
