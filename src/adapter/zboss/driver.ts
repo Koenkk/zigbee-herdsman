@@ -8,6 +8,7 @@ import {Waitress} from "../../utils";
 import {AsyncMutex} from "../../utils/async-mutex";
 import {logger} from "../../utils/logger";
 import type * as ZSpec from "../../zspec";
+import * as Zcl from "../../zspec/zcl";
 import * as Zdo from "../../zspec/zdo";
 import type {TsType} from "..";
 import {ZDO_REQ_CLUSTER_ID_TO_ZBOSS_COMMAND_ID} from "./commands";
@@ -307,6 +308,12 @@ export class ZBOSSDriver extends EventEmitter {
     }
 
     public async request(ieee: string, profileID: number, clusterID: number, dstEp: number, srcEp: number, data: Buffer): Promise<ZBOSSFrame> {
+        // Default APS options
+        let txOptions = 0x02; // ROUTE DISCOVERY
+        // Zigbee Direct cluster, enable APS layer encryption
+        if (clusterID === Zcl.Clusters.zigbeeDirectConfiguration.ID) {
+            txOptions |= 0x01;
+        }
         const payload = {
             paramLength: 21,
             dataLength: data.length,
@@ -317,7 +324,7 @@ export class ZBOSSDriver extends EventEmitter {
             srcEndpoint: srcEp,
             radius: 3,
             dstAddrMode: 3, // ADDRESS MODE ieee
-            txOptions: 2, // ROUTE DISCOVERY
+            txOptions: txOptions,
             useAlias: 0,
             aliasAddr: 0,
             aliasSequence: 0,
