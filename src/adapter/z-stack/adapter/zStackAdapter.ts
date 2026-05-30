@@ -1146,6 +1146,13 @@ export class ZStackAdapter extends Adapter {
         const transactionID = this.nextTransactionID();
         const response = this.znp.waitFor(Type.AREQ, Subsystem.AF, "dataConfirm", undefined, transactionID, undefined, timeout);
 
+        let frameOptions = 0;
+
+        // Zigbee Direct cluster, enable APS layer encryption
+        if (clusterID === Zcl.Clusters.zigbeeDirectConfiguration.ID) {
+            frameOptions |= Constants.AF.options.EN_SECURITY;
+        }
+
         await this.znp.request(
             Subsystem.AF,
             "dataRequest",
@@ -1155,7 +1162,7 @@ export class ZStackAdapter extends Adapter {
                 srcendpoint: sourceEndpoint,
                 clusterid: clusterID,
                 transid: transactionID,
-                options: 0,
+                options: frameOptions,
                 radius: radius,
                 len: data.length,
                 data: data,
