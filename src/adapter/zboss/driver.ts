@@ -324,7 +324,7 @@ export class ZBOSSDriver extends EventEmitter {
             srcEndpoint: srcEp,
             radius: 3,
             dstAddrMode: 3, // ADDRESS MODE ieee
-            txOptions: txOptions,
+            txOptions,
             useAlias: 0,
             aliasAddr: 0,
             aliasSequence: 0,
