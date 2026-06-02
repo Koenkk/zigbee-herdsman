@@ -1,5 +1,20 @@
 # Changelog
 
+## [10.2.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.1.0...v10.2.0) (2026-06-02)
+
+
+### Features
+
+* Enable APS layer encryption for Zigbee Direct cluster operations ([#1762](https://github.com/Koenkk/zigbee-herdsman/issues/1762)) ([0ab26c0](https://github.com/Koenkk/zigbee-herdsman/commit/0ab26c06153030f98f49e0fd11b1f8a055b0fcf3))
+
+
+### Bug Fixes
+
+* defaultRsp matching for OTA ([#1771](https://github.com/Koenkk/zigbee-herdsman/issues/1771)) ([a4f4492](https://github.com/Koenkk/zigbee-herdsman/commit/a4f44922901ccc71bca802ff39fbb5cf87c897e2))
+* **ignore:** bump @date-fns/tz from 1.4.1 to 1.5.0 in the minor-patch group ([#1764](https://github.com/Koenkk/zigbee-herdsman/issues/1764)) ([b1e1577](https://github.com/Koenkk/zigbee-herdsman/commit/b1e1577a74f4f521e2e89e95c037ec25e003ce6d))
+* **ignore:** bump the minor-patch group with 2 updates ([#1766](https://github.com/Koenkk/zigbee-herdsman/issues/1766)) ([6b0b5c2](https://github.com/Koenkk/zigbee-herdsman/commit/6b0b5c2c384396f6107f7beff14968c58d25f64c))
+* Zboss: keep onPackage active during inReset ([#1763](https://github.com/Koenkk/zigbee-herdsman/issues/1763)) ([fb2b2fe](https://github.com/Koenkk/zigbee-herdsman/commit/fb2b2fe411f7c4c5038244971ba3927d73d9cd85))
+
 ## [10.1.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.0.8...v10.1.0) (2026-05-17)
 
 
