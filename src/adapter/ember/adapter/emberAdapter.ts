@@ -1960,6 +1960,11 @@ export class EmberAdapter extends Adapter {
             apsFrame.options &= ~EmberApsOption.RETRY;
         }
 
+        // Zigbee Direct cluster, enable APS layer encryption
+        if (zclFrame.cluster.ID === Zcl.Clusters.zigbeeDirectConfiguration.ID) {
+            apsFrame.options |= EmberApsOption.ENCRYPTION;
+        }
+
         const data = zclFrame.toBuffer();
 
         return await this.queue.execute<ZclPayload | undefined>(async () => {

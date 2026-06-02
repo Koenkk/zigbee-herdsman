@@ -2321,6 +2321,34 @@ describe("zstack-adapter", () => {
         );
     });
 
+    it("Send zcl frame with APS encryption", async () => {
+        basicMocks();
+        await adapter.start();
+
+        mockZnpRequest.mockClear();
+        mockQueueExecute.mockClear();
+        const frame = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            true,
+            undefined,
+            3,
+            "read",
+            "zigbeeDirectConfiguration",
+            [{attrId: 0}],
+            {},
+        );
+        await adapter.sendZclFrameToEndpoint("0x1122334455667788", 1234, 232, frame, 10000, true, false);
+        expect(mockQueueExecute.mock.calls[0][1]).toBe(1234);
+        expect(mockZnpRequest).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).toHaveBeenCalledWith(
+            4,
+            "dataRequest",
+            {clusterid: 61, data: frame.toBuffer(), destendpoint: 232, dstaddr: 1234, len: 5, options: 64, radius: 30, srcendpoint: 1, transid: 1},
+            99,
+        );
+    });
+
     it("Send zcl frame network address retry on MAC channel access failure", async () => {
         basicMocks();
         dataConfirmCode = 225;
