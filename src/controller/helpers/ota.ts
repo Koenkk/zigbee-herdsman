@@ -448,7 +448,8 @@ export class OtaSession {
 
     public async run(): Promise<TZclFrame<"genOta", "upgradeEndRequest"> | TFoundationZclFrame<"defaultRsp">> {
         // can take a long time, use max (int32 - 1), ~24 days
-        const upgradeEndRequest = this.waitForOtaCommand<"upgradeEndRequest">(this.endpoint.ID, UPGRADE_END_REQUEST_ID, undefined, 2147483647);
+        // never match on defaultRsp
+        const upgradeEndRequest = this.waitForOtaCommand<"upgradeEndRequest">(this.endpoint.ID, UPGRADE_END_REQUEST_ID, -1, 2147483647);
 
         try {
             for await (const request of this.commandStream(upgradeEndRequest)) {
