@@ -455,9 +455,13 @@ export class ZoHAdapter extends Adapter {
         transactionSequenceNumber: number | undefined,
         clusterId: number,
         commandId: number,
+        defaultRspCommandId: number | undefined,
         timeout: number,
     ): {promise: Promise<ZclPayload>; cancel: () => void} {
-        const waiter = this.zclWaitress.waitFor({address: networkAddress, endpoint, clusterId, commandId, transactionSequenceNumber}, timeout);
+        const waiter = this.zclWaitress.waitFor(
+            {address: networkAddress, endpoint, clusterId, commandId, defaultRspCommandId, transactionSequenceNumber},
+            timeout,
+        );
         const cancel = (): void => this.zclWaitress.remove(waiter.ID);
 
         return {cancel, promise: waiter.start().promise};
@@ -632,6 +636,7 @@ export class ZoHAdapter extends Adapter {
                                     clusterId: zclFrame.cluster.ID,
                                     endpoint,
                                     commandId: commandResponseId,
+                                    defaultRspCommandId: undefined,
                                     transactionSequenceNumber: zclFrame.header.transactionSequenceNumber,
                                 },
                                 timeout,

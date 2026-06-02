@@ -202,9 +202,10 @@ export class DeconzAdapter extends Adapter {
         transactionSequenceNumber: number | undefined,
         clusterId: number,
         commandId: number,
+        defaultRspCommandId: number | undefined,
         timeout: number,
     ): {promise: Promise<Events.ZclPayload>; cancel: () => void} {
-        const payload = {address: networkAddress, endpoint, clusterId, commandId, transactionSequenceNumber};
+        const payload = {address: networkAddress, endpoint, clusterId, commandId, defaultRspCommandId, transactionSequenceNumber};
 
         logger.debug(() => `waitFor() called ${JSON.stringify(payload)}`, NS);
 

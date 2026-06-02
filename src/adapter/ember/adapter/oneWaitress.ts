@@ -29,6 +29,8 @@ type OneWaitressMatcher = {
     zclSequence?: number;
     /** Expected command ID for ZCL commands */
     commandIdentifier?: number;
+    /** Expected default response command ID for ZCL commands */
+    defaultRspCommandId?: number;
 };
 
 type OneWaitressEventMatcher = {
@@ -161,12 +163,14 @@ export class EmberOneWaitress {
             if (
                 (matcher.apsFrame.profileId === TOUCHLINK_PROFILE_ID ||
                     (address === matcher.target && endpoint === matcher.apsFrame.destinationEndpoint)) &&
+                clusterID === matcher.apsFrame.clusterId &&
                 (matcher.zclSequence === undefined || header.transactionSequenceNumber === matcher.zclSequence) &&
                 (matcher.commandIdentifier === undefined ||
                     header.commandIdentifier === matcher.commandIdentifier ||
                     // defaultRsp
-                    (header.frameControl.frameType === FrameType.GLOBAL && header.commandIdentifier === 0x0b)) &&
-                clusterID === matcher.apsFrame.clusterId
+                    (header.frameControl.frameType === FrameType.GLOBAL &&
+                        header.commandIdentifier === 0x0b &&
+                        (matcher.defaultRspCommandId === undefined || payload.data[payload.data.byteLength - 2] === matcher.defaultRspCommandId)))
             ) {
                 clearTimeout(waiter.timer);
 
