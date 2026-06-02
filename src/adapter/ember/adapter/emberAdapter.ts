@@ -1712,6 +1712,7 @@ export class EmberAdapter extends Adapter {
         transactionSequenceNumber: number | undefined,
         clusterID: number,
         commandIdentifier: number,
+        defaultRspCommandId: number | undefined,
         timeout: number,
     ): {promise: Promise<ZclPayload>; cancel: () => void} {
         const sourceEndpointInfo = FIXED_ENDPOINTS[0];
@@ -1729,6 +1730,7 @@ export class EmberAdapter extends Adapter {
                 },
                 zclSequence: transactionSequenceNumber,
                 commandIdentifier,
+                defaultRspCommandId,
             },
             timeout,
         );
