@@ -390,7 +390,6 @@ export class OtaSession {
         private readonly waitForOtaCommand: <Co extends string>(
             endpointId: number,
             commandId: number,
-            transactionSequenceNumber: number | undefined,
             timeout: number,
         ) => {promise: Promise<TZclFrame<"genOta", Co>>; cancel: () => void},
     ) {
@@ -447,7 +446,7 @@ export class OtaSession {
 
     public async run(): Promise<TZclFrame<"genOta", "upgradeEndRequest">> {
         // can take a long time, use max (int32 - 1), ~24 days
-        const upgradeEndRequest = this.waitForOtaCommand<"upgradeEndRequest">(this.endpoint.ID, UPGRADE_END_REQUEST_ID, undefined, 2147483647);
+        const upgradeEndRequest = this.waitForOtaCommand<"upgradeEndRequest">(this.endpoint.ID, UPGRADE_END_REQUEST_ID, 2147483647);
 
         try {
             for await (const request of this.commandStream(upgradeEndRequest)) {
@@ -508,13 +507,11 @@ export class OtaSession {
             const imageBlockRequest = this.waitForOtaCommand<"imageBlockRequest">(
                 this.endpoint.ID,
                 IMAGE_BLOCK_REQUEST_ID,
-                undefined,
                 this.dataSettings.requestTimeout,
             );
             const imagePageRequest = this.waitForOtaCommand<"imagePageRequest">(
                 this.endpoint.ID,
                 IMAGE_PAGE_REQUEST_ID,
-                undefined,
                 this.dataSettings.requestTimeout,
             );
             const dataRequest = Promise.race([imageBlockRequest.promise, imagePageRequest.promise]);

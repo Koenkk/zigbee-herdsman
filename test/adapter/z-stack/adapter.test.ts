@@ -3171,7 +3171,7 @@ describe("zstack-adapter", () => {
             100,
             "defaultRsp",
             0,
-            {cmdId: 0, statusCode: Zcl.Status.NOT_AUTHORIZED},
+            {cmdId: 1, statusCode: Zcl.Status.NOT_AUTHORIZED},
             {},
         );
         const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, false, undefined, 100, "read", 0, [{attrId: 0}], {});
@@ -3209,7 +3209,7 @@ describe("zstack-adapter", () => {
         expect(result.linkquality).toStrictEqual(101);
         expect(result.address).toStrictEqual(2);
         expect(result.groupID).toStrictEqual(12);
-        expect(result.data).toStrictEqual(Buffer.from([24, 100, 11, 0, 126]));
+        expect(result.data).toStrictEqual(Buffer.from([24, 100, 11, 1, 126]));
     });
 
     it("Send zcl frame network address data confirm fails with default response", async () => {

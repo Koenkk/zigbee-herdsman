@@ -130,7 +130,9 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
             (matcher.transactionSequenceNumber === undefined || header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
             (header.commandIdentifier === matcher.commandId ||
                 // defaultRsp
-                (header.frameControl.frameType === Zcl.FrameType.GLOBAL && header.commandIdentifier === 0x0b))
+                (header.frameControl.frameType === Zcl.FrameType.GLOBAL &&
+                    header.commandIdentifier === 0x0b &&
+                    matcher.commandId === payload.data[payload.data.byteLength - 2]))
         );
     }
 

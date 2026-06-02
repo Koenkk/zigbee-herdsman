@@ -1443,7 +1443,6 @@ export class Device extends Entity<ControllerEventMap> {
     #waitForOtaCommand<Co extends string>(
         endpointId: number,
         commandId: number,
-        transactionSequenceNumber: number | undefined,
         timeout: number,
     ): {promise: Promise<TZclFrame<"genOta", Co>>; cancel: () => void} {
         const waiter = Entity.adapter.waitFor(
@@ -1451,7 +1450,7 @@ export class Device extends Entity<ControllerEventMap> {
             endpointId,
             Zcl.FrameType.SPECIFIC,
             Zcl.Direction.CLIENT_TO_SERVER,
-            transactionSequenceNumber,
+            undefined,
             GEN_OTA_CLUSTER_ID,
             commandId,
             timeout,
@@ -1514,7 +1513,6 @@ export class Device extends Entity<ControllerEventMap> {
         const queryNextImageRequest = this.#waitForOtaCommand<"queryNextImageRequest">(
             endpoint.ID,
             Zcl.Clusters.genOta.commands.queryNextImageRequest.ID,
-            undefined,
             60000,
         );
 

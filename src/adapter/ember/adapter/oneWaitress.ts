@@ -165,7 +165,9 @@ export class EmberOneWaitress {
                 (matcher.commandIdentifier === undefined ||
                     header.commandIdentifier === matcher.commandIdentifier ||
                     // defaultRsp
-                    (header.frameControl.frameType === FrameType.GLOBAL && header.commandIdentifier === 0x0b)) &&
+                    (header.frameControl.frameType === FrameType.GLOBAL &&
+                        header.commandIdentifier === 0x0b &&
+                        matcher.commandIdentifier === payload.data[payload.data.byteLength - 2])) &&
                 clusterID === matcher.apsFrame.clusterId
             ) {
                 clearTimeout(waiter.timer);
