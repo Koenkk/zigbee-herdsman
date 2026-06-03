@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.3.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.2.0...v10.3.0) (2026-06-03)
+
+
+### Features
+
+* Add ability to abort running OTA ([#1759](https://github.com/Koenkk/zigbee-herdsman/issues/1759)) ([a70e57b](https://github.com/Koenkk/zigbee-herdsman/commit/a70e57b1aab60aa43e0d12a44643bbc5c6bd5694))
+
 ## [10.2.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.1.0...v10.2.0) (2026-06-02)
 
 
