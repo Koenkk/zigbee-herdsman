@@ -58,6 +58,7 @@ const ZIGBEE_OTA_PREVIOUS_URL = "https://raw.githubusercontent.com/Koenkk/zigbee
 const UPGRADE_END_REQUEST_ID = Zcl.Clusters.genOta.commands.upgradeEndRequest.ID;
 const IMAGE_BLOCK_REQUEST_ID = Zcl.Clusters.genOta.commands.imageBlockRequest.ID;
 const IMAGE_PAGE_REQUEST_ID = Zcl.Clusters.genOta.commands.imagePageRequest.ID;
+const IMAGE_BLOCK_RESPONSE_ID = Zcl.Clusters.genOta.commandsResponse.imageBlockResponse.ID;
 
 /** uint32 LE */
 export const UPGRADE_FILE_IDENTIFIER = 0x0beef11e;
@@ -390,9 +391,9 @@ export class OtaSession {
         private readonly waitForOtaCommand: <Co extends string>(
             endpointId: number,
             commandId: number,
-            transactionSequenceNumber: number | undefined,
+            defaultRspCommandId: number | undefined,
             timeout: number,
-        ) => {promise: Promise<TZclFrame<"genOta", Co>>; cancel: () => void},
+        ) => {promise: Promise<TZclFrame<"genOta", Co> | TFoundationZclFrame<"defaultRsp">>; cancel: () => void},
     ) {
         this.#startTime = performance.now();
 
@@ -445,9 +446,10 @@ export class OtaSession {
         );
     }
 
-    public async run(abortSignal: AbortSignal): Promise<TZclFrame<"genOta", "upgradeEndRequest">> {
+    public async run(abortSignal: AbortSignal): Promise<TZclFrame<"genOta", "upgradeEndRequest"> | TFoundationZclFrame<"defaultRsp">> {
         // can take a long time, use max (int32 - 1), ~24 days
-        const upgradeEndRequest = this.waitForOtaCommand<"upgradeEndRequest">(this.endpoint.ID, UPGRADE_END_REQUEST_ID, undefined, 2147483647);
+        // never match on defaultRsp
+        const upgradeEndRequest = this.waitForOtaCommand<"upgradeEndRequest">(this.endpoint.ID, UPGRADE_END_REQUEST_ID, -1, 2147483647);
 
         try {
             for await (const request of this.commandStream(upgradeEndRequest)) {
@@ -509,20 +511,20 @@ export class OtaSession {
     }
 
     private async *commandStream(upgradeEndRequest: {
-        promise: Promise<TZclFrame<"genOta", "upgradeEndRequest">>;
+        promise: Promise<TZclFrame<"genOta", "upgradeEndRequest"> | TFoundationZclFrame<"defaultRsp">>;
         cancel: () => void;
     }): AsyncGenerator<OtaDataRequest | OtaUpgradeEndRequest | TFoundationZclFrame<"defaultRsp">> {
         while (true) {
             const imageBlockRequest = this.waitForOtaCommand<"imageBlockRequest">(
                 this.endpoint.ID,
                 IMAGE_BLOCK_REQUEST_ID,
-                undefined,
+                IMAGE_BLOCK_RESPONSE_ID,
                 this.dataSettings.requestTimeout,
             );
             const imagePageRequest = this.waitForOtaCommand<"imagePageRequest">(
                 this.endpoint.ID,
                 IMAGE_PAGE_REQUEST_ID,
-                undefined,
+                IMAGE_BLOCK_RESPONSE_ID,
                 this.dataSettings.requestTimeout,
             );
             const dataRequest = Promise.race([imageBlockRequest.promise, imagePageRequest.promise]);

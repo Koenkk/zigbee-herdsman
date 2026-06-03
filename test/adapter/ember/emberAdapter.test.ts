@@ -2284,7 +2284,7 @@ describe("Ember Adapter Layer", () => {
         });
 
         it("Adapter impl: waitFor", () => {
-            const waiter = adapter.waitFor(1234, 1, Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, 10, 0, 1, 15000);
+            const waiter = adapter.waitFor(1234, 1, Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, 10, 0, 1, undefined, 15000);
             const spyCancel = vi.spyOn(waiter, "cancel");
 
             expect(typeof waiter.cancel).toStrictEqual("function");
@@ -2293,6 +2293,80 @@ describe("Ember Adapter Layer", () => {
             waiter.cancel();
 
             expect(spyCancel).toHaveReturned();
+        });
+
+        it("Adapter impl: waitFor resolves on cmd", async () => {
+            const waiter = adapter.waitFor(1234, 1, Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, 10, 0, 1, undefined, 15000);
+            const spyCancel = vi.spyOn(waiter, "cancel");
+
+            expect(typeof waiter.cancel).toStrictEqual("function");
+            expect(waiter.promise).toBeDefined();
+
+            const messageContents = Zcl.Frame.create(
+                Zcl.FrameType.GLOBAL,
+                Zcl.Direction.SERVER_TO_CLIENT,
+                true,
+                undefined,
+                10,
+                "readRsp",
+                "genBasic",
+                [{attrId: 0, status: 0, dataType: Zcl.DataType.UINT8, attrData: 8}],
+                {},
+            ).toBuffer();
+            const expected = {
+                clusterID: 0,
+                header: Zcl.Header.fromBuffer(messageContents),
+                address: 1234,
+                data: messageContents,
+                endpoint: 1,
+                linkquality: 243,
+                groupID: 0,
+                wasBroadcast: false,
+                destinationEndpoint: 1,
+            };
+
+            // @ts-expect-error private
+            adapter.oneWaitress.resolveZCL(expected);
+
+            await expect(waiter.promise).resolves.toStrictEqual(expected);
+            expect(spyCancel).toHaveBeenCalledTimes(0);
+        });
+
+        it("Adapter impl: waitFor resolves on specified default response", async () => {
+            const waiter = adapter.waitFor(1234, 1, Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, undefined, 0x0019, 3, 5, 15000);
+            const spyCancel = vi.spyOn(waiter, "cancel");
+
+            expect(typeof waiter.cancel).toStrictEqual("function");
+            expect(waiter.promise).toBeDefined();
+
+            const messageContents = Zcl.Frame.create(
+                Zcl.FrameType.GLOBAL,
+                Zcl.Direction.SERVER_TO_CLIENT,
+                true,
+                undefined,
+                99,
+                "defaultRsp",
+                "genOta",
+                {cmdId: 5, statusCode: Zcl.Status.MALFORMED_COMMAND},
+                {},
+            ).toBuffer();
+            const expected = {
+                clusterID: 0x0019,
+                header: Zcl.Header.fromBuffer(messageContents),
+                address: 1234,
+                data: messageContents,
+                endpoint: 1,
+                linkquality: 243,
+                groupID: 0,
+                wasBroadcast: false,
+                destinationEndpoint: 1,
+            };
+
+            // @ts-expect-error private
+            adapter.oneWaitress.resolveZCL(expected);
+
+            await expect(waiter.promise).resolves.toStrictEqual(expected);
+            expect(spyCancel).toHaveBeenCalledTimes(0);
         });
 
         it("Adapter impl: permitJoin on all", async () => {
@@ -3229,6 +3303,40 @@ describe("Ember Adapter Layer", () => {
                 sourceEndpoint,
                 destinationEndpoint: endpoint,
                 options: DEFAULT_APS_OPTIONS & ~EmberApsOption.RETRY,
+                groupId: 0,
+                sequence: 0, // set by stack
+            };
+
+            expect(mockEzspSend).toHaveBeenCalledWith(EmberOutgoingMessageType.DIRECT, networkAddress, apsFrame, zclFrame.toBuffer(), 0, 0);
+        });
+
+        it("Adapter impl: sendZclFrameToEndpoint with encryption", async () => {
+            const networkAddress: NodeId = 1234;
+            const endpoint: number = 232;
+            const sourceEndpoint = FIXED_ENDPOINTS[0].endpoint;
+            const zclFrame = Zcl.Frame.create(
+                Zcl.FrameType.GLOBAL,
+                Zcl.Direction.CLIENT_TO_SERVER,
+                true,
+                undefined,
+                3,
+                "read",
+                "zigbeeDirectConfiguration",
+                [{attrId: 0}],
+                {},
+            );
+
+            const p = adapter.sendZclFrameToEndpoint("0x1122334455667788", networkAddress, endpoint, zclFrame, 10000, true, false, sourceEndpoint);
+
+            await vi.advanceTimersByTimeAsync(5000);
+            await expect(p).resolves.toStrictEqual(undefined);
+
+            const apsFrame: EmberApsFrame = {
+                profileId: FIXED_ENDPOINTS[0].profileId,
+                clusterId: zclFrame.cluster.ID,
+                sourceEndpoint,
+                destinationEndpoint: endpoint,
+                options: (DEFAULT_APS_OPTIONS & ~EmberApsOption.RETRY) | EmberApsOption.ENCRYPTION,
                 groupId: 0,
                 sequence: 0, // set by stack
             };

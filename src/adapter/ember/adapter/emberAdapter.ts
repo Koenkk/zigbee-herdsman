@@ -1712,6 +1712,7 @@ export class EmberAdapter extends Adapter {
         transactionSequenceNumber: number | undefined,
         clusterID: number,
         commandIdentifier: number,
+        defaultRspCommandId: number | undefined,
         timeout: number,
     ): {promise: Promise<ZclPayload>; cancel: () => void} {
         const sourceEndpointInfo = FIXED_ENDPOINTS[0];
@@ -1729,6 +1730,7 @@ export class EmberAdapter extends Adapter {
                 },
                 zclSequence: transactionSequenceNumber,
                 commandIdentifier,
+                defaultRspCommandId,
             },
             timeout,
         );
@@ -1956,6 +1958,11 @@ export class EmberAdapter extends Adapter {
         // don't RETRY if no response expected
         if (commandResponseId === undefined) {
             apsFrame.options &= ~EmberApsOption.RETRY;
+        }
+
+        // Zigbee Direct cluster, enable APS layer encryption
+        if (zclFrame.cluster.ID === Zcl.Clusters.zigbeeDirectConfiguration.ID) {
+            apsFrame.options |= EmberApsOption.ENCRYPTION;
         }
 
         const data = zclFrame.toBuffer();

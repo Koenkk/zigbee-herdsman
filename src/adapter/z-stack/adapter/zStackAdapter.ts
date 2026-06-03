@@ -518,6 +518,7 @@ export class ZStackAdapter extends Adapter {
                 zclFrame.header.transactionSequenceNumber,
                 zclFrame.cluster.ID,
                 command.response,
+                undefined,
                 timeout,
             );
         } else if (!zclFrame.header.frameControl.disableDefaultResponse) {
@@ -527,6 +528,7 @@ export class ZStackAdapter extends Adapter {
                 zclFrame.header.transactionSequenceNumber,
                 zclFrame.cluster.ID,
                 Zcl.Foundation.defaultRsp.ID,
+                undefined,
                 timeout,
             );
         }
@@ -1065,7 +1067,7 @@ export class ZStackAdapter extends Adapter {
             let response: ReturnType<typeof this.waitForInternal> | undefined;
 
             if (!disableResponse && command.response !== undefined) {
-                response = this.waitForInternal(undefined, 0xfe, undefined, zclFrame.cluster.ID, command.response, timeout);
+                response = this.waitForInternal(undefined, 0xfe, undefined, zclFrame.cluster.ID, command.response, undefined, timeout);
             }
 
             try {
@@ -1107,9 +1109,10 @@ export class ZStackAdapter extends Adapter {
         transactionSequenceNumber: number | undefined,
         clusterId: number,
         commandId: number,
+        defaultRspCommandId: number | undefined,
         timeout: number,
     ): {start: () => {promise: Promise<Events.ZclPayload>}; cancel: () => void} {
-        const payload = {address: networkAddress, endpoint, clusterId, commandId, transactionSequenceNumber};
+        const payload = {address: networkAddress, endpoint, clusterId, commandId, defaultRspCommandId, transactionSequenceNumber};
 
         const waiter = this.waitress.waitFor(payload, timeout);
         const cancel = (): void => this.waitress.remove(waiter.ID);
@@ -1124,9 +1127,10 @@ export class ZStackAdapter extends Adapter {
         transactionSequenceNumber: number | undefined,
         clusterId: number,
         commandId: number,
+        defaultRspCommandId: number | undefined,
         timeout: number,
     ): {promise: Promise<Events.ZclPayload>; cancel: () => void} {
-        const waiter = this.waitForInternal(networkAddress, endpoint, transactionSequenceNumber, clusterId, commandId, timeout);
+        const waiter = this.waitForInternal(networkAddress, endpoint, transactionSequenceNumber, clusterId, commandId, defaultRspCommandId, timeout);
 
         return {cancel: waiter.cancel, promise: waiter.start().promise};
     }
@@ -1146,6 +1150,13 @@ export class ZStackAdapter extends Adapter {
         const transactionID = this.nextTransactionID();
         const response = this.znp.waitFor(Type.AREQ, Subsystem.AF, "dataConfirm", undefined, transactionID, undefined, timeout);
 
+        let options = 0;
+
+        // Zigbee Direct cluster, enable APS layer encryption
+        if (clusterID === Zcl.Clusters.zigbeeDirectConfiguration.ID) {
+            options |= Constants.AF.options.EN_SECURITY;
+        }
+
         await this.znp.request(
             Subsystem.AF,
             "dataRequest",
@@ -1155,7 +1166,7 @@ export class ZStackAdapter extends Adapter {
                 srcendpoint: sourceEndpoint,
                 clusterid: clusterID,
                 transid: transactionID,
-                options: 0,
+                options,
                 radius: radius,
                 len: data.length,
                 data: data,
