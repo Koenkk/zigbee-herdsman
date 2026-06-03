@@ -78,6 +78,7 @@ export class Device extends Entity<ControllerEventMap> {
     private _gpSecurityKey?: number[];
     #scheduledOta: OtaSource | undefined;
     #otaInProgress = false;
+    #otaAbortController: AbortController | undefined;
 
     // Getters/setters
     get ieeeAddr(): string {
@@ -1719,13 +1720,15 @@ export class Device extends Entity<ControllerEventMap> {
         let endResult: TZclFrame<"genOta", "upgradeEndRequest">;
 
         try {
-            const runEnd = await session.run();
+            this.#otaAbortController = new AbortController();
+            const runEnd = await session.run(this.#otaAbortController.signal);
 
             assert(runEnd.header.isSpecific);
 
             endResult = runEnd as TZclFrame<"genOta", "upgradeEndRequest">;
         } finally {
             this.#otaInProgress = false;
+            this.#otaAbortController = undefined;
         }
 
         logger.debug(() => `Received upgrade end request for ${this.ieeeAddr}: ${JSON.stringify(endResult.payload)}`, NS);
@@ -1813,6 +1816,13 @@ export class Device extends Entity<ControllerEventMap> {
 
             throw new Error(`OTA update of ${this.ieeeAddr} failed with reason: ${Zcl.Status[endResult.payload.status]}`);
         }
+    }
+
+    /**
+     * Abort running OTA if any. Send `ABORT` with next block response to device.
+     */
+    abortOta(): void {
+        this.#otaAbortController?.abort();
     }
 
     scheduleOta(source: OtaSource): void {
