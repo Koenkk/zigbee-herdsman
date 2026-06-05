@@ -957,16 +957,22 @@ export class EmberAdapter extends Adapter {
                 logger.info("[INIT TC] Forming from backup.", NS);
                 // `backup` valid in this `action` path (not detected by TS)
                 /* v8 ignore start */
+                const keyList: LinkKeyBackupData[] = [];
+
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                const keyList: LinkKeyBackupData[] = backup!.devices.map((device) => ({
-                    deviceEui64: ZSpec.Utils.eui64BEBufferToHex(device.ieeeAddress),
-                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                    key: {contents: device.linkKey!.key},
-                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                    outgoingFrameCounter: device.linkKey!.txCounter,
-                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                    incomingFrameCounter: device.linkKey!.rxCounter,
-                }));
+                for (const device of backup!.devices) {
+                    // link_key is optional in the open coordinator backup format, skip devices without one
+                    if (device.linkKey == null) {
+                        continue;
+                    }
+
+                    keyList.push({
+                        deviceEui64: ZSpec.Utils.eui64BEBufferToHex(device.ieeeAddress),
+                        key: {contents: device.linkKey.key},
+                        outgoingFrameCounter: device.linkKey.txCounter,
+                        incomingFrameCounter: device.linkKey.rxCounter,
+                    });
+                }
                 /* v8 ignore stop */
 
                 // before forming
