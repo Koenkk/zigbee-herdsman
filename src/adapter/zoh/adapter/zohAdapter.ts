@@ -227,7 +227,7 @@ export class ZoHAdapter extends Adapter {
 
             return await new Promise((resolve, reject): void => {
                 const openError = async (err: Error): Promise<void> => {
-                    await this.stop();
+                    await this.closePort();
 
                     reject(err);
                 };
@@ -304,7 +304,7 @@ export class ZoHAdapter extends Adapter {
                 await wait(150);
             }
         } catch (error) {
-            await this.stop();
+            await this.closePort();
 
             throw error;
         }
