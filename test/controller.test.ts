@@ -2080,12 +2080,12 @@ describe("Controller", () => {
 
     it("Add install code pipe-enclosed", async () => {
         await controller.start();
-        const code = "|0013EA0032005C0D|0D791F5C5476B9C556A87F97955FF8E7A8B0|";
+        const code = "|0013EA0032005C0D|0D791F5C5476B9C556A87F97955FF8E7A8DC|";
         await controller.addInstallCode(code);
         expect(mockAddInstallCode).toHaveBeenCalledTimes(1);
         expect(mockAddInstallCode).toHaveBeenCalledWith(
             "0x0013ea0032005c0d",
-            Buffer.from([0x0d, 0x79, 0x1f, 0x5c, 0x54, 0x76, 0xb9, 0xc5, 0x56, 0xa8, 0x7f, 0x97, 0x95, 0x5f, 0xf8, 0xe7, 0xa8, 0xb0]),
+            Buffer.from([0x0d, 0x79, 0x1f, 0x5c, 0x54, 0x76, 0xb9, 0xc5, 0x56, 0xa8, 0x7f, 0x97, 0x95, 0x5f, 0xf8, 0xe7, 0xa8, 0xdc]),
             false,
         );
     });
