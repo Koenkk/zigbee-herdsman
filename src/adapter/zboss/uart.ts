@@ -200,6 +200,13 @@ export class ZBOSSUart extends EventEmitter {
             await wait(3000);
             await this.openPort();
             this.inReset = false;
+        } else if (!this.closing) {
+            // Unexpected close (USB unplug, TCP peer reboot/keepalive drop, ...).
+            // Notify upper layers so the application can handle the disconnect —
+            // mirrors the z-stack behaviour (`onZnpClose` -> `disconnected`).
+            // Without this the adapter keeps running against a dead port and
+            // every subsequent command fails with "Connection not initialized".
+            this.emit("close");
         }
     }
 
