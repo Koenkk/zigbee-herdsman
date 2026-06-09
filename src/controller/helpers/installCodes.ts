@@ -6,6 +6,7 @@ import {crc16X25} from "../../zspec/utils";
  * - 95 or 91-length
  * - Widely adopted (Ubisys, Danfoss, Inovelli, Ledvance): ...Z:<ieee>$I:<key>...
  * - Pipe-separated (Muller-Licht, Innr): <ieee>|<key>
+ * - Pipe-enclosed (frient): |<ieee>|<key>|
  * - Aqara: G$M:...$A:<ieee>$I:<key>
  * - Hue: HUE:Z:<key> M:<ieee>...
  * @param installCode
@@ -20,7 +21,7 @@ export function parseInstallCode(installCode: string): [ieeeAddr: string, key: s
         return [`0x${widelyAdoptedMatch[1].toLowerCase()}`, widelyAdoptedMatch[2]];
     }
 
-    const pipeMatch = installCode.match(/^([a-zA-Z0-9]{16})\|([a-zA-Z0-9]+)$/);
+    const pipeMatch = installCode.match(/^\|?([a-zA-Z0-9]{16})\|([a-zA-Z0-9]+)\|?$/);
 
     if (pipeMatch) {
         return [`0x${pipeMatch[1].toLowerCase()}`, pipeMatch[2]];
