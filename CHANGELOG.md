@@ -1,5 +1,20 @@
 # Changelog
 
+## [10.4.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.3.0...v10.4.0) (2026-06-09)
+
+
+### Features
+
+* Support for Frient install codes ([#1778](https://github.com/Koenkk/zigbee-herdsman/issues/1778)) ([40f3eeb](https://github.com/Koenkk/zigbee-herdsman/commit/40f3eeb99bc1fa6feb5b9edba0ba4d2e8a1f9003))
+
+
+### Bug Fixes
+
+* ember: skip backup devices without a link key in FORM_BACKUP ([#1774](https://github.com/Koenkk/zigbee-herdsman/issues/1774)) ([324a005](https://github.com/Koenkk/zigbee-herdsman/commit/324a005dea5bab54b927e3632f22fc4149a0fc19))
+* **ignore:** bump @types/node from 24.12.4 to 24.13.0 in the minor-patch group ([#1773](https://github.com/Koenkk/zigbee-herdsman/issues/1773)) ([7825459](https://github.com/Koenkk/zigbee-herdsman/commit/7825459784e03f78e9b7768c76e41cef9f11c209))
+* **ignore:** bump vitest from 3.2.4 to 3.2.6 ([#1781](https://github.com/Koenkk/zigbee-herdsman/issues/1781)) ([5a48d1b](https://github.com/Koenkk/zigbee-herdsman/commit/5a48d1b7bb313906ac5643a93162c78b96907d0b))
+* zoh: only close port (if needed) on init port failure ([#1776](https://github.com/Koenkk/zigbee-herdsman/issues/1776)) ([5592148](https://github.com/Koenkk/zigbee-herdsman/commit/559214808d1f488a3427c321a256109b3c667e38))
+
 ## [10.3.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.2.0...v10.3.0) (2026-06-03)
 
 
