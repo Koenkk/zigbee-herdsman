@@ -1907,7 +1907,7 @@ export class BuffaloZdo extends Buffalo {
                     deviceType: deviceTypeByte & 0x03,
                     rxOnWhenIdle: (deviceTypeByte & 0x0c) >> 2,
                     relationship: (deviceTypeByte & 0x70) >> 4,
-                    reserved1: (deviceTypeByte & 0x10) >> 7,
+                    reserved1: (deviceTypeByte & 0x80) >> 7,
                     permitJoining: permitJoiningByte & 0x03,
                     reserved2: (permitJoiningByte & 0xfc) >> 2,
                     depth,
