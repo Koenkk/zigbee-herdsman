@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.4.1](https://github.com/Koenkk/zigbee-herdsman/compare/v10.4.0...v10.4.1) (2026-06-11)
+
+
+### Bug Fixes
+
+* **ignore:** bump the minor-patch group with 2 updates ([#1782](https://github.com/Koenkk/zigbee-herdsman/issues/1782)) ([823ad8d](https://github.com/Koenkk/zigbee-herdsman/commit/823ad8d10befcf172f69667ebdee882722ae4559))
+
 ## [10.4.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.3.0...v10.4.0) (2026-06-09)
 
 
