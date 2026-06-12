@@ -36,6 +36,12 @@ export class ZBOSSAdapter extends Adapter {
         this.waitress = new Waitress(Adapter.zclWaitressValidator, Adapter.clusterWaitressTimeoutFormatter);
         this.driver = new ZBOSSDriver(serialPortOptions, networkOptions);
         this.driver.on("frame", this.processMessage.bind(this));
+        this.driver.on("close", this.onDriverClose.bind(this));
+    }
+
+    private onDriverClose(): void {
+        logger.error("Driver connection closed unexpectedly", NS);
+        this.emit("disconnected");
     }
 
     private async processMessage(frame: ZBOSSFrame): Promise<void> {

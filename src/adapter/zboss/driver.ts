@@ -52,6 +52,7 @@ export class ZBOSSDriver extends EventEmitter {
 
         this.port = new ZBOSSUart(options);
         this.port.on("frame", this.onFrame.bind(this));
+        this.port.on("close", () => this.emit("close"));
     }
 
     public async connect(): Promise<boolean> {
