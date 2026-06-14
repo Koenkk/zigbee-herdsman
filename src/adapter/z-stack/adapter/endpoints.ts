@@ -57,4 +57,6 @@ export const Endpoints = [
     // Required for shelly wifi and rpc clusters
     {...EndpointDefaults, endpoint: 239, appprofid: ZSpec.CUSTOM_SHELLY_PROFILE_ID},
     {...EndpointDefaults, endpoint: 242, appprofid: 0xa1e0},
+    // Control4 devices use a custom profile
+    {...EndpointDefaults, endpoint: 197, appprofid: ZSpec.CONTROL4_PROFILE_ID},
 ];
