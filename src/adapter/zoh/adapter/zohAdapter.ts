@@ -783,12 +783,8 @@ export class ZoHAdapter extends Adapter {
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 clusterID: apsHeader.clusterId!,
                 header: Zcl.Header.fromBuffer(apsPayload),
-                // Prefer the 16-bit network source address so the payload matches the
-                // zclWaitress matcher, which is registered with the device's networkAddress
-                // (a number). sender64 is only present when the device sets the NWK
-                // extended-source bit; using the EUI64 string there desyncs the waiter
-                // (request times out even though the response arrives). This mirrors the
-                // other adapters, which always key inbound ZCL payloads on the 16-bit source.
+                // always use 16-bit address for ZCL
+                // only fallback to 64-bit if no choice - waitress will never match on it
                 address:
                     sender16 !== undefined
                         ? sender16
