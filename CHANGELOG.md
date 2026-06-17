@@ -1,5 +1,14 @@
 # Changelog
 
+## [10.4.1](https://github.com/Koenkk/zigbee-herdsman/compare/v10.4.0...v10.4.1) (2026-06-17)
+
+
+### Bug Fixes
+
+* **ignore:** bump the minor-patch group with 2 updates ([#1782](https://github.com/Koenkk/zigbee-herdsman/issues/1782)) ([823ad8d](https://github.com/Koenkk/zigbee-herdsman/commit/823ad8d10befcf172f69667ebdee882722ae4559))
+* Zboss: emit disconnected on unexpected port close ([#1779](https://github.com/Koenkk/zigbee-herdsman/issues/1779)) ([c3c3361](https://github.com/Koenkk/zigbee-herdsman/commit/c3c336144c2caecacd81bafe69ed297b73a34cee))
+* zoh: prioritize 16-bit address for ZCL to match waitress logic ([#1780](https://github.com/Koenkk/zigbee-herdsman/issues/1780)) ([cc84d5a](https://github.com/Koenkk/zigbee-herdsman/commit/cc84d5a03fa381c055d3c68dc7261f4ac7a83474))
+
 ## [10.4.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.3.0...v10.4.0) (2026-06-09)
 
 
