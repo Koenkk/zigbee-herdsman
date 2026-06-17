@@ -1080,6 +1080,53 @@ describe("Zigbee on Host", () => {
             155,
         );
 
+        // sender16 and sender64 both present (NWK extended-source bit set): prefer the
+        // 16-bit network source so the payload matches the zclWaitress (keyed on networkAddress).
+        expect(emitSpy).toHaveBeenLastCalledWith("zclPayload", {
+            address: 0x9876,
+            clusterID: Zcl.Clusters.genIdentify.ID,
+            data: Buffer.from([0, 123, 0x00, 0x01, 0xff]),
+            destinationEndpoint: 1,
+            endpoint: 1,
+            groupID: undefined,
+            header: {
+                commandIdentifier: 0,
+                frameControl: {
+                    direction: 0,
+                    disableDefaultResponse: false,
+                    frameType: 0,
+                    manufacturerSpecific: false,
+                    reservedBits: 0,
+                },
+                manufacturerCode: undefined,
+                transactionSequenceNumber: 123,
+            },
+            linkquality: 155,
+            wasBroadcast: false,
+        });
+
+        // sender16 undefined (no 16-bit source available): fall back to the EUI64 string.
+        adapter.onFrame(
+            undefined,
+            1234n,
+            {
+                frameControl: {
+                    frameType: 0 /* DATA */,
+                    deliveryMode: 0 /* UNICAST */,
+                    ackFormat: false,
+                    security: false,
+                    ackRequest: false,
+                    extendedHeader: false,
+                },
+                profileId: ZSpec.HA_PROFILE_ID,
+                clusterId: Zcl.Clusters.genIdentify.ID,
+                sourceEndpoint: 0x1,
+                destEndpoint: 0x1,
+            },
+            Buffer.from([0, 123, 0x00, 0x01, 0xff]),
+            155,
+        );
+
         expect(emitSpy).toHaveBeenLastCalledWith("zclPayload", {
             address: "0x00000000000004d2",
             clusterID: Zcl.Clusters.genIdentify.ID,

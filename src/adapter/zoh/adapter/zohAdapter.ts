@@ -783,11 +783,13 @@ export class ZoHAdapter extends Adapter {
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 clusterID: apsHeader.clusterId!,
                 header: Zcl.Header.fromBuffer(apsPayload),
+                // always use 16-bit address for ZCL
+                // only fallback to 64-bit if no choice - waitress will never match on it
                 address:
-                    sender64 !== undefined
-                        ? `0x${bigUInt64ToHexBE(sender64)}`
+                    sender16 !== undefined
+                        ? sender16
                         : // biome-ignore lint/style/noNonNullAssertion: ignore
-                          sender16!,
+                          `0x${bigUInt64ToHexBE(sender64!)}`,
                 data: apsPayload,
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
                 endpoint: apsHeader.sourceEndpoint!,
