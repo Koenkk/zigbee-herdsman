@@ -479,6 +479,7 @@ enum ZgpConstants {
     GpNwkProtocolVersion = 3,
     GpNwkDataFrame = 0,
     GpNwkMaintenanceFrame = 1,
+    // biome-ignore lint/suspicious/noDuplicateEnumValues: fix-me
     GpMinMsduSize = 1,
     GpAutoCommissioningFlag = 1 << 6,
     GpNwkFrameControlExtensionFlag = 1 << 7,

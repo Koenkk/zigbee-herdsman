@@ -977,6 +977,7 @@ export enum EmberCounterType {
 export enum EmberLibraryId {
     FIRST = 0x00,
 
+    // biome-ignore lint/suspicious/noDuplicateEnumValues: first invalid?
     ZIGBEE_PRO = 0x00,
     BINDING = 0x01,
     END_DEVICE_BIND = 0x02,
@@ -1012,6 +1013,7 @@ export enum EmberLibraryStatus {
 
     // The Zigbee Pro library uses the following to indicate additional functionality:
     /** no router capability */
+    // biome-ignore lint/suspicious/noDuplicateEnumValues: fix-me
     ZIGBEE_PRO_LIBRARY_END_DEVICE_ONLY = 0x00,
     ZIGBEE_PRO_LIBRARY_HAVE_ROUTER_CAPABILITY = 0x01,
     ZIGBEE_PRO_LIBRARY_ZLL_SUPPORT = 0x02,

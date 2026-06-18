@@ -1876,7 +1876,7 @@ export enum OperationEventCode {
     ScheduleUnlock = 0x0c,
     ManualLock = 0x0d,
     ManualUnlock = 0x0e,
-    NonAccessUserOperationalEvent = 0x0e,
+    NonAccessUserOperationalEvent = 0x0f,
 }
 
 /**
