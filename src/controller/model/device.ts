@@ -1190,9 +1190,7 @@ export class Device extends Entity<ControllerEventMap> {
         // Remove disappeared endpoints (can happen with e.g. custom devices).
         // Preserve endpoints with a proprietary profile ID (e.g. C4 endpoint 197 with CONTROL4_PROFILE_ID)
         // since these are not ZDO-advertised and are managed externally (e.g. by a converter's configure).
-        this._endpoints = this._endpoints.filter(
-            (e) => activeEndpoints.endpointList.includes(e.ID) || e.profileID === ZSpec.CONTROL4_PROFILE_ID,
-        );
+        this._endpoints = this._endpoints.filter((e) => activeEndpoints.endpointList.includes(e.ID) || e.profileID === ZSpec.CONTROL4_PROFILE_ID);
     }
 
     /**
