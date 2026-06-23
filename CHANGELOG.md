@@ -1,5 +1,14 @@
 # Changelog
 
+## [10.4.2](https://github.com/Koenkk/zigbee-herdsman/compare/v10.4.1...v10.4.2) (2026-06-23)
+
+
+### Bug Fixes
+
+* **deps:** bump actions/checkout from 6 to 7 ([#1787](https://github.com/Koenkk/zigbee-herdsman/issues/1787)) ([28f6e9b](https://github.com/Koenkk/zigbee-herdsman/commit/28f6e9bcc15088ddf58b36105f401146234de414))
+* **ignore:** bump @biomejs/biome from 2.4.16 to 2.5.0 in the minor-patch group ([#1788](https://github.com/Koenkk/zigbee-herdsman/issues/1788)) ([53ed6fc](https://github.com/Koenkk/zigbee-herdsman/commit/53ed6fc80a97b78a3c7e5808621d1cfebb7da116))
+* OTA: fix possible race condition with abort ([#1793](https://github.com/Koenkk/zigbee-herdsman/issues/1793)) ([1a2007d](https://github.com/Koenkk/zigbee-herdsman/commit/1a2007d8cde7e8ee450dcc69ac7fe201e850e426))
+
 ## [10.4.1](https://github.com/Koenkk/zigbee-herdsman/compare/v10.4.0...v10.4.1) (2026-06-17)
 
 
