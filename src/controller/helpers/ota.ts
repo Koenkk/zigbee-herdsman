@@ -474,8 +474,6 @@ export class OtaSession {
                             pagePayload.pageSize,
                             abortSignal.aborted,
                         );
-
-                        abortSignal.throwIfAborted();
                     }
                 } else {
                     await this.sendImageBlockResponse(
@@ -485,7 +483,6 @@ export class OtaSession {
                         0,
                         abortSignal.aborted,
                     );
-                    abortSignal.throwIfAborted();
                 }
                 /* v8 ignore start */
             }
@@ -500,13 +497,11 @@ export class OtaSession {
         } catch (error) {
             upgradeEndRequest.cancel();
 
-            const err = error as Error;
-
-            if (err.name === "AbortError") {
+            if ((error as Error).message === "abort") {
                 throw new Error(`OTA for device ${this.ieeeAddr} was aborted`);
             }
 
-            throw new Error(`Device ${this.ieeeAddr} did not start/finish firmware download after being notified. (${err.message})`);
+            throw new Error(`Device ${this.ieeeAddr} did not start/finish firmware download after being notified. (${(error as Error).message})`);
         }
     }
 
@@ -566,7 +561,7 @@ export class OtaSession {
                 logger.debug(() => `Abort image block response failed for ${this.ieeeAddr}: ${(error as Error).message}`, NS);
             }
 
-            return 0;
+            throw new Error("abort");
         }
 
         try {
