@@ -199,6 +199,14 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
             pathRegex: ".*sonoff.*plus(?!_v2_).*",
         },
         {
+            // SONOFF Dongle-PP10 (CC2674P10)
+            vendorId: "10c4",
+            productId: "ea60",
+            manufacturer: "SONOFF",
+            // /dev/serial/by-id/usb-SONOFF_SONOFF_Dongle_Plus_CC2674P10_141ff85f6b12f011b6500514773d9da9-if00-port0
+            pathRegex: ".*sonoff.*plus.*cc2674p10.*",
+        },
+        {
             // CC2538
             vendorId: "0451",
             productId: "16c8",
