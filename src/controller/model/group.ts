@@ -145,9 +145,8 @@ export class Group extends ZigbeeEntity {
 
     public static create(groupID: number): Group {
         assert(typeof groupID === "number", "GroupID must be a number");
-        // Don't allow groupID 0, from the spec:
-        // "Scene identifier 0x00, along with group identifier 0x0000, is reserved for the global scene used by the OnOff cluster"
-        assert(groupID >= 1, "GroupID must be at least 1");
+        // Valid range from spec:
+        assert(groupID >= 0x0001 && groupID <= 0xfff7, "GroupID must be >= 1 and <= 65527");
 
         Group.loadFromDatabaseIfNecessary();
 
