@@ -1,5 +1,17 @@
 # Changelog
 
+## [10.5.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.4.2...v10.5.0) (2026-06-25)
+
+
+### Features
+
+* Support for Sonoff Dongle-PP10 auto-discovery. ([#1797](https://github.com/Koenkk/zigbee-herdsman/issues/1797)) ([f01cd75](https://github.com/Koenkk/zigbee-herdsman/commit/f01cd75dec2b088cdc900b73f430ce901c5c1b55))
+
+
+### Bug Fixes
+
+* Fix min and max Group ID ([#1795](https://github.com/Koenkk/zigbee-herdsman/issues/1795)) ([a30116a](https://github.com/Koenkk/zigbee-herdsman/commit/a30116a76585335a8ac3327db8cace7890cae5d0))
+
 ## [10.4.2](https://github.com/Koenkk/zigbee-herdsman/compare/v10.4.1...v10.4.2) (2026-06-23)
 
 
