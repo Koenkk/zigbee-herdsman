@@ -370,7 +370,7 @@ export class ZnpAdapterManager {
             await this.znp.request(Subsystem.APP_CNF, "bdbSetChannel", {isPrimary: 0x0, channel: 0x0});
 
             /* perform bdb commissioning */
-            const started = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, "stateChangeInd", undefined, undefined, 9, 60000);
+            const started = this.znp.waitFor(UnpiConstants.Type.AREQ, Subsystem.ZDO, "stateChangeInd", undefined, undefined, 9, 100000);
             await this.znp.request(Subsystem.APP_CNF, "bdbStartCommissioning", {mode: 0x04});
             try {
                 await started.start().promise;
