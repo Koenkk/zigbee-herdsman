@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.6.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.5.0...v10.6.0) (2026-06-28)
+
+
+### Features
+
+* support for EmberZNet 9.1.0 (EZSP v19 / v2026.6.0) ([#1800](https://github.com/Koenkk/zigbee-herdsman/issues/1800)) ([5f64996](https://github.com/Koenkk/zigbee-herdsman/commit/5f64996c422a1c605c442ca399ecd0100810d288))
+
 ## [10.5.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.4.2...v10.5.0) (2026-06-25)
 
 
