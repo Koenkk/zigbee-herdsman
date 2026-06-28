@@ -1873,6 +1873,28 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
     }
 
     /**
+     * Set the channel number the device will accept in ZDO Mgmt Network Update command to change channel.
+     * If a ZDO Mgmt Network Update command is received by the device specifying a channel that does not match with the given
+     * channel, the ZDO Mgmt Network Update command will be ignored by the device.
+     * A value of 0xFF indicates that any channel received in a ZDO Mgmt Network Update command
+     * will be accepted which is also the default value set by the stack.
+     * @param channel uint8_t
+     */
+    async ezspSetPendingNetworkUpdateChannel(channel: number): Promise<void> {
+        if (this.version < 0x12) {
+            throw new EzspError(EzspStatus.ERROR_INVALID_FRAME_ID);
+        }
+
+        const sendBuffalo = this.startCommand(EzspFrameID.SET_PENDING_NETWORK_UPDATE_CHANNEL);
+        sendBuffalo.writeUInt8(channel);
+        const sendStatus = await this.sendCommand(sendBuffalo);
+
+        if (sendStatus !== EzspStatus.SUCCESS) {
+            throw new EzspError(sendStatus);
+        }
+    }
+
+    /**
      * Retrieve the endpoint number located at the specified index.
      * @param index uint8_t Index to retrieve the endpoint number for.
      * @returns uint8_t Endpoint number at the index.
@@ -2096,33 +2118,29 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
 
         // the size of corresponding the EZSP Mfg token, please refer to app/util/ezsp/ezsp-enum.h
         switch (tokenId) {
-            // 2 bytes
+            case EzspMfgTokenId.BOOTLOAD_AES_KEY:
+            case EzspMfgTokenId.SL_ZIGBEE_EZSP_STORAGE:
+            case EzspMfgTokenId.STRING:
+                expectedTokenDataLength = 255; // removed legacy
+                break;
             case EzspMfgTokenId.CUSTOM_VERSION:
             case EzspMfgTokenId.MANUF_ID:
             case EzspMfgTokenId.PHY_CONFIG:
             case EzspMfgTokenId.CTUNE:
                 expectedTokenDataLength = 2;
                 break;
-            // 8 bytes
-            case EzspMfgTokenId.EZSP_STORAGE:
             case EzspMfgTokenId.CUSTOM_EUI_64:
                 expectedTokenDataLength = 8;
                 break;
-            // 16 bytes
-            case EzspMfgTokenId.STRING:
             case EzspMfgTokenId.BOARD_NAME:
-            case EzspMfgTokenId.BOOTLOAD_AES_KEY:
                 expectedTokenDataLength = 16;
                 break;
-            // 20 bytes
             case EzspMfgTokenId.INSTALLATION_CODE:
                 expectedTokenDataLength = 20;
                 break;
-            // 40 bytes
             case EzspMfgTokenId.ASH_CONFIG:
                 expectedTokenDataLength = 40;
                 break;
-            // 92 bytes
             case EzspMfgTokenId.CBKE_DATA:
                 expectedTokenDataLength = 92;
                 break;
@@ -2130,7 +2148,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
                 break;
         }
 
-        if (tokenDataLength !== expectedTokenDataLength) {
+        if (expectedTokenDataLength === 255 || tokenDataLength !== expectedTokenDataLength) {
             throw new EzspError(EzspStatus.ERROR_INVALID_VALUE);
         }
 
@@ -4756,6 +4774,23 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         const sendBuffalo = this.startCommand(EzspFrameID.SET_BINDING_REMOTE_NODE_ID);
         sendBuffalo.writeUInt8(index);
         sendBuffalo.writeUInt16(nodeId);
+
+        const sendStatus = await this.sendCommand(sendBuffalo);
+
+        if (sendStatus !== EzspStatus.SUCCESS) {
+            throw new EzspError(sendStatus);
+        }
+    }
+
+    /**
+     * When enabled, the stack clears the binding table on definitive leave (not
+     * leave-with-rejoin), as required for Zigbee 4.0 security profile (e.g.
+     * CN-Reset-TC-01).
+     * @param clear True to clear bindings on leave; false to disable.
+     */
+    async ezspClearBindingTableOnLeave(clear: boolean): Promise<void> {
+        const sendBuffalo = this.startCommand(EzspFrameID.CLEAR_BINDING_TABLE_ON_LEAVE);
+        sendBuffalo.writeUInt8(clear ? 1 : 0);
 
         const sendStatus = await this.sendCommand(sendBuffalo);
 

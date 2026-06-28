@@ -16,6 +16,8 @@ export enum EzspFrameID {
     SET_PASSIVE_ACK_CONFIG = 0x0105,
     /** v14+ */
     SET_PENDING_NETWORK_UPDATE_PAN_ID = 0x011e,
+    /** v18+ */
+    SET_PENDING_NETWORK_UPDATE_CHANNEL = 0x003d,
     /** v14+ */
     GET_ENDPOINT = 0x012e,
     /** v14+ */
@@ -59,7 +61,7 @@ export enum EzspFrameID {
     SETUP_DELAYED_JOIN = 0x003a,
     /** v14+ */
     RADIO_GET_SCHEDULER_PRIORITIES = 0x012a,
-    /** v14+ */
+    /** v14+..v18 (2025.12.2) */
     RADIO_SET_SCHEDULER_PRIORITIES = 0x012b,
     /** v14+ */
     RADIO_GET_SCHEDULER_SLIPTIME = 0x012c,
@@ -194,6 +196,8 @@ export enum EzspFrameID {
     BINDING_IS_ACTIVE = 0x002e,
     GET_BINDING_REMOTE_NODE_ID = 0x002f,
     SET_BINDING_REMOTE_NODE_ID = 0x0030,
+    /** v19+ */
+    CLEAR_BINDING_TABLE_ON_LEAVE = 0x006d,
     REMOTE_SET_BINDING_HANDLER = 0x0031,
     REMOTE_DELETE_BINDING_HANDLER = 0x0032,
 
@@ -424,6 +428,54 @@ export enum EzspFrameID {
     RESET_NODE = 0x0104,
     GP_SECURITY_TEST_VECTORS = 0x0117,
     TOKEN_FACTORY_RESET = 0x0077,
+
+    // Dynamic Hardware Configuration Frames
+    /** v18+ */
+    READ_PA_DESCRIPTOR = 0x0152,
+    /** v18+ */
+    WRITE_PA_DESCRIPTOR = 0x0153,
+    /** v18+ */
+    READ_PA_CURVE_SEGMENT = 0x0154,
+    /** v18+ */
+    WRITE_PA_CURVE_SEGMENT = 0x0155,
+    /** v18+ */
+    READ_PA_CURVE = 0x0156,
+    /** v18+ */
+    WRITE_PA_CURVE = 0x0157,
+    /** v18+ */
+    READ_PA_TABLE = 0x0158,
+    /** v18+ */
+    WRITE_PA_TABLE = 0x0159,
+    /** v18+ */
+    READ_RSSI_OFFSET = 0x015a,
+    /** v18+ */
+    WRITE_RSSI_OFFSET = 0x015f,
+    /** v18+ */
+    READ_PA_VOLTAGE = 0x015b,
+    /** v18+ */
+    WRITE_PA_VOLTAGE = 0x015c,
+    /** v18+ */
+    READ_PA_MODE = 0x015d,
+    /** v18+ */
+    WRITE_PA_MODE = 0x015e,
+    /** v18+ */
+    READ_CTUNE = 0x0160,
+    /** v18+ */
+    WRITE_CTUNE = 0x0161,
+    /** v18+ */
+    READ_DHC_VERSION = 0x0162,
+    /** v18+ */
+    WRITE_DHC_VERSION = 0x0163,
+    /** v18+ */
+    READ_PA_VERSION = 0x0164,
+    /** v18+ */
+    READ_PA_SIGNATURE = 0x0166,
+    /** v18+ */
+    WRITE_PA_SIGNATURE = 0x0167,
+    /** v18+ */
+    READ_PA_METADATA = 0x0168,
+    /** v18+ */
+    WRITE_PA_METADATA = 0x0169,
 }
 
 /** Identifies a configuration value. uint8_t */
@@ -1067,21 +1119,22 @@ export enum EzspMfgTokenId {
     /** ASH configuration (40 bytes). */
     ASH_CONFIG = 0x06,
     /** EZSP storage (8 bytes). */
-    EZSP_STORAGE = 0x07,
+    SL_ZIGBEE_EZSP_STORAGE = 0x07,
     /**
      * Radio calibration data (64 bytes). 4 bytes are stored for each of the 16 channels.
-     * This token is not stored in the Flash Information Area. It is updated by the stack each time a calibration is performed.
+     * This token is not stored in the Flash Information Area.
+     * It is updated by the stack each time a calibration is performed.
      */
-    STACK_CAL_DATA = 0x08,
+    SL_ZIGBEE_EZSP_STACK_CAL_DATA = 0x08,
     /** Certificate Based Key Exchange (CBKE) data (92 bytes). */
     CBKE_DATA = 0x09,
     /** Installation code (20 bytes). */
     INSTALLATION_CODE = 0x0a,
     /**
-     * Radio channel filter calibration data (1 byte).
-     * This token is not stored in the Flash Information Area. It is updated by the stack each time a calibration is performed.
+     * Radio channel filter calibration data (1 byte). This token is not stored in the Flash Information Area.
+     * It is updated by the stack each time a calibration is performed.
      */
-    STACK_CAL_FILTER = 0x0b,
+    SL_ZIGBEE_EZSP_STACK_CAL_FILTER = 0x0b,
     /** Custom EUI64 MAC address (8 bytes). */
     CUSTOM_EUI_64 = 0x0c,
     /** CTUNE value (2 byte). */
