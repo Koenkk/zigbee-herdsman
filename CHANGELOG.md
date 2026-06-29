@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.6.1](https://github.com/Koenkk/zigbee-herdsman/compare/v10.6.0...v10.6.1) (2026-06-29)
+
+
+### Bug Fixes
+
+* ZStack: increase BDB commissioning timeout from 60s to 100s ([#1799](https://github.com/Koenkk/zigbee-herdsman/issues/1799)) ([88f1de0](https://github.com/Koenkk/zigbee-herdsman/commit/88f1de08dd2091a09693a6e7d30ab4dfdc9dbc67))
+
 ## [10.6.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.5.0...v10.6.0) (2026-06-28)
 
 
