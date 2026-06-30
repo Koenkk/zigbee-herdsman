@@ -1281,7 +1281,7 @@ describe("ZCL Buffalo", () => {
                 0xef, // Manufacturer code
                 0xff,
                 0xff, // Cluster ID
-                0x02, // Length
+                4, // Length (octets)
                 0x00,
                 0x00, // Attribute ID
                 0x00,
@@ -1303,7 +1303,7 @@ describe("ZCL Buffalo", () => {
                 0xef, // Manufacturer code
                 0x00,
                 0x00, // Cluster ID
-                0x02, // Length
+                11, // Length (octets)
                 0x00,
                 0x00, // Attribute ID
                 0x00, // Status

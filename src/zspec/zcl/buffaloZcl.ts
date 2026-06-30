@@ -594,7 +594,8 @@ export class BuffaloZcl extends Buffalo {
 
                 while (this.position - startPosition < options.payload.payloadSize) {
                     const clusterID = this.readUInt16();
-                    const recordsLength = this.readUInt8();
+                    // payload contains size in octets
+                    const recordsLength = this.readUInt8() / 2;
                     const attributes = this.readListUInt16(recordsLength);
 
                     frame.records.push({clusterID, attributes});
@@ -617,10 +618,13 @@ export class BuffaloZcl extends Buffalo {
                 while (this.position - startPosition < options.payload.payloadSize) {
                     const clusterID = this.readUInt16();
                     const cluster = Utils.getCluster(clusterID, frame.manufacturerID, {});
+                    // payload contains size in octets
                     const recordsLength = this.readUInt8();
                     const record: GpdReadAttributeResponse["records"][number] = {clusterID, clusterName: cluster.name, attributes: {}};
+                    let readLength = 0;
 
-                    for (let i = 0; i < recordsLength; i++) {
+                    while (readLength < recordsLength) {
+                        const startPos = this.getPosition();
                         const attributeId = this.readUInt16();
                         const status = this.readUInt8();
                         const dataType = this.readUInt8();
@@ -629,6 +633,7 @@ export class BuffaloZcl extends Buffalo {
                             status,
                             attrData: this.read(dataType, options),
                         };
+                        readLength += this.getPosition() - startPos;
                     }
 
                     frame.records.push(record);
