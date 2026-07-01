@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.6.2](https://github.com/Koenkk/zigbee-herdsman/compare/v10.6.1...v10.6.2) (2026-07-01)
+
+
+### Bug Fixes
+
+* Greenpower: fix attr parsing ([#1804](https://github.com/Koenkk/zigbee-herdsman/issues/1804)) ([4ddbd2c](https://github.com/Koenkk/zigbee-herdsman/commit/4ddbd2cfc24577fce8cd9bea7b2bd530c62511f2))
+
 ## [10.6.1](https://github.com/Koenkk/zigbee-herdsman/compare/v10.6.0...v10.6.1) (2026-06-29)
 
 
