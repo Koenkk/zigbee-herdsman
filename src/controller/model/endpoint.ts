@@ -520,6 +520,46 @@ export class Endpoint extends ZigbeeEntity {
         await this.zclCommand(cluster, optionsWithDefaults.writeUndiv ? "writeUndiv" : "write", payload, optionsWithDefaults, attributes, true);
     }
 
+    public async writeControl4(xpayload: number[], options?: Options): Promise<void> {
+        const device = this.getDevice();
+        const cluster = Zcl.Utils.getCluster(0x0001 /* genPowerCfg */, undefined, device.customClusters);
+        const optionsWithDefaults = this.getOptionsWithDefaults(options, true, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
+        optionsWithDefaults.profileId = ZSpec.CONTROL4_PROFILE_ID;
+        optionsWithDefaults.disableResponse = true;
+        const data = xpayload.slice(3);
+        // biome-ignore lint/suspicious/noExplicitAny: Control4 proprietary ZCL extension bypasses typed foundation lookup
+        const c4Command: any = {
+            name: "c4cmd_s",
+            ID: 0x31,
+            parse: () => ({}),
+            // biome-ignore lint/suspicious/noExplicitAny: buffalo type not re-exported from zspec/zcl
+            write: (buffalo: any, payload: number[]) => {
+                buffalo.writeBuffer(Buffer.from(payload), payload.length);
+            },
+        };
+        const frame = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            true,
+            undefined,
+            0x73,
+            c4Command,
+            cluster,
+            data,
+            device.customClusters,
+            0x1,
+        );
+        const logMsg = `writeControl4 ${this.deviceIeeeAddress}/${this.ID} ${JSON.stringify(data)}`;
+        logger.debug(logMsg, NS);
+        try {
+            await this.sendRequest(frame, optionsWithDefaults);
+        } catch (error) {
+            const err = error as Error;
+            err.message = `${logMsg} failed (${err.message})`;
+            throw error;
+        }
+    }
+
     public async writeResponse<Cl extends number | string, Custom extends TCustomCluster | undefined = undefined>(
         clusterKey: Cl,
         transactionSequenceNumber: number,
