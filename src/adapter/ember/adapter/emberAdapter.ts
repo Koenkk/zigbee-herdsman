@@ -172,6 +172,8 @@ type StackConfig = {
     TRANSIENT_KEY_TIMEOUT_S: number;
     /**@see Ezsp.ezspSetRadioIeee802154CcaMode */
     CCA_MODE?: keyof typeof IEEE802154CcaMode;
+    /** (Default: undefined) @see EzspConfigId.SEND_MULTICASTS_TO_SLEEPY_ADDRESS */
+    SEND_MULTICASTS_TO_SLEEPY_ADDRESS?: boolean;
 };
 
 /**
@@ -194,6 +196,7 @@ export const DEFAULT_STACK_CONFIG: Readonly<StackConfig> = {
     END_DEVICE_POLL_TIMEOUT: 8, // zigpc: 8
     TRANSIENT_KEY_TIMEOUT_S: 300, // zigpc: 65535
     CCA_MODE: undefined, // not set by default
+    SEND_MULTICASTS_TO_SLEEPY_ADDRESS: undefined, // not set by default
 };
 /** Default behavior is to disable app key requests */
 const ALLOW_APP_KEY_REQUESTS = false;
@@ -355,6 +358,11 @@ export class EmberAdapter extends Adapter {
             if (config.CCA_MODE && IEEE802154CcaMode[config.CCA_MODE] === undefined) {
                 config.CCA_MODE = undefined;
                 logger.error("[STACK CONFIG] Invalid CCA_MODE, ignoring.", NS);
+            }
+
+            if (config.SEND_MULTICASTS_TO_SLEEPY_ADDRESS != null && typeof config.SEND_MULTICASTS_TO_SLEEPY_ADDRESS !== "boolean") {
+                config.SEND_MULTICASTS_TO_SLEEPY_ADDRESS = undefined;
+                logger.error("[STACK CONFIG] Invalid SEND_MULTICASTS_TO_SLEEPY_ADDRESS, ignoring.", NS);
             }
 
             logger.info(`Using stack config ${JSON.stringify(config)}.`, NS);
@@ -698,6 +706,13 @@ export class EmberAdapter extends Adapter {
         if (this.stackConfig.CCA_MODE) {
             // validated in `loadStackConfig`
             await this.ezsp.ezspSetRadioIeee802154CcaMode(IEEE802154CcaMode[this.stackConfig.CCA_MODE]);
+        }
+
+        // Whether group commands (multicast messages) will be sent to sleepy end-devices too
+        // (we don't override what the stack was compiled with, if the stackConfig here does not explicitly have a value)
+        if (this.stackConfig.SEND_MULTICASTS_TO_SLEEPY_ADDRESS != null) {
+            // validated in `loadStackConfig`
+            await this.emberSetEzspConfigValue(EzspConfigId.SEND_MULTICASTS_TO_SLEEPY_ADDRESS, +this.stackConfig.SEND_MULTICASTS_TO_SLEEPY_ADDRESS);
         }
 
         // WARNING: From here on EZSP commands that affect memory allocation on the NCP should no longer be called (like resizing tables)
