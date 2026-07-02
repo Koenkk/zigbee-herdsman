@@ -68,3 +68,19 @@ export interface MetricsEventMap {
 }
 
 export const metrics = new EventEmitter<MetricsEventMap>();
+
+/**
+ * Times an async send operation and reports its outcome (success/failure) and duration in seconds,
+ * regardless of whether it resolves or throws. Used to instrument adapter send calls for metrics.
+ */
+export async function instrumentSend<T>(fn: () => Promise<T>, record: (status: SendStatus, durationSeconds: number) => void): Promise<T> {
+    const start = Date.now();
+    try {
+        const result = await fn();
+        record("success", (Date.now() - start) / 1000);
+        return result;
+    } catch (e) {
+        record("failure", (Date.now() - start) / 1000);
+        throw e;
+    }
+}

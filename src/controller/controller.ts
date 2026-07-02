@@ -5,7 +5,7 @@ import {Adapter, type Events as AdapterEvents, type TsType as AdapterTsType} fro
 import type {ZclPayload} from "../adapter/events";
 import {BackupUtils, wait} from "../utils";
 import {logger} from "../utils/logger";
-import {metrics, type SendStatus} from "../utils/metrics.js";
+import {metrics} from "../utils/metrics.js";
 import {isNumberArrayOfLength} from "../utils/utils";
 import * as ZSpec from "../zspec";
 import type {Eui64} from "../zspec/tstypes";
@@ -28,18 +28,6 @@ import Touchlink from "./touchlink";
 import type {DeviceType, GreenPowerDeviceJoinedPayload, RawPayload} from "./tstype";
 
 const NS = "zh:controller";
-
-async function instrumentSend<T>(fn: () => Promise<T>, record: (status: SendStatus, durationSeconds: number) => void): Promise<T> {
-    const start = Date.now();
-    try {
-        const result = await fn();
-        record("success", (Date.now() - start) / 1000);
-        return result;
-    } catch (e) {
-        record("failure", (Date.now() - start) / 1000);
-        throw e;
-    }
-}
 
 interface Options {
     network: AdapterTsType.NetworkOptions;
@@ -293,11 +281,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             // will fail if args are incorrect for request
             const buf = Zdo.Buffalo.buildRequest(this.adapter.hasZdoMessageOverhead, clusterKey, ...zdoParams);
 
-            return (await instrumentSend(
-                () => this.adapter.sendZdo(ieeeAddress, networkAddress, clusterKey, buf, disableResponse),
-                (status, durationSeconds) =>
-                    metrics.emit("adapterSendZdo", {ieeeAddr: ieeeAddress, clusterId: clusterKey as number, status, durationSeconds}),
-            )) as ZdoTypes.GenericZdoResponse;
+            return (await this.adapter.sendZdo(ieeeAddress, networkAddress, clusterKey, buf, disableResponse)) as ZdoTypes.GenericZdoResponse;
         }
 
         assert(zcl);
@@ -347,10 +331,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         if (groupId !== undefined) {
             assert(groupId >= 0x0000 && groupId <= 0xffff);
 
-            await instrumentSend(
-                () => this.adapter.sendZclFrameToGroup(groupId, zclFrame, srcEndpoint, profileId),
-                (status, durationSeconds) => metrics.emit("adapterSendZclGroup", {groupId, status, durationSeconds}),
-            );
+            await this.adapter.sendZclFrameToGroup(groupId, zclFrame, srcEndpoint, profileId);
             return;
         }
 
@@ -359,29 +340,22 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         assert(networkAddress !== undefined && networkAddress >= 0x0000 && networkAddress <= 0xffff);
 
         if (networkAddress >= ZSpec.BROADCAST_MIN) {
-            await instrumentSend(
-                () => this.adapter.sendZclFrameToAll(dstEndpoint, zclFrame, srcEndpoint, networkAddress, profileId),
-                (status, durationSeconds) => metrics.emit("adapterSendZclBroadcast", {status, durationSeconds}),
-            );
+            await this.adapter.sendZclFrameToAll(dstEndpoint, zclFrame, srcEndpoint, networkAddress, profileId);
             return;
         }
 
         assert(ieeeAddress);
 
-        return await instrumentSend(
-            () =>
-                this.adapter.sendZclFrameToEndpoint(
-                    ieeeAddress,
-                    networkAddress,
-                    dstEndpoint,
-                    zclFrame,
-                    timeout,
-                    disableResponse,
-                    false,
-                    srcEndpoint,
-                    profileId,
-                ),
-            (status, durationSeconds) => metrics.emit("adapterSendZclUnicast", {ieeeAddr: ieeeAddress, status, durationSeconds}),
+        return await this.adapter.sendZclFrameToEndpoint(
+            ieeeAddress,
+            networkAddress,
+            dstEndpoint,
+            zclFrame,
+            timeout,
+            disableResponse,
+            false,
+            srcEndpoint,
+            profileId,
         );
     }
 
@@ -650,10 +624,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             undefined,
         );
 
-        await instrumentSend(
-            () => this.adapter.sendZdo(ZSpec.BLANK_EUI64, ZSpec.BroadcastAddress.SLEEPY, clusterId, zdoPayload, true),
-            (status, durationSeconds) => metrics.emit("adapterSendZdo", {ieeeAddr: ZSpec.BLANK_EUI64, clusterId, status, durationSeconds}),
-        );
+        await this.adapter.sendZdo(ZSpec.BLANK_EUI64, ZSpec.BroadcastAddress.SLEEPY, clusterId, zdoPayload, true);
         logger.info(`Channel changed to '${newChannel}'`, NS);
 
         this.networkParametersCached = undefined; // invalidate cache
@@ -674,10 +645,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         const zdoPayload = Zdo.Buffalo.buildRequest(this.adapter.hasZdoMessageOverhead, clusterId, nwkAddress, false, 0);
 
         try {
-            const response = await instrumentSend(
-                () => this.adapter.sendZdo(ZSpec.BLANK_EUI64, nwkAddress, clusterId, zdoPayload, false),
-                (status, durationSeconds) => metrics.emit("adapterSendZdo", {ieeeAddr: ZSpec.BLANK_EUI64, clusterId, status, durationSeconds}),
-            );
+            const response = await this.adapter.sendZdo(ZSpec.BLANK_EUI64, nwkAddress, clusterId, zdoPayload, false);
 
             if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.IEEE_ADDRESS_RESPONSE>(response)) {
                 const payload = response[1];

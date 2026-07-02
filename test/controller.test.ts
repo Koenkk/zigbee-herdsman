@@ -10714,5 +10714,64 @@ describe("Controller", () => {
             expect(received[0]).toEqual({clusterId: Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE});
             expect(received[1]).toEqual({clusterId: Zdo.ClusterId.IEEE_ADDRESS_RESPONSE});
         });
+
+        it("emits adapterSendZclUnicast when a device command goes through the normal Endpoint path", async () => {
+            const received: Parameters<Parameters<typeof metrics.on<"adapterSendZclUnicast">>[1]>[0][] = [];
+            metrics.on("adapterSendZclUnicast", (data) => received.push(data));
+            await controller.start();
+            await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+            // Ignore the sends triggered by the interview; only measure the explicit read below.
+            mocksendZclFrameToEndpoint.mockClear();
+            received.length = 0;
+            await controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!.read("genBasic", ["modelId"]);
+            metrics.removeAllListeners("adapterSendZclUnicast");
+            expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+            expect(received).toHaveLength(1);
+            expect(received[0].ieeeAddr).toBe("0x129");
+            expect(received[0].status).toBe("success");
+            expect(typeof received[0].durationSeconds).toBe("number");
+        });
+
+        it("emits adapterSendZdo when a device ZDO request goes through the normal path", async () => {
+            const received: Parameters<Parameters<typeof metrics.on<"adapterSendZdo">>[1]>[0][] = [];
+            metrics.on("adapterSendZdo", (data) => received.push(data));
+            await controller.start();
+            await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
+            await controller.getDeviceByIeeeAddr("0x140")!.lqi();
+            metrics.removeAllListeners("adapterSendZdo");
+            const lqiEvents = received.filter((d) => d.clusterId === Zdo.ClusterId.LQI_TABLE_REQUEST);
+            expect(lqiEvents).toHaveLength(1);
+            expect(lqiEvents[0].ieeeAddr).toBe("0x140");
+            expect(lqiEvents[0].status).toBe("success");
+            expect(typeof lqiEvents[0].durationSeconds).toBe("number");
+        });
+
+        it("emits adapterSendZclGroup when a group command is sent", async () => {
+            const received: Parameters<Parameters<typeof metrics.on<"adapterSendZclGroup">>[1]>[0][] = [];
+            metrics.on("adapterSendZclGroup", (data) => received.push(data));
+            await controller.start();
+            const group = await controller.createGroup(2);
+            await group.command("genOnOff", "offWithEffect", {effectid: 9, effectvariant: 10});
+            metrics.removeAllListeners("adapterSendZclGroup");
+            expect(received).toHaveLength(1);
+            expect(received[0].groupId).toBe(2);
+            expect(received[0].status).toBe("success");
+            expect(typeof received[0].durationSeconds).toBe("number");
+        });
+
+        it("emits adapterSendZclBroadcast when a broadcast command is sent", async () => {
+            const received: Parameters<Parameters<typeof metrics.on<"adapterSendZclBroadcast">>[1]>[0][] = [];
+            metrics.on("adapterSendZclBroadcast", (data) => received.push(data));
+            await controller.start();
+            await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+            await controller
+                .getDeviceByIeeeAddr("0x129")!
+                .getEndpoint(1)!
+                .zclCommandBroadcast(255, BroadcastAddress.SLEEPY, Zcl.Clusters.ssIasZone.ID, "initTestMode", {});
+            metrics.removeAllListeners("adapterSendZclBroadcast");
+            expect(received).toHaveLength(1);
+            expect(received[0].status).toBe("success");
+            expect(typeof received[0].durationSeconds).toBe("number");
+        });
     });
 });
