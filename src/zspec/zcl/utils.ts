@@ -238,6 +238,10 @@ function isMinOrMax<T>(entry: Attribute | Parameter, value: T): boolean {
 }
 
 function processRestrictions<T>(entry: Attribute | Parameter, value: T): void {
+    if (entry.special?.some(([, specialValue]) => Number(value) === Number.parseInt(specialValue, 16))) {
+        return;
+    }
+
     if (entry.min !== undefined && (value as number) < entry.min) {
         throw new ZclStatusError(Status.INVALID_VALUE, `${entry.name} requires min of ${entry.min}`);
     }
