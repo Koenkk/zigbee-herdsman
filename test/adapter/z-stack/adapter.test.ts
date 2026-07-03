@@ -14,6 +14,7 @@ import Definition from "../../../src/adapter/z-stack/znp/definition";
 import type {ZpiObjectPayload} from "../../../src/adapter/z-stack/znp/tstype";
 import type {UnifiedBackupStorage} from "../../../src/models";
 import {setLogger} from "../../../src/utils/logger";
+import {type MetricEvent, MetricType, metrics} from "../../../src/utils/metrics";
 import * as ZSpec from "../../../src/zspec";
 import {BroadcastAddress} from "../../../src/zspec/enums";
 import * as Zcl from "../../../src/zspec/zcl";
@@ -2402,6 +2403,98 @@ describe("zstack-adapter", () => {
             error = e;
         }
         expect(error.message).toStrictEqual("Data request failed with error: 'NWK_UNSUPPORTED_ATTRIBUTE' (0xc9)");
+    });
+
+    it("emits adapterSendZclUnicast on a successful endpoint send", async () => {
+        basicMocks();
+        await adapter.start();
+        const received: Extract<MetricEvent, {type: MetricType.AdapterSendZclUnicast}>[] = [];
+        metrics.on("metric", (data) => data.type === MetricType.AdapterSendZclUnicast && received.push(data));
+        const frame = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            true,
+            undefined,
+            100,
+            "writeNoRsp",
+            0,
+            [{attrId: 0, dataType: 0, attrData: null}],
+            {},
+        );
+        await adapter.sendZclFrameToEndpoint("0x02", 2, 20, frame, 10000, false, false);
+        metrics.removeAllListeners("metric");
+        expect(received).toHaveLength(1);
+        expect(received[0].ieeeAddr).toBe("0x02");
+        expect(received[0].status).toBe("success");
+        expect(typeof received[0].durationSeconds).toBe("number");
+    });
+
+    it("emits adapterSendZclUnicast with status failure when an endpoint send throws", async () => {
+        basicMocks();
+        await adapter.start();
+        dataConfirmCode = 201;
+        const received: Extract<MetricEvent, {type: MetricType.AdapterSendZclUnicast}>[] = [];
+        metrics.on("metric", (data) => data.type === MetricType.AdapterSendZclUnicast && received.push(data));
+        const frame = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            true,
+            undefined,
+            100,
+            "writeNoRsp",
+            0,
+            [{attrId: 0, dataType: 0, attrData: null}],
+            {},
+        );
+        await expect(adapter.sendZclFrameToEndpoint("0x02", 2, 20, frame, 10000, false, false)).rejects.toThrow();
+        metrics.removeAllListeners("metric");
+        expect(received).toHaveLength(1);
+        expect(received[0].ieeeAddr).toBe("0x02");
+        expect(received[0].status).toBe("failure");
+        expect(typeof received[0].durationSeconds).toBe("number");
+    });
+
+    it("emits adapterSendZdo on a successful ZDO send", async () => {
+        basicMocks();
+        await adapter.start();
+        const received: Extract<MetricEvent, {type: MetricType.AdapterSendZdo}>[] = [];
+        metrics.on("metric", (data) => data.type === MetricType.AdapterSendZdo && received.push(data));
+        const clusterId = Zdo.ClusterId.PERMIT_JOINING_REQUEST;
+        const zdoPayload = Zdo.Buffalo.buildRequest(false, clusterId, 250, 1, []);
+        await adapter.sendZdo("0x1122334455667788", 1234, clusterId, zdoPayload, true);
+        metrics.removeAllListeners("metric");
+        expect(received).toHaveLength(1);
+        expect(received[0].ieeeAddr).toBe("0x1122334455667788");
+        expect(received[0].clusterId).toBe(clusterId);
+        expect(received[0].status).toBe("success");
+        expect(typeof received[0].durationSeconds).toBe("number");
+    });
+
+    it("emits adapterSendZclGroup on a successful group send", async () => {
+        basicMocks();
+        await adapter.start();
+        const received: Extract<MetricEvent, {type: MetricType.AdapterSendZclGroup}>[] = [];
+        metrics.on("metric", (data) => data.type === MetricType.AdapterSendZclGroup && received.push(data));
+        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 100, "read", 0, [{attrId: 0}], {});
+        await adapter.sendZclFrameToGroup(25, frame, 1);
+        metrics.removeAllListeners("metric");
+        expect(received).toHaveLength(1);
+        expect(received[0].groupId).toBe(25);
+        expect(received[0].status).toBe("success");
+        expect(typeof received[0].durationSeconds).toBe("number");
+    });
+
+    it("emits adapterSendZclBroadcast on a successful broadcast send", async () => {
+        basicMocks();
+        await adapter.start();
+        const received: Extract<MetricEvent, {type: MetricType.AdapterSendZclBroadcast}>[] = [];
+        metrics.on("metric", (data) => data.type === MetricType.AdapterSendZclBroadcast && received.push(data));
+        const frame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 100, "read", 0, [{attrId: 0}], {});
+        await adapter.sendZclFrameToAll(242, frame, 250, BroadcastAddress.DEFAULT);
+        metrics.removeAllListeners("metric");
+        expect(received).toHaveLength(1);
+        expect(received[0].status).toBe("success");
+        expect(typeof received[0].durationSeconds).toBe("number");
     });
 
     it("Send zcl frame network address with default response", async () => {
