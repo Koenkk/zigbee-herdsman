@@ -214,21 +214,7 @@ export class DeconzAdapter extends Adapter {
         return {promise: waiter.start().promise, cancel};
     }
 
-    public async sendZdo(
-        ieeeAddress: string,
-        networkAddress: number,
-        clusterId: Zdo.ClusterId,
-        payload: Buffer,
-        disableResponse: true,
-    ): Promise<void>;
-    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
-        ieeeAddress: string,
-        networkAddress: number,
-        clusterId: K,
-        payload: Buffer,
-        disableResponse: false,
-    ): Promise<ZdoTypes.RequestToResponseMap[K]>;
-    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
+    protected async sendZdoImpl<K extends keyof ZdoTypes.RequestToResponseMap>(
         ieeeAddress: string,
         networkAddress: number,
         clusterId: K,
@@ -333,7 +319,7 @@ export class DeconzAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameToEndpoint(
+    protected async sendZclFrameToEndpointImpl(
         _ieeeAddr: string,
         networkAddress: number,
         endpoint: number,
@@ -490,7 +476,7 @@ export class DeconzAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
+    protected async sendZclFrameToGroupImpl(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
         const transactionID = this.nextTransactionID();
         const payload = zclFrame.toBuffer();
 
@@ -514,7 +500,7 @@ export class DeconzAdapter extends Adapter {
         return await (this.driver.enqueueApsDataRequest(request) as Promise<void>);
     }
 
-    public async sendZclFrameToAll(
+    protected async sendZclFrameToAllImpl(
         endpoint: number,
         zclFrame: Zcl.Frame,
         sourceEndpoint: number,
