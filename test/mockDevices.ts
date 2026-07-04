@@ -620,5 +620,4 @@ export const MOCK_DEVICES: {
             },
         },
     },
-    },
 };
