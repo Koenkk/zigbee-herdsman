@@ -312,6 +312,16 @@ const restoreMocksendZclFrameToEndpoint = () => {
             });
         }
 
+        if (
+            networkAddress === 180 &&
+            frame.header.isGlobal &&
+            frame.isCluster("ssIasZone") &&
+            frame.isCommand("write") &&
+            frame.payload[0].attrId === 16
+        ) {
+            throw new Error("ias-zone-failure");
+        }
+
         if (frame.header.isGlobal && frame.isCommand("write")) {
             const payload: {[key: string]: unknown}[] = [];
             for (const item of frame.payload) {
@@ -2478,6 +2488,22 @@ describe("Controller", () => {
         expect(events.deviceInterview[1].status).toBe("failed");
         // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[1].device._ieeeAddr).toBe("0x170");
+    });
+
+    it("NYCE 3011 joins successfully when IAS CIE address write fails", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 180, ieeeAddr: "0x180"});
+
+        expect(events.deviceInterview.length).toBe(2);
+        expect(events.deviceInterview[0].status).toBe("started");
+        // @ts-expect-error private but deep cloned
+        expect(events.deviceInterview[0].device._ieeeAddr).toBe("0x180");
+        expect(events.deviceInterview[1].status).toBe("successful");
+        // @ts-expect-error private but deep cloned
+        expect(events.deviceInterview[1].device._ieeeAddr).toBe("0x180");
+        expect(controller.getDeviceByIeeeAddr("0x180")!.type).toBe("EndDevice");
+        expect(controller.getDeviceByIeeeAddr("0x180")!.modelID).toBe("3011");
+        expect(controller.getDeviceByIeeeAddr("0x180")!.powerSource).toBe("Battery");
     });
 
     it("Device joins, shouldnt enroll when already enrolled", async () => {

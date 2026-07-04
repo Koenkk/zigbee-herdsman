@@ -620,4 +620,40 @@ export const MOCK_DEVICES: {
             },
         },
     },
+    180: {
+        nodeDescriptor: [
+            Zdo.Status.SUCCESS,
+            {...NODE_DESC_DEFAULTS, nwkAddress: 180, logicalType: 0b010, manufacturerCode: Zcl.ManufacturerCode.NYCE_CONTROL_INC},
+        ],
+        activeEndpoints: [Zdo.Status.SUCCESS, {nwkAddress: 180, endpointList: [1]}],
+        simpleDescriptor: {
+            1: [
+                Zdo.Status.SUCCESS,
+                {
+                    nwkAddress: 180,
+                    length: 14,
+                    endpoint: 1,
+                    profileId: 99,
+                    deviceId: 5,
+                    deviceVersion: 1,
+                    inClusterList: [0, 1280],
+                    outClusterList: [2],
+                },
+            ],
+        },
+        attributes: {
+            1: {
+                zoneState: 0,
+                iasCieAddr: "0x0000012300000000",
+                modelId: "3011",
+                manufacturerName: "NYCE",
+                zclVersion: 1,
+                appVersion: 2,
+                hwVersion: 3,
+                dateCode: "201901",
+                swBuildId: "1.01",
+                stackVersion: 101,
+            },
+        },
+    },
 };
