@@ -1,5 +1,15 @@
 # Changelog
 
+## [10.6.2](https://github.com/Koenkk/zigbee-herdsman/compare/v10.6.1...v10.6.2) (2026-07-06)
+
+
+### Bug Fixes
+
+* Greenpower: fix attr parsing ([#1804](https://github.com/Koenkk/zigbee-herdsman/issues/1804)) ([4ddbd2c](https://github.com/Koenkk/zigbee-herdsman/commit/4ddbd2cfc24577fce8cd9bea7b2bd530c62511f2))
+* **ignore:** bump @types/node from 24.13.2 to 26.1.0 ([#1807](https://github.com/Koenkk/zigbee-herdsman/issues/1807)) ([d72127e](https://github.com/Koenkk/zigbee-herdsman/commit/d72127e6826ee732e7604907e4b973b61c13ae48))
+* **ignore:** bump the minor-patch group with 2 updates ([#1806](https://github.com/Koenkk/zigbee-herdsman/issues/1806)) ([1f8daa0](https://github.com/Koenkk/zigbee-herdsman/commit/1f8daa09c6d63da525358a75072cf63324521dbc))
+* NYCE NCZ-3011-HA: enable interviewQuirks ([#1809](https://github.com/Koenkk/zigbee-herdsman/issues/1809)) ([613dce5](https://github.com/Koenkk/zigbee-herdsman/commit/613dce5bf36ed6b52a516d8218dc4e864b483e27))
+
 ## [10.6.1](https://github.com/Koenkk/zigbee-herdsman/compare/v10.6.0...v10.6.1) (2026-06-29)
 
 
