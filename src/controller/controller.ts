@@ -5,6 +5,7 @@ import {Adapter, type Events as AdapterEvents, type TsType as AdapterTsType} fro
 import type {ZclPayload} from "../adapter/events";
 import {BackupUtils, wait} from "../utils";
 import {logger} from "../utils/logger";
+import {MetricType, metrics} from "../utils/metrics.js";
 import {isNumberArrayOfLength} from "../utils/utils";
 import * as ZSpec from "../zspec";
 import type {Eui64} from "../zspec/tstypes";
@@ -904,6 +905,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
     }
 
     private onZdoResponse(clusterId: Zdo.ClusterId, response: ZdoTypes.GenericZdoResponse): void {
+        metrics.emit("metric", {type: MetricType.AdapterReceiveZdoResponse, clusterId});
         logger.debug(
             `Received ZDO response: clusterId=${Zdo.ClusterId[clusterId]}, status=${Zdo.Status[response[0]]}, payload=${JSON.stringify(response[1])}`,
             NS,
@@ -942,6 +944,13 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             // This is handled by touchlink
             return;
         }
+
+        metrics.emit("metric", {
+            type: MetricType.AdapterReceiveZclPayload,
+            ieeeAddr: typeof payload.address === "string" ? payload.address : undefined,
+            clusterID: payload.clusterID,
+            wasBroadcast: payload.wasBroadcast,
+        });
 
         if (payload.clusterID === Zcl.Clusters.greenPower.ID) {
             try {

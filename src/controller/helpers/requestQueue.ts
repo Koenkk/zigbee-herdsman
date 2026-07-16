@@ -1,5 +1,6 @@
 import equal from "fast-deep-equal/es6";
 import {logger} from "../../utils/logger";
+import {MetricType, metrics} from "../../utils/metrics";
 import type * as Zcl from "../../zspec/zcl";
 import type {Endpoint} from "../model";
 import type Request from "./request";
@@ -36,6 +37,12 @@ export class RequestQueue extends Set<Request> {
                 logger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.id}): discard after timeout. Size before: ${this.size}`, NS);
                 request.reject();
                 this.delete(request);
+                metrics.emit("metric", {
+                    type: MetricType.RequestQueueLength,
+                    ieeeAddr: this.deviceIeeeAddress,
+                    endpointId: this.id,
+                    length: this.size,
+                });
             }
         }
 
@@ -48,6 +55,12 @@ export class RequestQueue extends Set<Request> {
                     logger.debug(`Request Queue (${this.deviceIeeeAddress}/${this.id}): send success`, NS);
                     request.resolve(result);
                     this.delete(request);
+                    metrics.emit("metric", {
+                        type: MetricType.RequestQueueLength,
+                        ieeeAddr: this.deviceIeeeAddress,
+                        endpointId: this.id,
+                        length: this.size,
+                    });
                 } catch (error) {
                     logger.debug(
                         `Request Queue (${this.deviceIeeeAddress}/${this.id}): send failed, expires in ` +
@@ -65,6 +78,7 @@ export class RequestQueue extends Set<Request> {
         return await new Promise((resolve, reject): void => {
             request.addCallbacks(resolve, reject);
             this.add(request);
+            metrics.emit("metric", {type: MetricType.RequestQueueLength, ieeeAddr: this.deviceIeeeAddress, endpointId: this.id, length: this.size});
         });
     }
 
