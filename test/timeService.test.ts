@@ -91,36 +91,33 @@ describe("TimeService", () => {
             expectedStandardTime: 822103691,
             expectedLocalTime: 822107291,
         },
-    ])(
-        "Should work correctly for specific dates ($testCase)",
-        ({
-            timeZone,
-            localTime,
-            expectedTime,
-            expectedTimeZone,
-            expectedDstStart,
-            expectedDstEnd,
-            expectedDstShift,
-            expectedStandardTime,
-            expectedLocalTime,
-        }) => {
-            vi.stubEnv("TZ", timeZone);
-            vi.setSystemTime(new Date(localTime));
+    ])("Should work correctly for specific dates ($testCase)", ({
+        timeZone,
+        localTime,
+        expectedTime,
+        expectedTimeZone,
+        expectedDstStart,
+        expectedDstEnd,
+        expectedDstShift,
+        expectedStandardTime,
+        expectedLocalTime,
+    }) => {
+        vi.stubEnv("TZ", timeZone);
+        vi.setSystemTime(new Date(localTime));
 
-            const timeClusterAttributes = timeService.getTimeClusterAttributes();
+        const timeClusterAttributes = timeService.getTimeClusterAttributes();
 
-            expect(timeClusterAttributes.time).toStrictEqual(expectedTime);
-            expect(timeClusterAttributes.timeStatus).toStrictEqual(0b1101);
-            expect(timeClusterAttributes.timeZone).toStrictEqual(expectedTimeZone);
-            expect(timeClusterAttributes.dstStart).toStrictEqual(expectedDstStart);
-            expect(timeClusterAttributes.dstEnd).toStrictEqual(expectedDstEnd);
-            expect(timeClusterAttributes.dstShift).toStrictEqual(expectedDstShift);
-            expect(timeClusterAttributes.standardTime).toStrictEqual(expectedStandardTime);
-            expect(timeClusterAttributes.localTime).toStrictEqual(expectedLocalTime);
-            expect(timeClusterAttributes.lastSetTime).toStrictEqual(expectedTime);
-            expect(timeClusterAttributes.validUntilTime).toStrictEqual(expectedTime + 24 * 60 * 60);
-        },
-    );
+        expect(timeClusterAttributes.time).toStrictEqual(expectedTime);
+        expect(timeClusterAttributes.timeStatus).toStrictEqual(0b1101);
+        expect(timeClusterAttributes.timeZone).toStrictEqual(expectedTimeZone);
+        expect(timeClusterAttributes.dstStart).toStrictEqual(expectedDstStart);
+        expect(timeClusterAttributes.dstEnd).toStrictEqual(expectedDstEnd);
+        expect(timeClusterAttributes.dstShift).toStrictEqual(expectedDstShift);
+        expect(timeClusterAttributes.standardTime).toStrictEqual(expectedStandardTime);
+        expect(timeClusterAttributes.localTime).toStrictEqual(expectedLocalTime);
+        expect(timeClusterAttributes.lastSetTime).toStrictEqual(expectedTime);
+        expect(timeClusterAttributes.validUntilTime).toStrictEqual(expectedTime + 24 * 60 * 60);
+    });
 
     it.each([
         {
