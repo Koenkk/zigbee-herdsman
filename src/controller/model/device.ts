@@ -1253,8 +1253,10 @@ export class Device extends Entity<ControllerEventMap> {
         Device.devices.delete(this.ieeeAddr);
 
         // Clear all data in case device joins again
-        // Green power devices are never interviewed, keep existing interview state.
-        this._interviewState = this.type === "GreenPower" ? this._interviewState : InterviewState.Pending;
+        if (this.type !== "GreenPower") {
+            this._interviewState = InterviewState.Pending;
+            this.#genBasic = {};
+        }
         this.meta = {};
         const newEndpoints: Endpoint[] = [];
         for (const endpoint of this.endpoints) {
