@@ -1015,6 +1015,7 @@ export class Device extends Entity<ControllerEventMap> {
         logger.debug(`Interview - got active endpoints for device '${this.ieeeAddr}'`, NS);
 
         const coordinator = Device.byType("Coordinator")[0];
+        const genBasicAttrs = new Set(INTERVIEW_GENBASIC_ATTRIBUTES);
 
         for (const endpoint of this._endpoints) {
             await endpoint.updateSimpleDescriptor();
@@ -1023,8 +1024,13 @@ export class Device extends Entity<ControllerEventMap> {
             // Read attributes
             // nice to have but not required for successful pairing as most of the attributes are not mandatory in ZCL specification
             if (endpoint.supportsInputCluster("genBasic")) {
-                for (const key of INTERVIEW_GENBASIC_ATTRIBUTES) {
-                    if (ignoreCache || !this.#genBasic[key]) {
+                for (const key of genBasicAttrs) {
+                    if (
+                        ignoreCache ||
+                        this.#genBasic[key] === undefined ||
+                        this.#genBasic[key] === "" ||
+                        (key === "powerSource" && this.#genBasic.powerSource === Zcl.PowerSource.Unknown)
+                    ) {
                         try {
                             let result: TPartialClusterAttributes<"genBasic">;
 
@@ -1045,6 +1051,7 @@ export class Device extends Entity<ControllerEventMap> {
                             }
 
                             this.updateGenBasic(result);
+                            genBasicAttrs.delete(key);
                             logger.debug(`Interview - got '${key}' for device '${this.ieeeAddr}'`, NS);
                         } catch (error) {
                             logger.debug(`Interview - failed to read attribute '${key}' from endpoint '${endpoint.ID}' (${error})`, NS);
