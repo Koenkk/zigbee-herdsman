@@ -886,6 +886,15 @@ export class Device extends Entity<ControllerEventMap> {
             return true;
         }
 
+        // Control4 devices don't support genBasic.modelId (returns UNSUPPORTED_ATTRIBUTE on both attempts,
+        // causing interviewInternal to throw). Their modelID is captured from genPowerCfg attr 7 in the
+        // controller before the interview runs. If modelID is already set, treat interview as successful.
+        if (this.modelID?.startsWith("C4-")) {
+            this.#genBasic.powerSource = this.#genBasic.powerSource || Zcl.PowerSource["Mains (single phase)"];
+            logger.debug("Interview - quirks matched for Control4 device", NS);
+            return true;
+        }
+
         // Some devices, e.g. Xiaomi end devices have a different interview procedure, after pairing they
         // report it's modelID trough a readResponse. The readResponse is received by the controller and set
         // on the device.
@@ -1187,7 +1196,9 @@ export class Device extends Entity<ControllerEventMap> {
         }
 
         // Remove disappeared endpoints (can happen with e.g. custom devices).
-        this._endpoints = this._endpoints.filter((e) => activeEndpoints.endpointList.includes(e.ID));
+        // Preserve endpoints with a proprietary profile ID (e.g. C4 endpoint 197 with CONTROL4_PROFILE_ID)
+        // since these are not ZDO-advertised and are managed externally (e.g. by a converter's configure).
+        this._endpoints = this._endpoints.filter((e) => activeEndpoints.endpointList.includes(e.ID) || e.profileID === ZSpec.CONTROL4_PROFILE_ID);
     }
 
     /**
