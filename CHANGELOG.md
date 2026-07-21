@@ -1,5 +1,15 @@
 # Changelog
 
+## [10.6.3](https://github.com/Koenkk/zigbee-herdsman/compare/v10.6.2...v10.6.3) (2026-07-21)
+
+
+### Bug Fixes
+
+* **deps:** bump actions/setup-node from 6 to 7 ([#1813](https://github.com/Koenkk/zigbee-herdsman/issues/1813)) ([c380c2f](https://github.com/Koenkk/zigbee-herdsman/commit/c380c2fb67f495c287c93215f5a2d7e857d0dca8))
+* **ignore:** bump the minor-patch group with 3 updates ([#1810](https://github.com/Koenkk/zigbee-herdsman/issues/1810)) ([562df3d](https://github.com/Koenkk/zigbee-herdsman/commit/562df3de1750f8bab2314088159dc778f3ab32d3))
+* **ignore:** bump typescript from 6.0.3 to 7.0.2 ([#1811](https://github.com/Koenkk/zigbee-herdsman/issues/1811)) ([595f653](https://github.com/Koenkk/zigbee-herdsman/commit/595f65373068842899aa56c02522fe5c732b0b7a))
+* Optimize attribute reads during interview logic ([#1816](https://github.com/Koenkk/zigbee-herdsman/issues/1816)) ([528f1e4](https://github.com/Koenkk/zigbee-herdsman/commit/528f1e4605d812c36cadc62831a734def4630b74))
+
 ## [10.6.2](https://github.com/Koenkk/zigbee-herdsman/compare/v10.6.1...v10.6.2) (2026-07-06)
 
 
