@@ -1,5 +1,17 @@
 # Changelog
 
+## [10.7.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.6.3...v10.7.0) (2026-07-24)
+
+
+### Features
+
+* Allow to remove device from cache on request ([#1819](https://github.com/Koenkk/zigbee-herdsman/issues/1819)) ([1f42869](https://github.com/Koenkk/zigbee-herdsman/commit/1f428690d1dfbe9ca6166fcf404ea6026310a36d))
+
+
+### Bug Fixes
+
+* **ignore:** bump @biomejs/biome from 2.5.3 to 2.5.5 in the minor-patch group across 1 directory ([#1814](https://github.com/Koenkk/zigbee-herdsman/issues/1814)) ([e86ce9f](https://github.com/Koenkk/zigbee-herdsman/commit/e86ce9ffabccddc1ad7601b5c82f7a741227185c))
+
 ## [10.6.3](https://github.com/Koenkk/zigbee-herdsman/compare/v10.6.2...v10.6.3) (2026-07-21)
 
 
