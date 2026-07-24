@@ -3921,31 +3921,131 @@ describe("Controller", () => {
         }
     });
 
-    it("Remove device from network", async () => {
+    it("Removes device from network and database but keep in cache", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
+
         const device = controller.getDeviceByIeeeAddr("0x140")!;
+
         await device.removeFromNetwork();
+
         const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.LEAVE_REQUEST, "0x140", Zdo.LeaveRequestFlags.WITHOUT_REJOIN);
+
         expect(mockAdapterSendZdo).toHaveBeenCalledWith("0x140", 140, Zdo.ClusterId.LEAVE_REQUEST, zdoPayload, false);
         expect(controller.getDeviceByIeeeAddr("0x140")).toBeUndefined();
+        expect(Device.byIeeeAddr("0x140")).toBeUndefined();
+        expect(Device.byIeeeAddr("0x140", true)).toBeDefined();
+
         // shouldn't throw when removing from database when not in
         await device.removeFromDatabase();
     });
 
-    it("Remove group from network", async () => {
+    it("Removes device from network and clears cache", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+
+        expect(events.deviceInterview[0]).toStrictEqual({
+            device: {
+                _events: {},
+                _eventsCount: 0,
+                meta: {},
+                _skipDefaultResponse: false,
+                _lastSeen: Date.now(),
+                ID: 2,
+                _pendingRequestTimeout: 0,
+                _customClusters: {},
+                _endpoints: [],
+                _type: "Unknown",
+                _ieeeAddr: "0x129",
+                _interviewState: InterviewState.Pending,
+                _networkAddress: 129,
+            },
+            status: "started",
+        });
+
         const device = controller.getDeviceByIeeeAddr("0x129")!;
-        const group = await controller.createGroup(4);
+
+        expect(events.deviceInterview[1]).toMatchObject({status: "successful", device: {_ieeeAddr: "0x129", _interviewState: "SUCCESSFUL"}});
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(9);
+
+        await device.removeFromNetwork(true);
+
+        const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.LEAVE_REQUEST, "0x129", Zdo.LeaveRequestFlags.WITHOUT_REJOIN);
+
+        expect(mockAdapterSendZdo).toHaveBeenCalledWith("0x129", 129, Zdo.ClusterId.LEAVE_REQUEST, zdoPayload, false);
+        expect(controller.getDeviceByIeeeAddr("0x129")).toBeUndefined();
+        expect(Device.byIeeeAddr("0x129")).toBeUndefined();
+        expect(Device.byIeeeAddr("0x129", true)).toBeUndefined();
+
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+
+        expect(events.deviceInterview[2]).toStrictEqual({
+            device: {
+                _events: {},
+                _eventsCount: 0,
+                meta: {},
+                _skipDefaultResponse: false,
+                _lastSeen: Date.now(),
+                ID: 3,
+                _pendingRequestTimeout: 0,
+                _customClusters: {},
+                _endpoints: [],
+                _type: "Unknown",
+                _ieeeAddr: "0x129",
+                _interviewState: InterviewState.Pending,
+                _networkAddress: 129,
+            },
+            status: "started",
+        });
+        expect(events.deviceInterview[3]).toMatchObject({status: "successful", device: {_ieeeAddr: "0x129", _interviewState: "SUCCESSFUL"}});
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(18);
+    });
+
+    it("Removes device from database but keep in cache", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+
+        await device.removeFromDatabase();
+
+        expect(controller.getDeviceByIeeeAddr("0x129")).toBeUndefined();
+        expect(Device.byIeeeAddr("0x129")).toBeUndefined();
+        expect(Device.byIeeeAddr("0x129", true)).toBeDefined();
+
+        // shouldn't throw when removing from database when not in
+        device.removeFromDatabase();
+    });
+
+    it("Removes device from database and clears cache", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
+
+        const device = controller.getDeviceByIeeeAddr("0x140")!;
+
+        device.removeFromDatabase(true);
+
+        expect(controller.getDeviceByIeeeAddr("0x140")).toBeUndefined();
+        expect(Device.byIeeeAddr("0x140")).toBeUndefined();
+        expect(Device.byIeeeAddr("0x140", true)).toBeUndefined();
+    });
+
+    it("Removes group from network and database", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const group = controller.createGroup(4);
         const endpoint = device.getEndpoint(1)!;
+
         await endpoint.addToGroup(group);
         mocksendZclFrameToEndpoint.mockClear();
-
         await group.removeFromNetwork();
 
         expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+
         const call = mocksendZclFrameToEndpoint.mock.calls[0];
+
         expect(call[0]).toBe("0x129");
         expect(call[1]).toBe(129);
         expect(call[2]).toBe(1);
@@ -3954,13 +4054,17 @@ describe("Controller", () => {
         );
     });
 
-    it("Remove group from database", async () => {
+    it("Removes group from database", async () => {
         await controller.start();
-        const group = await controller.createGroup(4);
-        await group.removeFromDatabase();
+
+        const group = controller.createGroup(4);
+
+        group.removeFromDatabase();
+
         expect(controller.getGroupByID(4)).toStrictEqual(undefined);
+
         // shouldn't throw when removing from database when not in
-        await group.removeFromDatabase();
+        group.removeFromDatabase();
     });
 
     it("Device lqi", async () => {

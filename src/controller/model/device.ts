@@ -1201,7 +1201,7 @@ export class Device extends Entity<ControllerEventMap> {
         await Entity.adapter.sendZdo(this.ieeeAddr, ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE, clusterId, zdoPayload, true);
     }
 
-    public async removeFromNetwork(): Promise<void> {
+    public async removeFromNetwork(clearCache = false): Promise<void> {
         if (this._type === "GreenPower") {
             const payload = {
                 options: 0x002550,
@@ -1235,10 +1235,10 @@ export class Device extends Entity<ControllerEventMap> {
             }
         }
 
-        this.removeFromDatabase();
+        this.removeFromDatabase(clearCache);
     }
 
-    public removeFromDatabase(): void {
+    public removeFromDatabase(clearCache = false): void {
         Device.loadFromDatabaseIfNecessary();
 
         for (const endpoint of this.endpoints) {
@@ -1249,28 +1249,32 @@ export class Device extends Entity<ControllerEventMap> {
             Entity.database.remove(this.ID);
         }
 
-        Device.deletedDevices.set(this.ieeeAddr, this);
-        Device.devices.delete(this.ieeeAddr);
+        if (clearCache) {
+            Device.devices.delete(this.ieeeAddr);
+        } else {
+            Device.deletedDevices.set(this.ieeeAddr, this);
+            Device.devices.delete(this.ieeeAddr);
 
-        // Clear all data in case device joins again
-        // Green power devices are never interviewed, keep existing interview state.
-        this._interviewState = this.type === "GreenPower" ? this._interviewState : InterviewState.Pending;
-        this.meta = {};
-        const newEndpoints: Endpoint[] = [];
-        for (const endpoint of this.endpoints) {
-            newEndpoints.push(
-                Endpoint.create(
-                    endpoint.ID,
-                    endpoint.profileID,
-                    endpoint.deviceID,
-                    endpoint.inputClusters,
-                    endpoint.outputClusters,
-                    this.networkAddress,
-                    this.ieeeAddr,
-                ),
-            );
+            // Clear all data in case device joins again
+            // Green power devices are never interviewed, keep existing interview state.
+            this._interviewState = this.type === "GreenPower" ? this._interviewState : InterviewState.Pending;
+            this.meta = {};
+            const newEndpoints: Endpoint[] = [];
+            for (const endpoint of this.endpoints) {
+                newEndpoints.push(
+                    Endpoint.create(
+                        endpoint.ID,
+                        endpoint.profileID,
+                        endpoint.deviceID,
+                        endpoint.inputClusters,
+                        endpoint.outputClusters,
+                        this.networkAddress,
+                        this.ieeeAddr,
+                    ),
+                );
+            }
+            this._endpoints = newEndpoints;
         }
-        this._endpoints = newEndpoints;
     }
 
     public async lqi(): Promise<LQITableEntry[]> {
