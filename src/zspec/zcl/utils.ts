@@ -228,6 +228,12 @@ export function getFoundationCommandByName(name: string): FoundationDefinition {
     return command;
 }
 
+function isStringOrNumber(value: unknown): value is string | number {
+    const type = typeof value;
+
+    return type === "number" || type === "string";
+}
+
 /** Check if value is equal to either min, max, minRef or maxRef */
 function isMinOrMax<T>(entry: Attribute | Parameter, value: T): boolean {
     if (value === entry.max || value === entry.min) {
@@ -295,6 +301,10 @@ export function processAttributeWrite<T>(attribute: Attribute, value: T): T {
         return attribute.default as T;
     }
 
+    if (attribute.special !== undefined && isStringOrNumber(value) && value in attribute.special) {
+        return value;
+    }
+
     processRestrictions(attribute, value);
 
     return value;
@@ -314,6 +324,10 @@ export function processAttributePostRead<T>(attribute: Attribute, value: T): T {
 
     // if default, always valid
     if (attribute.default === value) {
+        return value;
+    }
+
+    if (attribute.special !== undefined && isStringOrNumber(value) && value in attribute.special) {
         return value;
     }
 
@@ -349,6 +363,10 @@ export function processParameterWrite<T>(parameter: Parameter, value: T): T {
         return nonValue as T;
     }
 
+    if (parameter.special !== undefined && isStringOrNumber(value) && value in parameter.special) {
+        return value;
+    }
+
     processRestrictions(parameter, value);
 
     return value;
@@ -357,6 +375,10 @@ export function processParameterWrite<T>(parameter: Parameter, value: T): T {
 export function processParameterRead<T>(parameter: Parameter, value: T): T {
     // should never happen?
     if (value == null) {
+        return value;
+    }
+
+    if (parameter.special !== undefined && isStringOrNumber(value) && value in parameter.special) {
         return value;
     }
 

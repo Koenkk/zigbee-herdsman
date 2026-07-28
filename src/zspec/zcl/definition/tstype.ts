@@ -206,9 +206,11 @@ type Restrictions = Readonly<{
      * In some cases, a special value is defined by the Zigbee specification.
      * In these cases, the special value along with a descriptor should be defined using this tag.
      * Special values take precedence over other restrictions imposed (e.g. a special value may fall outside the min/max range for the attribute).
-     * `value` is kept as string for easier handling (will be checked on spot if used anyway) though most often is a hex number string (without 0x)
+     *
+     * Mapped as "value -> label".
+     * Technically `1 in ..` and `"1" in ..` will match, but for same entry, value is always expected of same type, so does not matter.
      */
-    special?: [name: string, value: string][];
+    special?: Record<string | number, string>;
 }>;
 
 /**
