@@ -356,6 +356,17 @@ describe("ZCL Utils", () => {
             );
         });
 
+        it("lighting control ctrl attributes startUpColorTemperature", () => {
+            const cluster = Zcl.Utils.getCluster("lightingColorCtrl");
+            let result = Zcl.Utils.processAttributeWrite(Zcl.Utils.getClusterAttribute(cluster, "startUpColorTemperature", undefined)!, 0xfeff);
+            expect(result).toStrictEqual(0xfeff);
+            result = Zcl.Utils.processAttributeWrite(Zcl.Utils.getClusterAttribute(cluster, "startUpColorTemperature", undefined)!, 0xffff);
+            expect(result).toStrictEqual(0xffff);
+            expect(() =>
+                Zcl.Utils.processAttributeWrite(Zcl.Utils.getClusterAttribute(cluster, "startUpColorTemperature", undefined)!, 0xff00),
+            ).toThrow(/requires max/i);
+        });
+
         it("rssi location attributes coordinate1 and pathLossExponent", () => {
             const cluster = Zcl.Utils.getCluster("genRssiLocation");
             let result = Zcl.Utils.processAttributeWrite(Zcl.Utils.getClusterAttribute(cluster, "coordinate1", undefined)!, -0x8000);
@@ -464,6 +475,23 @@ describe("ZCL Utils", () => {
             result = Zcl.Utils.processAttributePostRead(Zcl.Utils.getClusterAttribute(cluster, "options", undefined)!, 0xff);
             expect(result).toStrictEqual(0xff);
         });
+
+        it("lighting control ctrl attributes startUpColorTemperature", () => {
+            const cluster = Zcl.Utils.getCluster("lightingColorCtrl");
+            let result = Zcl.Utils.processAttributePostRead(Zcl.Utils.getClusterAttribute(cluster, "startUpColorTemperature", undefined)!, 0xfeff);
+            expect(result).toStrictEqual(0xfeff);
+            result = Zcl.Utils.processAttributePostRead(Zcl.Utils.getClusterAttribute(cluster, "startUpColorTemperature", undefined)!, 0xffff);
+            expect(result).toStrictEqual(0xffff);
+            expect(() =>
+                Zcl.Utils.processAttributePostRead(Zcl.Utils.getClusterAttribute(cluster, "startUpColorTemperature", undefined)!, 0xff00),
+            ).toThrow(/requires max/i);
+        });
+
+        it("scenes attributes lastCfgBy", () => {
+            const cluster = Zcl.Utils.getCluster("genScenes");
+            const result = Zcl.Utils.processAttributePostRead(Zcl.Utils.getClusterAttribute(cluster, "lastCfgBy", undefined)!, "0xffffffffffffffff");
+            expect(result).toStrictEqual("0xffffffffffffffff");
+        });
     });
 
     describe("processParameterWrite specific", () => {
@@ -490,6 +518,16 @@ describe("ZCL Utils", () => {
             expect(result).toStrictEqual(0xff);
             result = Zcl.Utils.processParameterWrite(paramPathLossExponent, Number.NaN);
             expect(result).toStrictEqual(0xffff);
+        });
+
+        it("scenes cmd rsp getSceneMembershipRsp parameter capacity", () => {
+            const cluster = Zcl.Utils.getCluster("genScenes");
+            const cmd = Zcl.Utils.getClusterCommandResponse(cluster, "getSceneMembershipRsp")!;
+            const paramCapacity = cmd.parameters.find((p) => p.name === "capacity")!;
+            let result = Zcl.Utils.processParameterWrite(paramCapacity, 0xfe);
+            expect(result).toStrictEqual(0xfe);
+            result = Zcl.Utils.processParameterWrite(paramCapacity, 0xff);
+            expect(result).toStrictEqual(0xff);
         });
     });
 
@@ -554,6 +592,16 @@ describe("ZCL Utils", () => {
             expect(result).toStrictEqual(0xff);
             result = Zcl.Utils.processParameterRead(paramPathLossExponent, 0xffff);
             expect(Number.isNaN(result)).toStrictEqual(true);
+        });
+
+        it("scenes cmd rsp getSceneMembershipRsp parameter capacity", () => {
+            const cluster = Zcl.Utils.getCluster("genScenes");
+            const cmd = Zcl.Utils.getClusterCommandResponse(cluster, "getSceneMembershipRsp")!;
+            const paramCapacity = cmd.parameters.find((p) => p.name === "capacity")!;
+            let result = Zcl.Utils.processParameterRead(paramCapacity, 0xfe);
+            expect(result).toStrictEqual(0xfe);
+            result = Zcl.Utils.processParameterRead(paramCapacity, 0xff);
+            expect(result).toStrictEqual(0xff);
         });
     });
 
