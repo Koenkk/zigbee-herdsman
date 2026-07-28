@@ -5632,6 +5632,111 @@ describe("Controller", () => {
         expect(mocksendZclFrameToEndpoint.mock.calls[0][4]).toBe(10000);
     });
 
+    it("onZclData: answers unsolicited genOta queryNextImageRequest with NO_IMAGE_AVAILABLE", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        mocksendZclFrameToEndpoint.mockClear();
+
+        const frame = Zcl.Frame.create(
+            Zcl.FrameType.SPECIFIC,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            true,
+            undefined,
+            20,
+            "queryNextImageRequest",
+            Zcl.Utils.getCluster("genOta", undefined, {}).ID,
+            {fieldControl: 0, manufacturerCode: 4742, imageType: 8204, fileVersion: 4101},
+            {},
+        );
+        await mockAdapterEvents.zclPayload({
+            wasBroadcast: false,
+            address: 129,
+            clusterID: frame.cluster.ID,
+            data: frame.toBuffer(),
+            header: frame.header,
+            endpoint: 1,
+            linkquality: 100,
+            groupID: undefined,
+        });
+
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        const call = mocksendZclFrameToEndpoint.mock.calls[0];
+        expect(call[0]).toBe("0x129");
+        expect(call[1]).toBe(129);
+        expect(call[2]).toBe(1);
+        expect(call[3].cluster.name).toBe("genOta");
+        expect(call[3].command.name).toBe("queryNextImageResponse");
+        expect(call[3].payload).toStrictEqual({status: Zcl.Status.NO_IMAGE_AVAILABLE});
+        expect(call[3].header.transactionSequenceNumber).toBe(20);
+    });
+
+    it("onZclData: logs error if answering unsolicited genOta queryNextImageRequest fails", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        mocksendZclFrameToEndpoint.mockClear();
+        mockLogger.error.mockClear();
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("failed to send"));
+
+        const frame = Zcl.Frame.create(
+            Zcl.FrameType.SPECIFIC,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            true,
+            undefined,
+            21,
+            "queryNextImageRequest",
+            Zcl.Utils.getCluster("genOta", undefined, {}).ID,
+            {fieldControl: 0, manufacturerCode: 4742, imageType: 8204, fileVersion: 4101},
+            {},
+        );
+        await mockAdapterEvents.zclPayload({
+            wasBroadcast: false,
+            address: 129,
+            clusterID: frame.cluster.ID,
+            data: frame.toBuffer(),
+            header: frame.header,
+            endpoint: 1,
+            linkquality: 100,
+            groupID: undefined,
+        });
+
+        expect(mockLogger.error).toHaveBeenCalledWith(
+            expect.stringMatching(/^Failed to answer unsolicited OTA query from 0x129 \(.*failed to send.*\)$/),
+            "zh:controller:device",
+        );
+    });
+
+    it("onZclData: does not answer other genOta commands as an unsolicited queryNextImageRequest", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        mocksendZclFrameToEndpoint.mockClear();
+
+        const frame = Zcl.Frame.create(
+            Zcl.FrameType.SPECIFIC,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            true,
+            undefined,
+            22,
+            "upgradeEndRequest",
+            Zcl.Utils.getCluster("genOta", undefined, {}).ID,
+            {status: Zcl.Status.SUCCESS, manufacturerCode: 4742, imageType: 8204, fileVersion: 4101},
+            {},
+        );
+        await mockAdapterEvents.zclPayload({
+            wasBroadcast: false,
+            address: 129,
+            clusterID: frame.cluster.ID,
+            data: frame.toBuffer(),
+            header: frame.header,
+            endpoint: 1,
+            linkquality: 100,
+            groupID: undefined,
+        });
+
+        for (const call of mocksendZclFrameToEndpoint.mock.calls) {
+            expect(call[3].command.name).not.toBe("queryNextImageResponse");
+        }
+    });
+
     it("Device without meta should set meta to {}", async () => {
         Device.resetCache();
         const line = JSON.stringify({
