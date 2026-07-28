@@ -1563,13 +1563,15 @@ export class Device extends Entity<ControllerEventMap> {
 
             assert(response.header.isSpecific);
 
+            this.#pendingOtaCheck = false;
+
             return [(response as TZclFrame<"genOta", "queryNextImageRequest">).payload, response.header.transactionSequenceNumber];
         } catch {
+            this.#pendingOtaCheck = false;
+
             queryNextImageRequest.cancel();
 
             throw new Error(`Device didn't respond to OTA request`);
-        } finally {
-            this.#pendingOtaCheck = false;
         }
     }
 
