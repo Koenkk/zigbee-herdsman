@@ -73,7 +73,7 @@ export class Device extends Entity<ControllerEventMap> {
     private _customReadResponse?: CustomReadResponse;
     private _lastDefaultResponseSequenceNumber?: number;
     private _checkinInterval?: number;
-    private _pendingOtaCheck = false;
+    #pendingOtaCheck = false;
     private _pendingRequestTimeout: number;
     private _customClusters: CustomClusters = {};
     private _gpSecurityKey?: number[];
@@ -549,7 +549,7 @@ export class Device extends Entity<ControllerEventMap> {
                     break;
                 }
                 case "genOta": {
-                    if (command.name === "queryNextImageRequest" && !this._pendingOtaCheck) {
+                    if (command.name === "queryNextImageRequest" && !this.#pendingOtaCheck) {
                         // Device is polling on its own initiative (no adapter-driven OTA check in
                         // progress). Answer NO_IMAGE_AVAILABLE so it stops retrying, instead of
                         // leaving the request unanswered indefinitely.
@@ -1554,7 +1554,7 @@ export class Device extends Entity<ControllerEventMap> {
             60000,
         );
 
-        this._pendingOtaCheck = true;
+        this.#pendingOtaCheck = true;
 
         try {
             await endpoint.commandResponse("genOta", "imageNotify", {payloadType: 0, queryJitter: 100}, {sendPolicy: "immediate"});
@@ -1569,7 +1569,7 @@ export class Device extends Entity<ControllerEventMap> {
 
             throw new Error(`Device didn't respond to OTA request`);
         } finally {
-            this._pendingOtaCheck = false;
+            this.#pendingOtaCheck = false;
         }
     }
 
