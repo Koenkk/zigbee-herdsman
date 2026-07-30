@@ -1,5 +1,19 @@
 # Changelog
 
+## [10.8.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.7.0...v10.8.0) (2026-07-30)
+
+
+### Features
+
+* Handle `special` in ZCL spec ([#1825](https://github.com/Koenkk/zigbee-herdsman/issues/1825)) ([8cad765](https://github.com/Koenkk/zigbee-herdsman/commit/8cad765426016ff935c7cd9f8045882289b73748))
+
+
+### Bug Fixes
+
+* Add support for some recent `EzspValueId` ([#1830](https://github.com/Koenkk/zigbee-herdsman/issues/1830)) ([09d8101](https://github.com/Koenkk/zigbee-herdsman/commit/09d81012caed1c80fd3e570a67a9a8aa17b0e475))
+* **ignore:** bump the minor-patch group with 2 updates ([#1832](https://github.com/Koenkk/zigbee-herdsman/issues/1832)) ([5d4c8bf](https://github.com/Koenkk/zigbee-herdsman/commit/5d4c8bfb1d179256f754e0623d6b21bb65fb1206))
+* **ignore:** Clean-up manuSpecificTuya ([#1824](https://github.com/Koenkk/zigbee-herdsman/issues/1824)) ([55f3648](https://github.com/Koenkk/zigbee-herdsman/commit/55f36488edacdaf2fd68c8feb5d54f9b70c883ef))
+
 ## [10.7.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.6.3...v10.7.0) (2026-07-24)
 
 
