@@ -7219,10 +7219,6 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
              */
             dataQuery: {name: "dataQuery", ID: 0x03, parameters: []},
             /**
-             * Gw->Zigbee gateway query MCU version
-             */
-            mcuVersionRequest: {name: "mcuVersionRequest", ID: 0x10, parameters: [{name: "seq", type: DataType.UINT16, max: 0xffff}]},
-            /**
              * FIXME: This command is not listed in Tuya zigbee cluster description,
              *  but there is some command 0x04 (description is: Command Issuance)
              *  in `Serial command list` section of the same document
@@ -7236,6 +7232,10 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                     {name: "dpValues", type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
                 ],
             },
+            /**
+             * Gw->Zigbee gateway query MCU version
+             */
+            mcuVersionRequest: {name: "mcuVersionRequest", ID: 0x10, parameters: [{name: "seq", type: DataType.UINT16, max: 0xffff}]},
             /**
              * Gw->Zigbee gateway notifies MCU of upgrade
              */
