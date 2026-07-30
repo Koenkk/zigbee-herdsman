@@ -1036,6 +1036,14 @@ export enum EzspValueId {
      * Controls whether devices must use an install code when joining.
      */
     JOIN_USE_INSTALL_CODE_ENABLE = 0x48,
+    /** v18+ The stack revision. */
+    STACK_REVISION = 0x49,
+    /**
+     * v19+ (technically v9.1.1)
+     * The extra milliseconds added to the APS retry and Fragmentation retry
+     * timeout for known sleepy destinations.
+     */
+    SLEEPY_TARGET_MAC_TIMEOUT_INCREASE = 0x50,
 }
 
 /**
