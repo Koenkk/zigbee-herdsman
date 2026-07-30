@@ -7188,23 +7188,18 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
         },
     },
     /**
-     * Tuya cluster
-     *
-     * Common parameters:
-     *
+     * Common parameter:
      *  seq -  Sequence number of transmitted data, range 0-65535, revert to 0 after reaching 65535
      *
-     * Official Tuya documentation: https://developer.tuya.com/en/docs/iot-device-dev/tuya-zigbee-universal-docking-access-standard?id=K9ik6zvofpzql#subtitle-6-Private%20cluster
-     *
+     * Tuya cluster documentation: https://developer.tuya.com/en/docs/iot-device-dev/tuya-zigbee-universal-docking-access-standard?id=K9ik6zvofpzql#subtitle-6-Private%20cluster
+     * Device types documentation: https://developer.tuya.com/en/docs/connect-subdevices-to-gateways/Zigbee_2?id=Kcww7qppbe87m
      */
     manuSpecificTuya: {
         name: "manuSpecificTuya",
         ID: 0xef00, // 61184
         attributes: {},
         commands: {
-            /**
-             * Gateway-side data request
-             */
+            /** Read/write some datapoints. Device returns dataResponse(s) */
             dataRequest: {
                 name: "dataRequest",
                 ID: 0x00,
@@ -7213,17 +7208,9 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                     {name: "dpValues", type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
                 ],
             },
-            /**
-             * GW send, trigger MCU side to report all current information, no zcl payload.
-             * Note: Device side can make a policy, data better not to report centrally
-             */
+            /** Read all datapoints. Device returns dataResponse(s) */
             dataQuery: {name: "dataQuery", ID: 0x03, parameters: []},
-            /**
-             * FIXME: This command is not listed in Tuya zigbee cluster description,
-             *  but there is some command 0x04 (description is: Command Issuance)
-             *  in `Serial command list` section of the same document
-             *  So, need to investigate more information about it
-             */
+            /** Some devices need this instead of dataRequest? Device returns dataResponse(s) */
             sendData: {
                 name: "sendData",
                 ID: 0x04,
@@ -7232,13 +7219,9 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                     {name: "dpValues", type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
                 ],
             },
-            /**
-             * Gw->Zigbee gateway query MCU version
-             */
+            /** Read MCU version. Device returns mcuVersionResponse */
             mcuVersionRequest: {name: "mcuVersionRequest", ID: 0x10, parameters: [{name: "seq", type: DataType.UINT16, max: 0xffff}]},
-            /**
-             * Gw->Zigbee gateway notifies MCU of upgrade
-             */
+            /** Notify update. Device returns mcuOtaBlockDataRequest */
             mcuOtaNotify: {
                 name: "mcuOtaNotify",
                 ID: 0x12,
@@ -7256,9 +7239,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                     {name: "crc", type: DataType.UINT32, max: 0xffffffff},
                 ],
             },
-            /**
-             * Gw->Zigbee gateway returns the requested upgrade package for MCU
-             */
+            /** Reply to mcuOtaBlockDataRequest with chunks of update file. Ends with device returning mcuOtaResult */
             mcuOtaBlockDataResponse: {
                 name: "mcuOtaBlockDataResponse",
                 ID: 0x14,
@@ -7272,9 +7253,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                     {name: "imageData", type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
-            /**
-             * Time synchronization (bidirectional)
-             */
+            /** Device asks current time, gateway replies with same command + payload */
             mcuSyncTime: {
                 name: "mcuSyncTime",
                 ID: 0x24,
@@ -7283,9 +7262,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                     {name: "payload", type: BuffaloZclDataType.LIST_UINT8},
                 ],
             },
-            /**
-             * Gateway connection status (bidirectional)
-             */
+            /** Gateway connection status (bidirectional) */
             mcuGatewayConnectionStatus: {
                 name: "mcuGatewayConnectionStatus",
                 ID: 0x25,
@@ -7294,15 +7271,11 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                     {name: "payload", type: DataType.UINT8, max: 0xff},
                 ],
             },
-            /**
-             * Weather forecast synchronization (check requestWeatherInformation)
-             */
+            /** Weather forecast sync. Reply to requestWeatherInformation */
             tuyaWeatherSync: {name: "tuyaWeatherSync", ID: 0x61, parameters: [{name: "payload", type: BuffaloZclDataType.BUFFER}]},
         },
         commandsResponse: {
-            /**
-             * Reply to MCU-side data request
-             */
+            /** Reply to dataQuery or sendData with some datapoints */
             dataResponse: {
                 name: "dataResponse",
                 ID: 0x01,
@@ -7311,9 +7284,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                     {name: "dpValues", type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
                 ],
             },
-            /**
-             * MCU-side data active upload (bidirectional)
-             */
+            /** Report some datapoints. Bidirectional? */
             dataReport: {
                 name: "dataReport",
                 ID: 0x02,
@@ -7350,9 +7321,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                     {name: "dpValues", type: BuffaloZclDataType.LIST_TUYA_DATAPOINT_VALUES},
                 ],
             },
-            /**
-             * Zigbee->Gw MCU return version or actively report version
-             */
+            /** Report / reply to mcuVersionRequest */
             mcuVersionResponse: {
                 name: "mcuVersionResponse",
                 ID: 0x11,
@@ -7361,9 +7330,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                     {name: "version", type: DataType.UINT8, max: 0xff},
                 ],
             },
-            /**
-             * Zigbee->Gw requests an upgrade package for the MCU
-             */
+            /** Request chunks of update file. Replying to mcuOtaNotify */
             mcuOtaBlockDataRequest: {
                 name: "mcuOtaBlockDataRequest",
                 ID: 0x13,
@@ -7376,9 +7343,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                     {name: "size", type: DataType.UINT32, max: 0xffffffff},
                 ],
             },
-            /**
-             * Zigbee->Gw returns the upgrade result for the mcu
-             */
+            /** End update. Replying to last mcuOtaBlockDataResponse */
             mcuOtaResult: {
                 name: "mcuOtaResult",
                 ID: 0x15,
@@ -7390,25 +7355,15 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                     {name: "version", type: DataType.UINT8, max: 0xff},
                 ],
             },
-            /**
-             * Time synchronization (bidirectional)
-             */
+            /** Device asks current time, gateway replies with same command + payload */
             mcuSyncTime: {name: "mcuSyncTime", ID: 0x24, parameters: [{name: "payloadSize", type: DataType.UINT16, max: 0xffff}]},
-            /**
-             * Gateway connection status (bidirectional)
-             */
+            /** Gateway connection status (bidirectional) */
             mcuGatewayConnectionStatus: {
                 name: "mcuGatewayConnectionStatus",
                 ID: 0x25,
                 parameters: [{name: "payloadSize", type: DataType.UINT16, max: 0xffff}],
             },
-            /**
-             * Device can request weather forecast information and expects response respecting given parameters.
-             * This command ID seem to be device speciffic, because there is simmilar structure documented in Tuya Serial Communication Protocol,
-             * but with different ID (0x3a and 0x3b respectively). In this case, I'm not sure if the name should reflect the one from
-             * docs or be also speciffic (providing space for the implementation of the correct one in the future)?
-             *
-             */
+            /** Request weather forecast. Can be device-specific */
             tuyaWeatherRequest: {name: "tuyaWeatherRequest", ID: 0x60, parameters: [{name: "payload", type: BuffaloZclDataType.BUFFER}]},
         },
     },
