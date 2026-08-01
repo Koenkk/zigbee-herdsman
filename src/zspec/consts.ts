@@ -21,6 +21,8 @@ export const TOUCHLINK_PROFILE_ID = 0xc05e;
 export const WILDCARD_PROFILE_ID = 0xffff;
 /** The profile ID used to access Shelly devices custom clusters. */
 export const CUSTOM_SHELLY_PROFILE_ID = 0xc001;
+/** The profile ID used by Control4 devices. */
+export const CONTROL4_PROFILE_ID = 0xc25c;
 
 /** The default HA endpoint. */
 export const HA_ENDPOINT = 0x01;

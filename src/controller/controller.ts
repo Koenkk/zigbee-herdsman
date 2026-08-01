@@ -1105,6 +1105,20 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                     // devices report attributes through readRsp or attributeReport
                     if (frame.cluster.name === "genBasic") {
                         device.updateGenBasic(data as TPartialClusterAttributes<"genBasic">);
+                    } else if (frame.cluster.name === "genPowerCfg" && !device.modelID) {
+                        // Control4 devices don't support genBasic.modelId (returns UNSUPPORTED_ATTRIBUTE).
+                        // They announce their model via genPowerCfg attribute 0x0007 in the format
+                        // "c4:<device_type>:<model_id>" as a broadcast immediately on joining.
+                        // Attribute 0x0007 is not defined in the standard genPowerCfg cluster so it
+                        // arrives keyed by its numeric ID rather than a name.
+                        const c4model = (data as Record<number, unknown>)[7];
+                        if (typeof c4model === "string" && c4model.startsWith("c4:")) {
+                            const modelID = c4model.split(":")[2];
+                            if (modelID) {
+                                device.modelID = modelID;
+                                logger.debug(`Set Control4 modelID '${device.modelID}' from genPowerCfg broadcast`, NS);
+                            }
+                        }
                     }
 
                     endpoint.saveClusterAttributeKeyValue(frame.cluster.ID, data);
