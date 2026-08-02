@@ -1747,8 +1747,6 @@ export class Device extends Entity<ControllerEventMap> {
 
         if (endResult.payload.status === Zcl.Status.SUCCESS) {
             try {
-                const currentTime = timeService.timestampToZigbeeUtcTime(Date.now());
-
                 await endpoint.commandResponse(
                     "genOta",
                     "upgradeEndResponse",
@@ -1756,8 +1754,15 @@ export class Device extends Entity<ControllerEventMap> {
                         manufacturerCode: image.header.manufacturerCode,
                         imageType: image.header.imageType,
                         fileVersion: image.header.fileVersion,
-                        currentTime,
-                        upgradeTime: currentTime + 1, // TODO: could this tiny offset be a problem for some stacks?
+                        // currentTime=0 signals "no UTC clock, UpgradeTime is a relative delay" per ZCL spec 11.13.9.4.
+                        // Sending the real UTC time here breaks stacks that compare UpgradeTime against their own
+                        // (unsynced) clock instead of computing the delta: e.g. the NXP JN51xx OTA client only
+                        // schedules relatively when currentTime is 0, otherwise it arms an absolute compare against
+                        // a clock that starts at 0 on boot - the upgrade lands ~26 years out and the device never
+                        // reboots even though the transfer and CRC succeeded. Spec-compliant clients compute
+                        // UpgradeTime - CurrentTime, which is identical either way.
+                        currentTime: 0,
+                        upgradeTime: 1,
                     },
                     undefined,
                     endResult.header.transactionSequenceNumber,

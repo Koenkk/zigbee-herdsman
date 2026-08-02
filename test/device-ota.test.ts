@@ -1141,7 +1141,11 @@ describe("Device OTA", () => {
             expect(calls[expectedBlocks - 1][2]).toEqual(
                 expect.objectContaining({fileOffset: lastOffset, dataSize: lastSize, data: image.raw.subarray(image.raw.length - lastSize)}),
             );
-            expect(getResponses(endpoint, "upgradeEndResponse").length).toStrictEqual(1);
+            const upgradeEndResponses = getResponses(endpoint, "upgradeEndResponse");
+            expect(upgradeEndResponses.length).toStrictEqual(1);
+            // relative scheduling (currentTime=0) - required by stacks that otherwise compare
+            // upgradeTime against their own unsynced UTC clock (e.g. NXP JN51xx)
+            expect(upgradeEndResponses[0][2]).toEqual(expect.objectContaining({currentTime: 0, upgradeTime: 1}));
             expect(onProgress).toHaveBeenCalled();
             expect(device.otaInProgress).toStrictEqual(false);
         });
