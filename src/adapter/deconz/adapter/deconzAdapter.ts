@@ -709,20 +709,19 @@ export class DeconzAdapter extends Adapter {
     }
 
     private checkWaitForDataRequestTimeouts() {
-        if (this.openRequestsQueue.length === 0) {
-            return;
-        }
-
         const now = Date.now();
-        const req: WaitForDataRequest = this.openRequestsQueue[0];
 
-        if (req.confirmed && req.timeout < now - req.ts) {
-            this.openRequestsQueue.shift();
-            logger.debug(
-                `Timeout for request in openRequestsQueue addr: ${req.addr}, clusterId: ${req.clusterId.toString(16)}, profileId: ${req.profileId.toString(16)}, seq: ${req.transactionSequenceNumber}`,
-                NS,
-            );
-            req.reject(new Error("waiting for response TIMEOUT"));
+        for (let i = this.openRequestsQueue.length - 1; i >= 0; i--) {
+            const req: WaitForDataRequest = this.openRequestsQueue[i];
+
+            if (req.timeout < now - req.ts) {
+                this.openRequestsQueue.splice(i, 1);
+                logger.debug(
+                    `Timeout for request in openRequestsQueue addr: ${req.addr}, clusterId: ${req.clusterId.toString(16)}, profileId: ${req.profileId.toString(16)}, seq: ${req.transactionSequenceNumber}`,
+                    NS,
+                );
+                req.reject(new Error("waiting for response TIMEOUT"));
+            }
         }
     }
 
