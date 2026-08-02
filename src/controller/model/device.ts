@@ -1754,13 +1754,7 @@ export class Device extends Entity<ControllerEventMap> {
                         manufacturerCode: image.header.manufacturerCode,
                         imageType: image.header.imageType,
                         fileVersion: image.header.fileVersion,
-                        // currentTime=0 signals "no UTC clock, UpgradeTime is a relative delay" per ZCL spec 11.13.9.4.
-                        // Sending the real UTC time here breaks stacks that compare UpgradeTime against their own
-                        // (unsynced) clock instead of computing the delta: e.g. the NXP JN51xx OTA client only
-                        // schedules relatively when currentTime is 0, otherwise it arms an absolute compare against
-                        // a clock that starts at 0 on boot - the upgrade lands ~26 years out and the device never
-                        // reboots even though the transfer and CRC succeeded. Spec-compliant clients compute
-                        // UpgradeTime - CurrentTime, which is identical either way.
+                        // using 0 tells the device to use `upgradeTime` as offset (11.13.8.2.8), preventing issues with UTC Time support
                         currentTime: 0,
                         upgradeTime: 1,
                     },
