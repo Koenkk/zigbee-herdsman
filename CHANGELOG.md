@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.8.1](https://github.com/Koenkk/zigbee-herdsman/compare/v10.8.0...v10.8.1) (2026-08-03)
+
+
+### Bug Fixes
+
+* OTA send relative upgrade time in upgradeEndResponse ([#1835](https://github.com/Koenkk/zigbee-herdsman/issues/1835)) ([898da16](https://github.com/Koenkk/zigbee-herdsman/commit/898da162914ff59c69491acd356ec0ab3b2cdb00))
+
 ## [10.8.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.7.0...v10.8.0) (2026-07-30)
 
 
