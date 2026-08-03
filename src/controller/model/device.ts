@@ -1747,8 +1747,6 @@ export class Device extends Entity<ControllerEventMap> {
 
         if (endResult.payload.status === Zcl.Status.SUCCESS) {
             try {
-                const currentTime = timeService.timestampToZigbeeUtcTime(Date.now());
-
                 await endpoint.commandResponse(
                     "genOta",
                     "upgradeEndResponse",
@@ -1756,8 +1754,9 @@ export class Device extends Entity<ControllerEventMap> {
                         manufacturerCode: image.header.manufacturerCode,
                         imageType: image.header.imageType,
                         fileVersion: image.header.fileVersion,
-                        currentTime,
-                        upgradeTime: currentTime + 1, // TODO: could this tiny offset be a problem for some stacks?
+                        // using 0 tells the device to use `upgradeTime` as offset (11.13.8.2.8), preventing issues with UTC Time support
+                        currentTime: 0,
+                        upgradeTime: 1,
                     },
                     undefined,
                     endResult.header.transactionSequenceNumber,
