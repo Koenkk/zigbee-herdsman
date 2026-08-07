@@ -663,7 +663,7 @@ export class DeconzAdapter extends Adapter {
         transactionSequenceNumber: number,
         timeout: number,
     ): Promise<ReceivedDataResponse> {
-        return new Promise((resolve, reject): void => {
+        const promise = new Promise<ReceivedDataResponse>((resolve, reject): void => {
             const ts = Date.now();
             if (!timeout) {
                 timeout = 60000;
@@ -673,6 +673,8 @@ export class DeconzAdapter extends Adapter {
             const req: WaitForDataRequest = {addr, profileId, clusterId, transactionSequenceNumber, resolve, reject, confirmed, ts, timeout};
             this.openRequestsQueue.push(req);
         });
+        promise.catch(() => {});
+        return promise;
     }
 
     private checkReceivedGreenPowerIndication(ind: GpDataInd): void {
