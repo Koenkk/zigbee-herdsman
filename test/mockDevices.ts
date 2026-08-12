@@ -620,4 +620,27 @@ export const MOCK_DEVICES: {
             },
         },
     },
+    180: {
+        // Control4 keypad dimmer: the node descriptor identifies it (manufacturerCode 0xabcd), but the
+        // device does not answer genBasic reads and the simple descriptor request for its proprietary
+        // endpoint times out, so the interview fails partway through.
+        nodeDescriptor: [Zdo.Status.SUCCESS, {...NODE_DESC_DEFAULTS, nwkAddress: 180, logicalType: 0b001, manufacturerCode: 0xabcd}],
+        activeEndpoints: [Zdo.Status.SUCCESS, {nwkAddress: 180, endpointList: [1, 197]}],
+        simpleDescriptor: {
+            1: [
+                Zdo.Status.SUCCESS,
+                {
+                    nwkAddress: 180,
+                    length: 14,
+                    endpoint: 1,
+                    profileId: 260,
+                    deviceId: 257,
+                    deviceVersion: 1,
+                    inClusterList: [0, 6, 8],
+                    outClusterList: [],
+                },
+            ],
+        },
+        attributes: {},
+    },
 };

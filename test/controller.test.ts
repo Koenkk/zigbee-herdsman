@@ -3271,6 +3271,21 @@ describe("Controller", () => {
         expect(controller.getDeviceByIeeeAddr("0x172")!.modelID).toBe("GL-C-008");
     });
 
+    it("Control4 device join (genBasic reads fail, interview completes via quirk)", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 180, ieeeAddr: "0x180"});
+        expect(events.deviceInterview.length).toBe(2);
+        expect(events.deviceInterview[0].status).toBe("started");
+        // @ts-expect-error private but deep cloned
+        expect(events.deviceInterview[0].device._ieeeAddr).toBe("0x180");
+        expect(events.deviceInterview[1].status).toBe("successful");
+        const device = controller.getDeviceByIeeeAddr("0x180")!;
+        expect(device.interviewState).toBe(InterviewState.Successful);
+        expect(device.modelID).toBe("C4-Zigbee");
+        expect(device.manufacturerName).toBe("Control4");
+        expect(device.powerSource).toBe("Mains (single phase)");
+    });
+
     it("Xiaomi end device joins (node descriptor fails)", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 150, ieeeAddr: "0x150"});
