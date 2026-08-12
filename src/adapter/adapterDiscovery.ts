@@ -84,6 +84,15 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
             pathRegex: ".*Nabu_Casa_ZBT-2.*",
             options: {baudRate: 460800, rtscts: true},
         },
+        {
+            // Home Assistant Connect ZBT-2
+            vendorId: "303a",
+            productId: "831a",
+            manufacturer: "Nabu Casa",
+            // /dev/serial/by-id/usb-Nabu_Casa_ZBT-2_10B41DE58D6C-if00
+            pathRegex: ".*Nabu_Casa_ZBT-2.*",
+            options: {baudRate: 460800, rtscts: true},
+        },
         // {
         //     // TODO: Home Assistant Yellow
         //     vendorId: '',
