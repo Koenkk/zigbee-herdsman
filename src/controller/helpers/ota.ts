@@ -509,27 +509,61 @@ export class OtaSession {
         promise: Promise<TZclFrame<"genOta", "upgradeEndRequest"> | TFoundationZclFrame<"defaultRsp">>;
         cancel: () => void;
     }): AsyncGenerator<OtaDataRequest | OtaUpgradeEndRequest | TFoundationZclFrame<"defaultRsp">> {
-        while (true) {
-            const imageBlockRequest = this.waitForOtaCommand<"imageBlockRequest">(
-                this.endpoint.ID,
-                IMAGE_BLOCK_REQUEST_ID,
-                IMAGE_BLOCK_RESPONSE_ID,
-                this.dataSettings.requestTimeout,
-            );
-            const imagePageRequest = this.waitForOtaCommand<"imagePageRequest">(
-                this.endpoint.ID,
-                IMAGE_PAGE_REQUEST_ID,
-                IMAGE_BLOCK_RESPONSE_ID,
-                this.dataSettings.requestTimeout,
-            );
-            const dataRequest = Promise.race([imageBlockRequest.promise, imagePageRequest.promise]);
-            const request = await Promise.race([dataRequest, upgradeEndRequest.promise]);
+        // Arm the waiters before yielding each request: the consumer sends the image block
+        // response while this generator is suspended at `yield`, and fast devices (e.g. Hue,
+        // which request with minimumBlockPeriod=0) send their next imageBlockRequest within
+        // milliseconds of receiving a response. If the waiters are only armed at the top of
+        // the loop (i.e. after the consumer resumes the generator), that request arrives in
+        // an unarmed window and is dropped, and the transfer only advances on the device's
+        // retry timeout (~10s per block for Hue) — a ~100x slowdown.
+        let imageBlockRequest = this.waitForOtaCommand<"imageBlockRequest">(
+            this.endpoint.ID,
+            IMAGE_BLOCK_REQUEST_ID,
+            IMAGE_BLOCK_RESPONSE_ID,
+            this.dataSettings.requestTimeout,
+        );
+        let imagePageRequest = this.waitForOtaCommand<"imagePageRequest">(
+            this.endpoint.ID,
+            IMAGE_PAGE_REQUEST_ID,
+            IMAGE_BLOCK_RESPONSE_ID,
+            this.dataSettings.requestTimeout,
+        );
 
+        // the armed promises may settle while the generator is suspended at `yield` below;
+        // keep a passive handler attached so a rejection (e.g. timeout) is never unhandled
+        void imageBlockRequest.promise.catch(() => {});
+        void imagePageRequest.promise.catch(() => {});
+
+        try {
+            while (true) {
+                const dataRequest = Promise.race([imageBlockRequest.promise, imagePageRequest.promise]);
+                const request = await Promise.race([dataRequest, upgradeEndRequest.promise]);
+
+                imageBlockRequest.cancel();
+                imagePageRequest.cancel();
+                imageBlockRequest = this.waitForOtaCommand<"imageBlockRequest">(
+                    this.endpoint.ID,
+                    IMAGE_BLOCK_REQUEST_ID,
+                    IMAGE_BLOCK_RESPONSE_ID,
+                    this.dataSettings.requestTimeout,
+                );
+                imagePageRequest = this.waitForOtaCommand<"imagePageRequest">(
+                    this.endpoint.ID,
+                    IMAGE_PAGE_REQUEST_ID,
+                    IMAGE_BLOCK_RESPONSE_ID,
+                    this.dataSettings.requestTimeout,
+                );
+                void imageBlockRequest.promise.catch(() => {});
+                void imagePageRequest.promise.catch(() => {});
+
+                // if this is `UPGRADE_END_REQUEST_ID`, `run()` will return and thus terminate the generator (no endless loop possible)
+                yield request;
+            }
+        } finally {
+            // the generator is closed by `run()` returning (upgrade end) or throwing (abort):
+            // cancel the armed waiters so their timeouts cannot fire as unhandled rejections
             imageBlockRequest.cancel();
             imagePageRequest.cancel();
-
-            // if this is `UPGRADE_END_REQUEST_ID`, `run()` will return and thus terminate the generator (no endless loop possible)
-            yield request;
         }
     }
 
