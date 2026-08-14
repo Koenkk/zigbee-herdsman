@@ -88,14 +88,9 @@ const createOtaDeviceWaitFor = (
 
     const pendingPromise = (): ReturnType<Adapter["waitFor"]>["promise"] => new Promise<never>(() => {}) as never;
 
-    // ------------------------------------------------------------------ device pacing
-    // A real device sends its next block/page request only after it has received the
-    // response to its previous one — it is never prompted by the controller arming a
-    // waiter. Model that here: requests are produced lazily, in arm-order, each gated
-    // on completion of the responses owed for the previously produced request (1 per
-    // block request, blocks-per-page per page request, 0 for frames that elicit no
-    // response). This keeps the mock faithful regardless of when the controller arms
-    // its waiters relative to sending responses.
+    // Device pacing: produce requests lazily, in arm-order, each gated on completion of the
+    // responses owed for the previous one (1 per block, blocks-per-page per page, 0 for frames
+    // that elicit no response) — like a real device, regardless of when waiters are armed.
     type WaitForPayload = Awaited<ReturnType<Adapter["waitFor"]>["promise"]>;
     type ProducedRequest = {value: WaitForPayload | Error | "pending"; responses: number};
 
@@ -116,15 +111,16 @@ const createOtaDeviceWaitFor = (
         }
     };
 
-    const chainProducer = (produce: () => ProducedRequest): ReturnType<Adapter["waitFor"]> => {
+    const chainProducer = (produce: () => ProducedRequest, timeout: number): ReturnType<Adapter["waitFor"]> => {
         let canceled = false;
+        let timer: NodeJS.Timeout | undefined;
         const prevTail = producerTail;
         let resolveTail: ((threshold: number) => void) | undefined;
         producerTail = new Promise<number>((resolve) => {
             resolveTail = resolve;
         });
 
-        const promise = (async (): Promise<WaitForPayload> => {
+        const produced = (async (): Promise<WaitForPayload> => {
             const threshold = await prevTail;
             await afterResponses(threshold);
 
@@ -149,13 +145,31 @@ const createOtaDeviceWaitFor = (
             return value;
         })();
 
-        // may reject while the controller is not racing this promise (suspended at `yield`)
-        void promise.catch(() => {});
+        // mirror the real adapter waiter: reject on timeout unless produced or canceled first
+        const promise = new Promise<WaitForPayload>((resolve, reject) => {
+            if (timeout > 0) {
+                timer = setTimeout(() => reject(new Error("timeout")), timeout);
+            }
+
+            produced.then(
+                (value) => {
+                    clearTimeout(timer);
+                    resolve(value);
+                },
+                (error) => {
+                    clearTimeout(timer);
+                    reject(error);
+                },
+            );
+        });
+
+        void promise.catch(() => {}); // may reject while nothing is racing it
 
         return {
             promise: promise as ReturnType<Adapter["waitFor"]>["promise"],
             cancel: (): void => {
                 canceled = true;
+                clearTimeout(timer);
             },
         };
     };
@@ -203,10 +217,8 @@ const createOtaDeviceWaitFor = (
         });
     }
 
-    // every image block response attempt (success or failure — a real device re-requests
-    // after a missed delivery — but not the final ABORT) advances the pacing gate above.
-    // Installed as an accessor so tests that assign their own `commandResponse` swap the
-    // inner implementation without disabling the pacing.
+    // Every imageBlockResponse attempt (except ABORT) advances the pacing gate. Accessor so
+    // tests that assign their own `commandResponse` swap the inner fn without losing pacing.
     {
         let innerCommandResponse = endpoint.commandResponse;
 
@@ -290,7 +302,8 @@ const createOtaDeviceWaitFor = (
         if (remaining <= 0) {
             maybeScheduleUpgradeEnd();
 
-            return {value: new Error("all blocks sent"), responses: 0};
+            // a real device goes silent once it has all blocks (upgradeEnd or waiter timeout follows)
+            return {value: "pending", responses: 0};
         }
 
         const payload: TClusterCommandPayload<"genOta", "imageBlockRequest"> = {
@@ -390,6 +403,7 @@ const createOtaDeviceWaitFor = (
         transactionSequenceNumber,
         clusterID,
         commandId,
+        _defaultRspCommandId,
         timeout,
     ) => {
         const fail = (message: string) => ({
@@ -459,7 +473,7 @@ const createOtaDeviceWaitFor = (
                 };
             }
 
-            return chainProducer(() => producePageRequest(endpointId, transactionSequenceNumber, networkAddress!));
+            return chainProducer(() => producePageRequest(endpointId, transactionSequenceNumber, networkAddress!), timeout);
         }
 
         if (commandId === IMAGE_BLOCK_REQUEST_ID) {
@@ -470,7 +484,7 @@ const createOtaDeviceWaitFor = (
                 };
             }
 
-            return chainProducer(() => produceBlockRequest(endpointId, transactionSequenceNumber, networkAddress!));
+            return chainProducer(() => produceBlockRequest(endpointId, transactionSequenceNumber, networkAddress!), timeout);
         }
 
         return fail("unsupported commandId");
@@ -2052,7 +2066,7 @@ describe("Device OTA", () => {
                 fileVersion: image.header.fileVersion - 1,
             };
             const baseSize = 40;
-            const dataSettings: OtaDataSettings = {requestTimeout: 10, responseDelay: 250, baseSize};
+            const dataSettings: OtaDataSettings = {requestTimeout: 1000, responseDelay: 250, baseSize};
             // Mock time to ensure progress is reported at regular intervals
             let currentTime = 0;
             const timeDelays = [

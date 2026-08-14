@@ -509,13 +509,10 @@ export class OtaSession {
         promise: Promise<TZclFrame<"genOta", "upgradeEndRequest"> | TFoundationZclFrame<"defaultRsp">>;
         cancel: () => void;
     }): AsyncGenerator<OtaDataRequest | OtaUpgradeEndRequest | TFoundationZclFrame<"defaultRsp">> {
-        // Arm the waiters before yielding each request: the consumer sends the image block
-        // response while this generator is suspended at `yield`, and fast devices (e.g. Hue,
-        // which request with minimumBlockPeriod=0) send their next imageBlockRequest within
-        // milliseconds of receiving a response. If the waiters are only armed at the top of
-        // the loop (i.e. after the consumer resumes the generator), that request arrives in
-        // an unarmed window and is dropped, and the transfer only advances on the device's
-        // retry timeout (~10s per block for Hue) — a ~100x slowdown.
+        // Waiters are armed before each `yield`: a device can request the next block before the
+        // response send resolves (e.g. both frames delivered in one chunk on network-serial
+        // adapters), which would otherwise be dropped and cost a device-side retry timeout per
+        // block. Passive catch: the promises can settle while the generator is suspended.
         let imageBlockRequest = this.waitForOtaCommand<"imageBlockRequest">(
             this.endpoint.ID,
             IMAGE_BLOCK_REQUEST_ID,
@@ -528,16 +525,12 @@ export class OtaSession {
             IMAGE_BLOCK_RESPONSE_ID,
             this.dataSettings.requestTimeout,
         );
-
-        // the armed promises may settle while the generator is suspended at `yield` below;
-        // keep a passive handler attached so a rejection (e.g. timeout) is never unhandled
         void imageBlockRequest.promise.catch(() => {});
         void imagePageRequest.promise.catch(() => {});
 
         try {
             while (true) {
-                const dataRequest = Promise.race([imageBlockRequest.promise, imagePageRequest.promise]);
-                const request = await Promise.race([dataRequest, upgradeEndRequest.promise]);
+                const request = await Promise.race([imageBlockRequest.promise, imagePageRequest.promise, upgradeEndRequest.promise]);
 
                 imageBlockRequest.cancel();
                 imagePageRequest.cancel();
@@ -560,10 +553,9 @@ export class OtaSession {
                 yield request;
             }
         } finally {
-            // the generator is closed by `run()` returning (upgrade end) or throwing (abort):
-            // cancel the armed waiters so their timeouts cannot fire as unhandled rejections
             imageBlockRequest.cancel();
             imagePageRequest.cancel();
+            upgradeEndRequest.cancel();
         }
     }
 
