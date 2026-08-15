@@ -5747,7 +5747,14 @@ describe("Controller", () => {
                     outClusterList: [],
                     clusters: {},
                     configuredReportings: [
-                        {cluster: genOnOff.ID, attrId: genOnOff.attributes.onOff.ID, minRepIntval: 0, maxRepIntval: 65000, repChange: 0},
+                        {
+                            cluster: genOnOff.ID,
+                            attrId: genOnOff.attributes.onOff.ID,
+                            minRepIntval: 0,
+                            maxRepIntval: 65000,
+                            repChange: 0,
+                            manufacturerCode: null,
+                        },
                         {cluster: genOnOff.ID, attrId: genOnOff.attributes.onOff.ID, minRepIntval: 1, maxRepIntval: 65534, repChange: 0},
                         {
                             cluster: genPowerCfg.ID,

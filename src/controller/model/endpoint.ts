@@ -266,10 +266,12 @@ export class Endpoint extends ZigbeeEntity {
         }
         /* v8 ignore stop */
 
-        // Drop duplicates left by older versions, keeping the last stored entry @deprecated 3.0
+        // Older versions stored `null` manufacturer codes and duplicate entries, keep the last of each @deprecated 3.0
         const configuredReportings: ConfiguredReportingInternal[] = [];
 
-        for (const entry of (record.configuredReportings || []) as ConfiguredReportingInternal[]) {
+        for (const stored of record.configuredReportings || []) {
+            const entry: ConfiguredReportingInternal = {...stored, manufacturerCode: stored.manufacturerCode ?? undefined};
+
             const duplicateIdx = configuredReportings.findIndex((c) =>
                 Endpoint.isSameConfiguredReporting(c, entry.cluster, entry.attrId, entry.manufacturerCode),
             );
