@@ -4820,6 +4820,65 @@ describe("Controller", () => {
         expect(endpoint.configuredReportings[0].cluster.name).toBe("manuSpecificAmazonWWAH");
     });
 
+    it("Should replace configured reportings stored with another manufacturerCode", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        const genPowerCfg = Zcl.Utils.getCluster("genPowerCfg", undefined, {});
+        mocksendZclFrameToEndpoint.mockClear();
+
+        // @ts-expect-error private
+        endpoint._configuredReportings = [
+            {
+                cluster: genPowerCfg.ID,
+                attrId: genPowerCfg.attributes.batteryVoltage.ID,
+                minRepIntval: 60,
+                maxRepIntval: 900,
+                repChange: 1,
+                manufacturerCode: Zcl.ManufacturerCode.IKEA_OF_SWEDEN,
+            },
+        ];
+
+        await endpoint.configureReporting("genPowerCfg", [
+            {attribute: "batteryVoltage", minimumReportInterval: 1, maximumReportInterval: 10, reportableChange: 1},
+        ]);
+
+        expect(endpoint.configuredReportings.length).toBe(1);
+        expect(endpoint.configuredReportings[0].minimumReportInterval).toBe(1);
+        expect(endpoint.configuredReportings[0].maximumReportInterval).toBe(10);
+    });
+
+    it("Should update legacy configured reportings without manufacturerCode when saving report config", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        const genBasic = Zcl.Utils.getCluster("genBasic", undefined, {});
+
+        // @ts-expect-error private
+        endpoint._configuredReportings = [
+            {cluster: genBasic.ID, attrId: genBasic.attributes.powerSource.ID, minRepIntval: 60, maxRepIntval: 900, repChange: 1},
+        ];
+
+        endpoint.saveClusterAttributeReportConfig(genBasic.ID, Zcl.ManufacturerCode.SCHNEIDER_ELECTRIC, [
+            {
+                status: Zcl.Status.SUCCESS,
+                direction: Zcl.Direction.CLIENT_TO_SERVER,
+                attrId: genBasic.attributes.powerSource.ID,
+                dataType: Zcl.DataType.ENUM8,
+                minRepIntval: 1,
+                maxRepIntval: 10,
+                repChange: 2,
+            },
+        ]);
+
+        expect(endpoint.configuredReportings.length).toBe(1);
+        expect(endpoint.configuredReportings[0].minimumReportInterval).toBe(1);
+        expect(endpoint.configuredReportings[0].maximumReportInterval).toBe(10);
+        expect(endpoint.configuredReportings[0].reportableChange).toBe(2);
+    });
+
     it("Endpoint configure reporting for manufacturer specific attribute", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
@@ -5664,6 +5723,56 @@ describe("Controller", () => {
         };
         expect(deepClone(mocksendZclFrameToEndpoint.mock.calls[0][3])).toStrictEqual(expected);
         expect(mocksendZclFrameToEndpoint.mock.calls[0][4]).toBe(10000);
+    });
+
+    it("Should remove duplicate configured reportings when loading from database", async () => {
+        Device.resetCache();
+        const genOnOff = Zcl.Utils.getCluster("genOnOff", undefined, {});
+        const genPowerCfg = Zcl.Utils.getCluster("genPowerCfg", undefined, {});
+        const line = JSON.stringify({
+            id: 3,
+            type: "Router",
+            ieeeAddr: "0x90fd9ffffe4b64ae",
+            nwkAddr: 19468,
+            manufId: 4476,
+            powerSource: "Mains (single phase)",
+            modelId: "ZB-ONOFFPlug-D0005",
+            epList: [1],
+            endpoints: {
+                "1": {
+                    profId: 49246,
+                    epId: 1,
+                    devId: 81,
+                    inClusterList: [0, 1, 6],
+                    outClusterList: [],
+                    clusters: {},
+                    configuredReportings: [
+                        {cluster: genOnOff.ID, attrId: genOnOff.attributes.onOff.ID, minRepIntval: 0, maxRepIntval: 65000, repChange: 0},
+                        {cluster: genOnOff.ID, attrId: genOnOff.attributes.onOff.ID, minRepIntval: 1, maxRepIntval: 65534, repChange: 0},
+                        {
+                            cluster: genPowerCfg.ID,
+                            attrId: genPowerCfg.attributes.batteryVoltage.ID,
+                            minRepIntval: 60,
+                            maxRepIntval: 3600,
+                            repChange: 1,
+                        },
+                    ],
+                },
+            },
+            interviewState: InterviewState.Successful,
+            _id: "fJ5pmjqKRYbNvslK",
+        });
+        fs.writeFileSync(options.databasePath, `${line}\n`);
+        await controller.start();
+
+        const endpoint = controller.getDeviceByIeeeAddr("0x90fd9ffffe4b64ae")!.getEndpoint(1)!;
+
+        expect(
+            endpoint.configuredReportings.map((c) => [c.cluster.ID, c.attribute.ID, c.minimumReportInterval, c.maximumReportInterval]),
+        ).toStrictEqual([
+            [genOnOff.ID, genOnOff.attributes.onOff.ID, 1, 65534],
+            [genPowerCfg.ID, genPowerCfg.attributes.batteryVoltage.ID, 60, 3600],
+        ]);
     });
 
     it("Device without meta should set meta to {}", async () => {

@@ -266,6 +266,24 @@ export class Endpoint extends ZigbeeEntity {
         }
         /* v8 ignore stop */
 
+        // Drop duplicates left by older versions, keeping the last stored entry @deprecated 3.0
+        const configuredReportings: ConfiguredReportingInternal[] = [];
+
+        for (const entry of (record.configuredReportings || []) as ConfiguredReportingInternal[]) {
+            const duplicateIdx = configuredReportings.findIndex((c) =>
+                Endpoint.isSameConfiguredReporting(c, entry.cluster, entry.attrId, entry.manufacturerCode),
+            );
+
+            if (duplicateIdx === -1) {
+                configuredReportings.push(entry);
+            } else {
+                const dropped = configuredReportings[duplicateIdx];
+
+                logger.debug(() => `Dropping duplicate configured reporting for ${deviceIeeeAddress}/${record.epId}: ${JSON.stringify(dropped)}`, NS);
+                configuredReportings[duplicateIdx] = entry;
+            }
+        }
+
         return new Endpoint(
             record.epId,
             record.profId,
@@ -276,7 +294,7 @@ export class Endpoint extends ZigbeeEntity {
             deviceIeeeAddress,
             record.clusters,
             record.binds || [],
-            record.configuredReportings || [],
+            configuredReportings,
             record.meta || {},
         );
     }
@@ -334,6 +352,25 @@ export class Endpoint extends ZigbeeEntity {
         return undefined;
     }
 
+    /**
+     * Whether a stored configured reporting applies to the given cluster/attribute/manufacturer code.
+     *
+     * An undefined manufacturer code on either side matches any: it is dropped when persisted to JSON, and entries
+     * stored by older versions never had one.
+     */
+    private static isSameConfiguredReporting(
+        entry: ConfiguredReportingInternal,
+        cluster: number,
+        attrId: number,
+        manufacturerCode: number | undefined,
+    ): boolean {
+        return (
+            entry.cluster === cluster &&
+            entry.attrId === attrId &&
+            (entry.manufacturerCode === undefined || manufacturerCode === undefined || entry.manufacturerCode === manufacturerCode)
+        );
+    }
+
     public saveClusterAttributeReportConfig(
         clusterId: number,
         manufacturerCode: Zcl.ManufacturerCode | undefined,
@@ -344,11 +381,8 @@ export class Endpoint extends ZigbeeEntity {
                 continue;
             }
 
-            const existingConfigIdx = this._configuredReportings.findIndex(
-                (r) =>
-                    r.cluster === clusterId &&
-                    r.attrId === entry.attrId &&
-                    (manufacturerCode === undefined || manufacturerCode === r.manufacturerCode),
+            const existingConfigIdx = this._configuredReportings.findIndex((r) =>
+                Endpoint.isSameConfiguredReporting(r, clusterId, entry.attrId, manufacturerCode),
             );
 
             if (entry.status === Zcl.Status.SUCCESS) {
@@ -869,12 +903,7 @@ export class Endpoint extends ZigbeeEntity {
 
         for (const e of payload) {
             this._configuredReportings = this._configuredReportings.filter(
-                (c) =>
-                    !(
-                        c.attrId === e.attrId &&
-                        c.cluster === cluster.ID &&
-                        (!("manufacturerCode" in c) || c.manufacturerCode === optionsWithDefaults.manufacturerCode)
-                    ),
+                (c) => !Endpoint.isSameConfiguredReporting(c, cluster.ID, e.attrId, optionsWithDefaults.manufacturerCode),
             );
         }
 
