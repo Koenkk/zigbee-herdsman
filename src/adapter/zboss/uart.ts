@@ -126,7 +126,11 @@ export class ZBOSSUart extends EventEmitter {
 
             this.writer.pipe(this.serialPort);
 
-            this.serialPort.pipe(this.reader);
+            // `end: false`: without it a port that emits `end` would also end() the
+            // reader Transform for good — the in-place reopen after an NCP reset
+            // (`onPortClose`) then pipes the new port into a finished stream and
+            // every received byte is silently dropped (write-after-end).
+            this.serialPort.pipe(this.reader, {end: false});
 
             try {
                 await this.serialPort.asyncOpen();
@@ -150,7 +154,10 @@ export class ZBOSSUart extends EventEmitter {
 
             this.writer.pipe(this.socketPort);
 
-            this.socketPort.pipe(this.reader);
+            // `end: false`: a remote FIN (TCP peer rebooting — e.g. the NCP behind a
+            // serial-to-TCP bridge restarting on NCP_RESET) emits `end`, which would
+            // end() the shared reader Transform for good. See the serial branch.
+            this.socketPort.pipe(this.reader, {end: false});
 
             return await new Promise((resolve, reject): void => {
                 const openError = async (err: Error): Promise<void> => {
@@ -178,6 +185,13 @@ export class ZBOSSUart extends EventEmitter {
     }
 
     public async closePort(): Promise<void> {
+        // Detach the writer from the port that is about to go away: pipe targets
+        // survive destroy(), so a reopen (`onPortClose` reset path) would otherwise
+        // leave the writer piped to BOTH the dead and the new port — the dead
+        // port's backpressure then wedges the writer and frames stop reaching the
+        // wire after the first reconnect.
+        this.writer.unpipe();
+
         if (this.serialPort?.isOpen) {
             try {
                 await this.serialPort.asyncFlushAndClose();
