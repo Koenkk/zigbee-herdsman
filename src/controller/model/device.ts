@@ -934,6 +934,7 @@ export class Device extends Entity<ControllerEventMap> {
             "CS-T9C-A0-BG": {}, // iAS enroll fails: https://github.com/Koenkk/zigbee2mqtt/issues/27822
             "SNZB-01": {}, // iAS enroll fails: https://github.com/Koenkk/zigbee2mqtt/issues/29474
             "3011": {type: "EndDevice", powerSource: Zcl.PowerSource.Battery}, // NYCE NCZ-3011-HA fails IAS CIE address write during interview: https://github.com/Koenkk/zigbee2mqtt/issues/32480
+            "Smart Siren": {manufacturerName: "AduroSmart Eria"}, // iAS enroll fails: https://github.com/Koenkk/zigbee2mqtt/issues/32839
         };
 
         let match: string | undefined;
