@@ -886,6 +886,19 @@ export class Device extends Entity<ControllerEventMap> {
             return true;
         }
 
+        // Control4 in-wall dimmers/keypads do not answer genBasic reads at all, so the interview always
+        // fails before a modelID is known and the modelID-keyed quirks below can never match them. The
+        // node descriptor already identifies them unambiguously (manufacturerCode 0xabcd), and their
+        // proprietary text protocol handles identification beyond this.
+        // https://github.com/Koenkk/zigbee-herdsman/pull/1792
+        if (this._manufacturerID === 0xabcd) {
+            this.#genBasic.manufacturerName = "Control4";
+            this.#genBasic.modelId = "C4-Zigbee";
+            this.#genBasic.powerSource = Zcl.PowerSource["Mains (single phase)"];
+            logger.debug("Interview - quirks matched for Control4 device", NS);
+            return true;
+        }
+
         // Some devices, e.g. Xiaomi end devices have a different interview procedure, after pairing they
         // report it's modelID trough a readResponse. The readResponse is received by the controller and set
         // on the device.
@@ -921,6 +934,7 @@ export class Device extends Entity<ControllerEventMap> {
             "CS-T9C-A0-BG": {}, // iAS enroll fails: https://github.com/Koenkk/zigbee2mqtt/issues/27822
             "SNZB-01": {}, // iAS enroll fails: https://github.com/Koenkk/zigbee2mqtt/issues/29474
             "3011": {type: "EndDevice", powerSource: Zcl.PowerSource.Battery}, // NYCE NCZ-3011-HA fails IAS CIE address write during interview: https://github.com/Koenkk/zigbee2mqtt/issues/32480
+            "Smart Siren": {manufacturerName: "AduroSmart Eria"}, // iAS enroll fails: https://github.com/Koenkk/zigbee2mqtt/issues/32839
         };
 
         let match: string | undefined;
@@ -1747,8 +1761,6 @@ export class Device extends Entity<ControllerEventMap> {
 
         if (endResult.payload.status === Zcl.Status.SUCCESS) {
             try {
-                const currentTime = timeService.timestampToZigbeeUtcTime(Date.now());
-
                 await endpoint.commandResponse(
                     "genOta",
                     "upgradeEndResponse",
@@ -1756,8 +1768,9 @@ export class Device extends Entity<ControllerEventMap> {
                         manufacturerCode: image.header.manufacturerCode,
                         imageType: image.header.imageType,
                         fileVersion: image.header.fileVersion,
-                        currentTime,
-                        upgradeTime: currentTime + 1, // TODO: could this tiny offset be a problem for some stacks?
+                        // using 0 tells the device to use `upgradeTime` as offset (11.13.8.2.8), preventing issues with UTC Time support
+                        currentTime: 0,
+                        upgradeTime: 1,
                     },
                     undefined,
                     endResult.header.transactionSequenceNumber,

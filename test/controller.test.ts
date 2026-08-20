@@ -100,7 +100,7 @@ const mocksendZclFrameToGroup = vi.fn();
 const mocksendZclFrameToAll = vi.fn();
 const mockAddInstallCode = vi.fn();
 const mocksendZclFrameToEndpoint = vi.fn();
-const mockApaterBackup = vi.fn(() => Promise.resolve(mockDummyBackup));
+const mockAdapterBackup = vi.fn(() => Promise.resolve(mockDummyBackup));
 let sendZdoResponseStatus = Zdo.Status.SUCCESS;
 const mockAdapterSendZdo = vi
     .fn()
@@ -354,6 +354,7 @@ const mocksClear = [
     mockAddInstallCode,
     mockAdapterGetNetworkParameters,
     mockAdapterSendZdo,
+    mockAdapterBackup,
     mockLogger.debug,
     mockLogger.info,
     mockLogger.warning,
@@ -391,7 +392,7 @@ vi.mock("../src/adapter/z-stack/adapter/zStackAdapter", () => ({
         getCoordinatorIEEE: mockAdapterGetCoordinatorIEEE,
         reset: mockAdapterReset,
         supportsBackup: mockAdapterSupportsBackup,
-        backup: mockApaterBackup,
+        backup: mockAdapterBackup,
         getCoordinatorVersion: () => {
             return {type: "zStack", meta: {version: 1}};
         },
@@ -673,6 +674,24 @@ describe("Controller", () => {
         expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual(JSON.parse(JSON.stringify(dummyBackup)));
         expect(mockAdapterStop).toHaveBeenCalledTimes(1);
         expect(databaseSaveSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("controller should backup at defined interval", async () => {
+        await controller.start();
+        const backupSpy = vi.spyOn(controller, "backup").mockResolvedValueOnce(undefined);
+        expect(backupSpy).toHaveBeenCalledTimes(0);
+        await vi.advanceTimersByTimeAsync(86401000);
+        expect(backupSpy).toHaveBeenCalledTimes(1);
+        expect(backupSpy.mock.settledResults[0].type).toStrictEqual("fulfilled");
+    });
+
+    it("controller should not crash on failed interval backup", async () => {
+        await controller.start();
+        const backupSpy = vi.spyOn(controller, "backup").mockRejectedValueOnce(new Error("bad"));
+        expect(backupSpy).toHaveBeenCalledTimes(0);
+        await vi.advanceTimersByTimeAsync(86401000);
+        expect(backupSpy).toHaveBeenCalledTimes(1);
+        expect(backupSpy.mock.settledResults[0].type).toStrictEqual("rejected");
     });
 
     it("Syncs runtime lookups", async () => {
@@ -3250,6 +3269,21 @@ describe("Controller", () => {
         // @ts-expect-error private but deep cloned
         expect(events.deviceInterview[1].device._ieeeAddr).toBe("0x172");
         expect(controller.getDeviceByIeeeAddr("0x172")!.modelID).toBe("GL-C-008");
+    });
+
+    it("Control4 device join (genBasic reads fail, interview completes via quirk)", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 180, ieeeAddr: "0x180"});
+        expect(events.deviceInterview.length).toBe(2);
+        expect(events.deviceInterview[0].status).toBe("started");
+        // @ts-expect-error private but deep cloned
+        expect(events.deviceInterview[0].device._ieeeAddr).toBe("0x180");
+        expect(events.deviceInterview[1].status).toBe("successful");
+        const device = controller.getDeviceByIeeeAddr("0x180")!;
+        expect(device.interviewState).toBe(InterviewState.Successful);
+        expect(device.modelID).toBe("C4-Zigbee");
+        expect(device.manufacturerName).toBe("Control4");
+        expect(device.powerSource).toBe("Mains (single phase)");
     });
 
     it("Xiaomi end device joins (node descriptor fails)", async () => {

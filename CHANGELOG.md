@@ -1,5 +1,26 @@
 # Changelog
 
+## [10.9.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.8.1...v10.9.0) (2026-08-12)
+
+
+### Features
+
+* Accept the Control4 custom profile ID on the EZSP adapters ([#1837](https://github.com/Koenkk/zigbee-herdsman/issues/1837)) ([9a992e6](https://github.com/Koenkk/zigbee-herdsman/commit/9a992e6b5bafbf8389e39bf83f9fe7b63ce1f228))
+
+
+### Bug Fixes
+
+* Add fingerprint for different zbt-2 batch ([#1842](https://github.com/Koenkk/zigbee-herdsman/issues/1842)) ([0c33dd9](https://github.com/Koenkk/zigbee-herdsman/commit/0c33dd9c4c4369c52414e3e751cac5a46d343a22))
+* Interview Control4 devices via a manufacturerCode-keyed quirk ([#1840](https://github.com/Koenkk/zigbee-herdsman/issues/1840)) ([f6885e2](https://github.com/Koenkk/zigbee-herdsman/commit/f6885e2efccf7d665929737850be717bdb05325c))
+* Prevent crash on backup failure ([#1838](https://github.com/Koenkk/zigbee-herdsman/issues/1838)) ([646cb9a](https://github.com/Koenkk/zigbee-herdsman/commit/646cb9a24ccc77cb3bd17cd22e1365ad760b4f0a))
+
+## [10.8.1](https://github.com/Koenkk/zigbee-herdsman/compare/v10.8.0...v10.8.1) (2026-08-03)
+
+
+### Bug Fixes
+
+* OTA send relative upgrade time in upgradeEndResponse ([#1835](https://github.com/Koenkk/zigbee-herdsman/issues/1835)) ([898da16](https://github.com/Koenkk/zigbee-herdsman/commit/898da162914ff59c69491acd356ec0ab3b2cdb00))
+
 ## [10.8.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.7.0...v10.8.0) (2026-07-30)
 
 
