@@ -452,10 +452,10 @@ export class Endpoint extends ZigbeeEntity {
     /*
      * Zigbee functions
      */
-    private checkStatus(payload: [{status: Zcl.Status}] | {cmdId: number; statusCode: number}): void {
-        const codes = Array.isArray(payload) ? payload.map((i) => i.status) : [payload.statusCode];
-        const invalid = codes.find((c) => c !== Zcl.Status.SUCCESS);
-        if (invalid) throw new Zcl.StatusError(invalid);
+    private checkStatus(payload: [{status: Zcl.Status}] | {status?: Zcl.Status; statusCode?: Zcl.Status}): void {
+        const codes = Array.isArray(payload) ? payload.map((i) => i.status) : [payload.status ?? payload.statusCode];
+        const invalid = codes.find((c) => c !== undefined && c !== Zcl.Status.SUCCESS);
+        if (invalid !== undefined) throw new Zcl.StatusError(invalid);
     }
 
     public async report<Cl extends number | string, Custom extends TCustomCluster | undefined = undefined>(
@@ -1104,15 +1104,21 @@ export class Endpoint extends ZigbeeEntity {
      * to zigbee-herdsman.
      */
     public async removeFromGroup(group: Group | number): Promise<void> {
-        await this.zclCommand(
-            "genGroups",
-            "remove",
-            {groupid: group instanceof Group ? group.groupID : group},
-            undefined,
-            undefined,
-            true,
-            Zcl.FrameType.SPECIFIC,
-        );
+        try {
+            await this.zclCommand(
+                "genGroups",
+                "remove",
+                {groupid: group instanceof Group ? group.groupID : group},
+                undefined,
+                undefined,
+                true,
+                Zcl.FrameType.SPECIFIC,
+            );
+        } catch (error) {
+            if (!(error instanceof Zcl.StatusError) || error.code !== Zcl.Status.NOT_FOUND) {
+                throw error;
+            }
+        }
 
         if (group instanceof Group) {
             group.removeMember(this);
