@@ -5627,6 +5627,44 @@ describe("Controller", () => {
         expect(mocksendZclFrameToEndpoint.mock.calls[0][7]).toBeUndefined();
     });
 
+    it("Endpoint sendRaw sends the payload verbatim with no ZCL framing", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        mocksendZclFrameToEndpoint.mockClear();
+        const payload = Buffer.from("0s0001 c4.dmx.led 01 03 ff0000\r\n", "ascii");
+        await endpoint.sendRaw(1, payload, {profileId: 0xc25c});
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        const call = mocksendZclFrameToEndpoint.mock.calls[0];
+        expect(call[0]).toBe("0x129");
+        expect(call[1]).toBe(129);
+        expect(call[2]).toBe(1);
+        // The payload must reach the adapter byte-for-byte: no ZCL header is prepended.
+        expect(call[3].toBuffer()).toStrictEqual(payload);
+        expect(call[3].cluster.ID).toBe(1);
+        expect(call[4]).toBe(10000);
+        // disableResponse defaults to true: no response correlation is performed.
+        expect(call[5]).toBe(true);
+        expect(call[8]).toBe(0xc25c);
+    });
+
+    it("Endpoint sendRaw error", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        mocksendZclFrameToEndpoint.mockClear();
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("timeout occurred"));
+        let error;
+        try {
+            await endpoint.sendRaw(1, Buffer.from([1, 2, 3]), {profileId: 0xc25c});
+        } catch (e) {
+            error = e;
+        }
+        expect((error as Error).message).toStrictEqual(expect.stringContaining("failed (timeout occurred)"));
+    });
+
     it("Endpoint command with duplicate cluster ID", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
