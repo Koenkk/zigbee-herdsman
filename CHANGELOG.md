@@ -1,5 +1,14 @@
 # Changelog
 
+## [10.9.1](https://github.com/Koenkk/zigbee-herdsman/compare/v10.9.0...v10.9.1) (2026-08-22)
+
+
+### Bug Fixes
+
+* Fix not every group member removed when deleting a group ([#1854](https://github.com/Koenkk/zigbee-herdsman/issues/1854)) ([a70284a](https://github.com/Koenkk/zigbee-herdsman/commit/a70284ac995a392dce31e90ebc4acbfc86fa952c))
+* Ignore iAS enroll failure for AduroSmart Eria Smart Siren ([#1848](https://github.com/Koenkk/zigbee-herdsman/issues/1848)) ([b3e89bd](https://github.com/Koenkk/zigbee-herdsman/commit/b3e89bd002f6395aa258a7a0350d41753484ed29))
+* **ignore:** bump @types/node from 26.1.2 to 26.2.0 in the minor-patch group ([#1844](https://github.com/Koenkk/zigbee-herdsman/issues/1844)) ([3c7782f](https://github.com/Koenkk/zigbee-herdsman/commit/3c7782fc76abe4fa1ff9ebacd951f82c2cb0ad01))
+
 ## [10.9.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.8.1...v10.9.0) (2026-08-12)
 
 
