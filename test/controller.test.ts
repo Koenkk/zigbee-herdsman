@@ -4088,6 +4088,30 @@ describe("Controller", () => {
         );
     });
 
+    it("Removes every member when removing a group from the network", async () => {
+        await controller.start();
+        const group = controller.createGroup(4);
+
+        const devices = [
+            {networkAddress: 129, ieeeAddr: "0x129"},
+            {networkAddress: 170, ieeeAddr: "0x170"},
+            {networkAddress: 171, ieeeAddr: "0x171"},
+            {networkAddress: 175, ieeeAddr: "0x175"},
+        ];
+
+        for (const device of devices) {
+            await mockAdapterEvents.deviceJoined(device);
+            group.addMember(controller.getDeviceByIeeeAddr(device.ieeeAddr)!.getEndpoint(1)!);
+        }
+
+        mocksendZclFrameToEndpoint.mockClear();
+        await group.removeFromNetwork();
+
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(4);
+        expect(mocksendZclFrameToEndpoint.mock.calls.map((call) => call[0])).toStrictEqual(devices.map((device) => device.ieeeAddr));
+        expect(controller.getGroupByID(4)).toBeUndefined();
+    });
+
     it("Removes group from database", async () => {
         await controller.start();
 
