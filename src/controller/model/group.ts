@@ -163,7 +163,7 @@ export class Group extends ZigbeeEntity {
     }
 
     public async removeFromNetwork(): Promise<void> {
-        for (const endpoint of this._members) {
+        for (const endpoint of [...this._members]) {
             await endpoint.removeFromGroup(this);
         }
 
