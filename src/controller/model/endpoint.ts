@@ -1117,28 +1117,22 @@ export class Endpoint extends ZigbeeEntity {
      * to zigbee-herdsman.
      */
     public async removeFromGroup(group: Group | number): Promise<void> {
-        try {
-            const response = await this.zclCommand(
-                "genGroups",
-                "remove",
-                {groupid: group instanceof Group ? group.groupID : group},
-                undefined,
-                undefined,
-                true,
-                Zcl.FrameType.SPECIFIC,
-            );
+        const response = await this.zclCommand(
+            "genGroups",
+            "remove",
+            {groupid: group instanceof Group ? group.groupID : group},
+            undefined,
+            undefined,
+            true,
+            Zcl.FrameType.SPECIFIC,
+        );
 
-            if (
-                response?.payload.status !== undefined &&
-                response.payload.status !== Zcl.Status.SUCCESS &&
-                response.payload.status !== Zcl.Status.NOT_FOUND
-            ) {
-                throw new Zcl.StatusError(response.payload.status);
-            }
-        } catch (error) {
-            if (!(error instanceof Zcl.StatusError) || error.code !== Zcl.Status.NOT_FOUND) {
-                throw error;
-            }
+        if (
+            response?.payload.status !== undefined &&
+            response.payload.status !== Zcl.Status.SUCCESS &&
+            response.payload.status !== Zcl.Status.NOT_FOUND
+        ) {
+            throw new Zcl.StatusError(response.payload.status);
         }
 
         if (group instanceof Group) {
