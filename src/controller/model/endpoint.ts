@@ -452,10 +452,10 @@ export class Endpoint extends ZigbeeEntity {
     /*
      * Zigbee functions
      */
-    private checkStatus(payload: [{status: Zcl.Status}] | {status?: Zcl.Status; statusCode?: Zcl.Status}): void {
-        const codes = Array.isArray(payload) ? payload.map((i) => i.status) : [payload.status ?? payload.statusCode];
-        const invalid = codes.find((c) => c !== undefined && c !== Zcl.Status.SUCCESS);
-        if (invalid !== undefined) throw new Zcl.StatusError(invalid);
+    private checkStatus(payload: [{status: Zcl.Status}] | {cmdId: number; statusCode: number}): void {
+        const codes = Array.isArray(payload) ? payload.map((i) => i.status) : [payload.statusCode];
+        const invalid = codes.find((c) => c !== Zcl.Status.SUCCESS);
+        if (invalid) throw new Zcl.StatusError(invalid);
     }
 
     public async report<Cl extends number | string, Custom extends TCustomCluster | undefined = undefined>(
@@ -1082,7 +1082,20 @@ export class Endpoint extends ZigbeeEntity {
     }
 
     public async addToGroup(group: Group): Promise<void> {
-        await this.zclCommand("genGroups", "add", {groupid: group.groupID, groupname: ""}, undefined, undefined, true, Zcl.FrameType.SPECIFIC);
+        const response = await this.zclCommand(
+            "genGroups",
+            "add",
+            {groupid: group.groupID, groupname: ""},
+            undefined,
+            undefined,
+            true,
+            Zcl.FrameType.SPECIFIC,
+        );
+
+        if (response?.payload.status !== undefined && response.payload.status !== Zcl.Status.SUCCESS) {
+            throw new Zcl.StatusError(response.payload.status);
+        }
+
         group.addMember(this);
     }
 
@@ -1105,7 +1118,7 @@ export class Endpoint extends ZigbeeEntity {
      */
     public async removeFromGroup(group: Group | number): Promise<void> {
         try {
-            await this.zclCommand(
+            const response = await this.zclCommand(
                 "genGroups",
                 "remove",
                 {groupid: group instanceof Group ? group.groupID : group},
@@ -1114,6 +1127,14 @@ export class Endpoint extends ZigbeeEntity {
                 true,
                 Zcl.FrameType.SPECIFIC,
             );
+
+            if (
+                response?.payload.status !== undefined &&
+                response.payload.status !== Zcl.Status.SUCCESS &&
+                response.payload.status !== Zcl.Status.NOT_FOUND
+            ) {
+                throw new Zcl.StatusError(response.payload.status);
+            }
         } catch (error) {
             if (!(error instanceof Zcl.StatusError) || error.code !== Zcl.Status.NOT_FOUND) {
                 throw error;
