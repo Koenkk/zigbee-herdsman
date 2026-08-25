@@ -5611,6 +5611,7 @@ describe("Controller", () => {
         });
 
         await expect(endpoint.removeFromGroup(group)).resolves.toBeUndefined();
+        expect(mockLogger.info).toHaveBeenCalledWith("Group '2' was not found on endpoint '0x129/1'", "zh:controller:endpoint");
         expect(group.members).toStrictEqual([]);
     });
 
