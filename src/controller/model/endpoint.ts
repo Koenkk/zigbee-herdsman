@@ -1082,15 +1082,8 @@ export class Endpoint extends ZigbeeEntity {
     }
 
     public async addToGroup(group: Group): Promise<void> {
-        const response = await this.zclCommand(
-            "genGroups",
-            "add",
-            {groupid: group.groupID, groupname: ""},
-            undefined,
-            undefined,
-            true,
-            Zcl.FrameType.SPECIFIC,
-        );
+        const payload = {groupid: group.groupID, groupname: ""};
+        const response = await this.zclCommand("genGroups", "add", payload, undefined, undefined, true, Zcl.FrameType.SPECIFIC);
 
         if (response?.payload.status !== undefined && response.payload.status !== Zcl.Status.SUCCESS) {
             throw new Zcl.StatusError(response.payload.status);
