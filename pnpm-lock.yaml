@@ -4,6 +4,11 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@serialport/bindings-cpp@13.0.1':
+    hash: 54a8c9c6d899d3f06f0b5413ee71cea036bde577c725b382df7e6e7b6009723f
+    path: patches/@serialport__bindings-cpp@13.0.1.patch
+
 importers:
 
   .:
@@ -13,7 +18,7 @@ importers:
         version: 1.5.0
       '@serialport/bindings-cpp':
         specifier: ^13.0.1
-        version: 13.0.1
+        version: 13.0.1(patch_hash=54a8c9c6d899d3f06f0b5413ee71cea036bde577c725b382df7e6e7b6009723f)
       '@serialport/parser-delimiter':
         specifier: ^13.0.0
         version: 13.0.0
@@ -1419,7 +1424,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@serialport/bindings-cpp@13.0.1':
+  '@serialport/bindings-cpp@13.0.1(patch_hash=54a8c9c6d899d3f06f0b5413ee71cea036bde577c725b382df7e6e7b6009723f)':
     dependencies:
       '@serialport/bindings-interface': 1.2.2
       '@serialport/parser-readline': 13.0.0

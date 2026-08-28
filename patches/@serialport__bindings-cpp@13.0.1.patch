@@ -1,0 +1,110 @@
+diff --git a/dist/poller.js b/dist/poller.js
+index e0e0cef1488a88acd699da6e976eb6d175233379..89c7569c6d513e99cae23948deab471f0eae1aac 100644
+--- a/dist/poller.js
++++ b/dist/poller.js
+@@ -51,6 +51,7 @@ class Poller extends events_1.EventEmitter {
+      * @returns {Poller} returns itself
+      */
+     once(event, callback) {
++        super.once(event, callback);
+         switch (event) {
+             case 'readable':
+                 this.poll(exports.EVENTS.UV_READABLE);
+@@ -62,7 +63,7 @@ class Poller extends events_1.EventEmitter {
+                 this.poll(exports.EVENTS.UV_DISCONNECT);
+                 break;
+         }
+-        return super.once(event, callback);
++        return this;
+     }
+     /**
+      * Ask the bindings to listen for an event, it is recommend to use `.once()` for easy use
+diff --git a/prebuilds/android-arm/@serialport+bindings-cpp.armv7.node b/prebuilds/android-arm/@serialport+bindings-cpp.armv7.node
+deleted file mode 100644
+index 9cd70ef90739768ebf9c135b3b9684a4839255ee..0000000000000000000000000000000000000000
+diff --git a/prebuilds/android-arm64/@serialport+bindings-cpp.armv8.node b/prebuilds/android-arm64/@serialport+bindings-cpp.armv8.node
+deleted file mode 100644
+index 94000f4043b176eb9adddc0619e9e4d2cf4ca495..0000000000000000000000000000000000000000
+diff --git a/prebuilds/darwin-x64+arm64/@serialport+bindings-cpp.node b/prebuilds/darwin-x64+arm64/@serialport+bindings-cpp.node
+deleted file mode 100644
+index 67c500104d710b53cd57852b477424a50aaf8a29..0000000000000000000000000000000000000000
+diff --git a/prebuilds/linux-arm/@serialport+bindings-cpp.armv6.glibc.node b/prebuilds/linux-arm/@serialport+bindings-cpp.armv6.glibc.node
+deleted file mode 100644
+index 6d20e9614d81931be31026c86e1a323e63539879..0000000000000000000000000000000000000000
+diff --git a/prebuilds/linux-arm/@serialport+bindings-cpp.armv7.glibc.node b/prebuilds/linux-arm/@serialport+bindings-cpp.armv7.glibc.node
+deleted file mode 100644
+index cde207717a4663ce7cfd4996ef7cf11ff619c856..0000000000000000000000000000000000000000
+diff --git a/prebuilds/linux-arm/@serialport+bindings-cpp.armv7.musl.node b/prebuilds/linux-arm/@serialport+bindings-cpp.armv7.musl.node
+deleted file mode 100644
+index 34099063fcebddadc91e4e2c1351e1bdeb376957..0000000000000000000000000000000000000000
+diff --git a/prebuilds/linux-arm64/@serialport+bindings-cpp.armv8.glibc.node b/prebuilds/linux-arm64/@serialport+bindings-cpp.armv8.glibc.node
+deleted file mode 100644
+index 0fb14846e2050d09242aa3e9ad7a6941e56d2b4c..0000000000000000000000000000000000000000
+diff --git a/prebuilds/linux-arm64/@serialport+bindings-cpp.armv8.musl.node b/prebuilds/linux-arm64/@serialport+bindings-cpp.armv8.musl.node
+deleted file mode 100644
+index 2532c73bf227fbc4c8341c776e3b3ab5663413e9..0000000000000000000000000000000000000000
+diff --git a/prebuilds/linux-x64/@serialport+bindings-cpp.glibc.node b/prebuilds/linux-x64/@serialport+bindings-cpp.glibc.node
+deleted file mode 100644
+index 2f010b97cbe6066372953f2de8ed0a1885d03c68..0000000000000000000000000000000000000000
+diff --git a/prebuilds/linux-x64/@serialport+bindings-cpp.musl.node b/prebuilds/linux-x64/@serialport+bindings-cpp.musl.node
+deleted file mode 100644
+index d43d0ed89d6babab7a97682d60beac498da4d376..0000000000000000000000000000000000000000
+diff --git a/prebuilds/win32-arm64/@serialport+bindings-cpp.armv8.node b/prebuilds/win32-arm64/@serialport+bindings-cpp.armv8.node
+deleted file mode 100644
+index c0177c202f4a62556a0469c3b22bc2279d409a90..0000000000000000000000000000000000000000
+diff --git a/prebuilds/win32-ia32/@serialport+bindings-cpp.node b/prebuilds/win32-ia32/@serialport+bindings-cpp.node
+deleted file mode 100644
+index 3386a6d480e27ccd8c5be49c69f3bc256a98718b..0000000000000000000000000000000000000000
+diff --git a/prebuilds/win32-x64/@serialport+bindings-cpp.node b/prebuilds/win32-x64/@serialport+bindings-cpp.node
+deleted file mode 100644
+index 91963b91f05564572891b814726bace0fc41e6c6..0000000000000000000000000000000000000000
+diff --git a/src/poller.cpp b/src/poller.cpp
+index 0b0469266622035c21a059035effa5c2e1c355dd..0e39347256130d63b6404da33fd84a924208f0cf 100644
+--- a/src/poller.cpp
++++ b/src/poller.cpp
+@@ -81,13 +81,13 @@ void Poller::onData(uv_poll_t* handle, int status, int events) {
+   if (0 != status) {
+     // fprintf(stdout, "OnData Error status=%s events=%d\n", uv_strerror(status), events);
+     obj->_stop(); // doesn't matter if this errors
+-    obj->callback.Call({Napi::Error::New(env, uv_strerror(status)).Value(), env.Undefined()});
++    obj->callback.MakeCallback(obj->Value(), {Napi::Error::New(env, uv_strerror(status)).Value(), env.Undefined()});
+   } else {
+     // fprintf(stdout, "OnData status=%d events=%d subscribed=%d\n", status, events, obj->events);
+     // remove triggered events from the poll
+     int newEvents = obj->events & ~events;
+     obj->poll(env, newEvents);
+-    obj->callback.Call({env.Null(), Napi::Number::New(env, events)});
++    obj->callback.MakeCallback(obj->Value(), {env.Null(), Napi::Number::New(env, events)});
+   }
+ 
+ }
+diff --git a/src/serialport_win.cpp b/src/serialport_win.cpp
+index 7e79216a37635a41d1c2db030f4009ea5d0d24b2..04895388788702726307a18e111f62f75e7420df 100644
+--- a/src/serialport_win.cpp
++++ b/src/serialport_win.cpp
+@@ -378,11 +378,10 @@ void EIO_AfterWrite(uv_async_t* req) {
+   CloseHandle(baton->hThread);
+   uv_close(reinterpret_cast<uv_handle_t*>(req), AsyncCloseCallback);
+ 
+-  v8::Local<v8::Value> argv[1];
+   if (baton->errorString[0]) {
+-    baton->callback.Call({Napi::Error::New(env, baton->errorString).Value()});
++    baton->callback.MakeCallback(env.Undefined(), {Napi::Error::New(env, baton->errorString).Value()});
+   } else {
+-    baton->callback.Call({env.Null()});
++    baton->callback.MakeCallback(env.Undefined(), {env.Null()});
+   }
+   baton->buffer.Reset();
+   delete baton;
+@@ -552,9 +551,9 @@ void EIO_AfterRead(uv_async_t* req) {
+   uv_close(reinterpret_cast<uv_handle_t*>(req), AsyncCloseCallback);
+ 
+   if (baton->errorString[0]) {
+-    baton->callback.Call({Napi::Error::New(env, baton->errorString).Value(), env.Undefined()});
++    baton->callback.MakeCallback(env.Undefined(), {Napi::Error::New(env, baton->errorString).Value(), env.Undefined()});
+   } else {
+-    baton->callback.Call({env.Null(), Napi::Number::New(env, static_cast<int>(baton->bytesRead))});
++    baton->callback.MakeCallback(env.Undefined(), {env.Null(), Napi::Number::New(env, static_cast<int>(baton->bytesRead))});
+   }
+   delete baton;
+ }
