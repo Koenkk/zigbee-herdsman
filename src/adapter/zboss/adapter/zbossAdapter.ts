@@ -225,6 +225,13 @@ export class ZBOSSAdapter extends Adapter {
                     await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.BroadcastAddress.DEFAULT, clusterId, zdoPayload, true);
                 }
             }
+        } else {
+            // Deliberately log-only, no throw: the guard also covers internal
+            // timer-driven calls around shutdown, where a rejection would
+            // surface as an unhandled one. But it must not be silent — the
+            // application above reports the permit as successful while nothing
+            // was sent, which turns any join problem into a dead-end diagnosis.
+            logger.error(`permitJoin(${seconds}) ignored: driver not initialized — network state unchanged`, NS);
         }
     }
 
