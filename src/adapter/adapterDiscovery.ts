@@ -569,7 +569,9 @@ export async function findMdnsAdapter(path: string): Promise<TsType.SerialPortOp
         throw new Error("No mdns device specified. You must specify the coordinator mdns service type after mdns://, e.g. mdns://my-adapter");
     }
 
-    const bj = new Bonjour();
+    const bj = new Bonjour({}, (error: unknown) => {
+        throw new Error(`Failed to start mdns discovery: ${error}`);
+    });
 
     logger.info(`Starting mdns discovery for coordinator: ${mdnsDevice}`, NS);
 
@@ -720,14 +722,16 @@ export async function findAllDevices(): Promise<AllDevices> {
 
             devices.push(device);
         }
-        /* v8 ignore start */
     } catch (error) {
         logger.debug(`Failed to retrieve serial list ${(error as Error).message}.`, NS);
     }
-    /* v8 ignore stop */
+
+    let bonjour: Bonjour | undefined;
 
     try {
-        const bonjour = new Bonjour();
+        bonjour = new Bonjour({}, (error: unknown) => {
+            throw new Error(`${error}`);
+        });
         const browser = bonjour.find(null, (service) => {
             if (service.txt?.radio_type) {
                 const path = `tcp://${service.addresses?.[0] ?? service.host}:${service.port}`;
@@ -743,12 +747,11 @@ export async function findAllDevices(): Promise<AllDevices> {
         browser.start();
         await wait(MDNS_SCAN_TIME);
         browser.stop();
-        bonjour.destroy();
-        /* v8 ignore start */
     } catch (error) {
         logger.debug(`Failed to retrieve mDNS list ${(error as Error).message}.`, NS);
+    } finally {
+        bonjour?.destroy();
     }
-    /* v8 ignore stop */
 
     return devices;
 }
