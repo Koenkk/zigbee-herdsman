@@ -1,5 +1,13 @@
 # Changelog
 
+## [10.9.2](https://github.com/Koenkk/zigbee-herdsman/compare/v10.9.1...v10.9.2) (2026-09-03)
+
+
+### Bug Fixes
+
+* Add fingerprint for zbt-1 ([#1860](https://github.com/Koenkk/zigbee-herdsman/issues/1860)) ([e353c40](https://github.com/Koenkk/zigbee-herdsman/commit/e353c408204fe69dd569952ce081662bc90815f1))
+* **ignore:** bump @types/node from 26.2.0 to 26.4.0 in the minor-patch group ([#1861](https://github.com/Koenkk/zigbee-herdsman/issues/1861)) ([753b334](https://github.com/Koenkk/zigbee-herdsman/commit/753b3342cf7924dc194c2c51da342625b00ce1aa))
+
 ## [10.9.1](https://github.com/Koenkk/zigbee-herdsman/compare/v10.9.0...v10.9.1) (2026-08-28)
 
 
