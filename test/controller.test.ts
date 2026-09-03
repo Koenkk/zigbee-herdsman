@@ -2162,6 +2162,72 @@ describe("Controller", () => {
         expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
     });
 
+    it("Controller permit joining all rolls back when Green Power commissioning fails", async () => {
+        await controller.start();
+
+        mocksendZclFrameToAll.mockRejectedValueOnce(new Error("~x~> [ZCL BROADCAST destination=65533] Failed to send with status=BUSY."));
+
+        await expect(controller.permitJoin(254)).rejects.toThrow("Failed to send with status=BUSY.");
+
+        // the adapter stage succeeded and must be closed again; the GP close is attempted first
+        expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(2);
+        expect(mockAdapterPermitJoin).toHaveBeenNthCalledWith(1, 254, undefined);
+        expect(mockAdapterPermitJoin).toHaveBeenNthCalledWith(2, 0, undefined);
+        expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(2);
+        expect(mocksendZclFrameToAll).toHaveBeenNthCalledWith(
+            2,
+            ZSpec.GP_ENDPOINT,
+            expect.any(Object),
+            ZSpec.GP_ENDPOINT,
+            ZSpec.BroadcastAddress.RX_ON_WHEN_IDLE,
+        );
+
+        expect(controller.getPermitJoin()).toStrictEqual(false);
+        expect(controller.getPermitJoinEnd()).toBeUndefined();
+        expect(events.permitJoinChanged).toStrictEqual([]);
+    });
+
+    it("Controller permit joining all rolls back when the adapter stage fails", async () => {
+        await controller.start();
+
+        mockAdapterPermitJoin.mockRejectedValueOnce(
+            new Error("~x~> [ZDO PERMIT_JOINING_REQUEST BROADCAST to=65532 messageTag=1] Failed to send request with status=BUSY."),
+        );
+
+        await expect(controller.permitJoin(254)).rejects.toThrow("Failed to send request with status=BUSY.");
+
+        // the adapter never opened, but both close stages are still attempted best-effort
+        expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
+        expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(2);
+        expect(mockAdapterPermitJoin).toHaveBeenNthCalledWith(2, 0, undefined);
+
+        expect(controller.getPermitJoin()).toStrictEqual(false);
+        expect(controller.getPermitJoinEnd()).toBeUndefined();
+        expect(events.permitJoinChanged).toStrictEqual([]);
+    });
+
+    it("Controller permit joining reports cleanup failures but preserves the original error", async () => {
+        await controller.start();
+
+        mockAdapterPermitJoin.mockRejectedValueOnce(new Error("original opening failure")).mockRejectedValueOnce(new Error("adapter close failure"));
+        mocksendZclFrameToAll.mockRejectedValueOnce(new Error("green power close failure"));
+
+        await expect(controller.permitJoin(254)).rejects.toThrow("original opening failure");
+
+        expect(mockLogger.error).toHaveBeenCalledWith(
+            "Failed to close Green Power permit join after failed permit join: Error: green power close failure",
+            "zh:controller",
+        );
+        expect(mockLogger.error).toHaveBeenCalledWith(
+            "Failed to close adapter permit join after failed permit join: Error: adapter close failure",
+            "zh:controller",
+        );
+        expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(2);
+        expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1);
+        expect(controller.getPermitJoin()).toStrictEqual(false);
+        expect(events.permitJoinChanged).toStrictEqual([]);
+    });
+
     it("Controller permit joining all, disabled manually", async () => {
         await controller.start();
 

@@ -2515,6 +2515,52 @@ describe("Ember Adapter Layer", () => {
             );
         });
 
+        it("Adapter impl: permitJoin all retries transient BUSY broadcast (BUSY -> OK)", async () => {
+            mockEzspSendBroadcast.mockResolvedValueOnce([SLStatus.BUSY, ++mockAPSSequence]).mockResolvedValueOnce([SLStatus.OK, ++mockAPSSequence]);
+
+            const p = adapter.permitJoin(250);
+            await vi.advanceTimersByTimeAsync(1000);
+            await expect(p).resolves.toStrictEqual(undefined);
+            expect(mockEzspSendBroadcast).toHaveBeenCalledTimes(2);
+        });
+
+        it("Adapter impl: permitJoin all retries transient BUSY broadcast twice (BUSY -> BUSY -> OK)", async () => {
+            mockEzspSendBroadcast
+                .mockResolvedValueOnce([SLStatus.BUSY, ++mockAPSSequence])
+                .mockResolvedValueOnce([SLStatus.BUSY, ++mockAPSSequence])
+                .mockResolvedValueOnce([SLStatus.OK, ++mockAPSSequence]);
+
+            const p = adapter.permitJoin(250);
+            await vi.advanceTimersByTimeAsync(1500);
+            await expect(p).resolves.toStrictEqual(undefined);
+            expect(mockEzspSendBroadcast).toHaveBeenCalledTimes(3);
+        });
+
+        it("Adapter impl: permitJoin all fails after three transient BUSY broadcasts", async () => {
+            mockEzspSendBroadcast
+                .mockResolvedValueOnce([SLStatus.BUSY, ++mockAPSSequence])
+                .mockResolvedValueOnce([SLStatus.BUSY, ++mockAPSSequence])
+                .mockResolvedValueOnce([SLStatus.BUSY, ++mockAPSSequence]);
+
+            const p = defuseRejection(adapter.permitJoin(250));
+            await vi.advanceTimersByTimeAsync(2000);
+            await expect(p).rejects.toThrow(
+                "~x~> [ZDO PERMIT_JOINING_REQUEST BROADCAST to=65532 messageTag=1] Failed to send request with status=BUSY.",
+            );
+            expect(mockEzspSendBroadcast).toHaveBeenCalledTimes(3);
+        });
+
+        it("Adapter impl: permitJoin all fails immediately on non-transient broadcast status", async () => {
+            mockEzspSendBroadcast.mockResolvedValueOnce([SLStatus.FAIL, 0]);
+
+            const p = defuseRejection(adapter.permitJoin(250));
+            await vi.advanceTimersByTimeAsync(2000);
+            await expect(p).rejects.toThrow(
+                "~x~> [ZDO PERMIT_JOINING_REQUEST BROADCAST to=65532 messageTag=1] Failed to send request with status=FAIL.",
+            );
+            expect(mockEzspSendBroadcast).toHaveBeenCalledTimes(1);
+        });
+
         it("Adapter impl: resolves undefined when permitJoin on router fails due to failed ZDO status", async () => {
             const spyResolveZDO = vi.spyOn(
                 // @ts-expect-error private
@@ -3457,6 +3503,60 @@ describe("Ember Adapter Layer", () => {
         });
 
         it("Adapter impl: throws when sendZclFrameToAll fails request", async () => {
+            mockEzspSend.mockResolvedValueOnce([SLStatus.FAIL, 0]);
+
+            const endpoint: number = 32;
+            const zclFrame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 1, 1, 0, [{}], {});
+            const p = defuseRejection(adapter.sendZclFrameToAll(endpoint, zclFrame, 1, ZSpec.BroadcastAddress.DEFAULT));
+
+            await vi.advanceTimersByTimeAsync(5000);
+            await expect(p).rejects.toThrow("~x~> [ZCL BROADCAST destination=65532] Failed to send with status=FAIL.");
+            expect(mockEzspSend).toHaveBeenCalledTimes(1);
+        });
+
+        it("Adapter impl: sendZclFrameToAll retries transient BUSY (BUSY -> OK)", async () => {
+            mockEzspSend.mockResolvedValueOnce([SLStatus.BUSY, ++mockMessageTag]).mockResolvedValueOnce([SLStatus.OK, ++mockMessageTag]);
+
+            const endpoint: number = 32;
+            const zclFrame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 1, 1, 0, [{}], {});
+            const p = adapter.sendZclFrameToAll(endpoint, zclFrame, 1, ZSpec.BroadcastAddress.DEFAULT);
+
+            await vi.advanceTimersByTimeAsync(5000);
+            await expect(p).resolves.toStrictEqual(undefined);
+            expect(mockEzspSend).toHaveBeenCalledTimes(2);
+        });
+
+        it("Adapter impl: sendZclFrameToAll retries transient BUSY twice (BUSY -> BUSY -> OK)", async () => {
+            mockEzspSend
+                .mockResolvedValueOnce([SLStatus.BUSY, ++mockMessageTag])
+                .mockResolvedValueOnce([SLStatus.BUSY, ++mockMessageTag])
+                .mockResolvedValueOnce([SLStatus.OK, ++mockMessageTag]);
+
+            const endpoint: number = 32;
+            const zclFrame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 1, 1, 0, [{}], {});
+            const p = adapter.sendZclFrameToAll(endpoint, zclFrame, 1, ZSpec.BroadcastAddress.DEFAULT);
+
+            await vi.advanceTimersByTimeAsync(5000);
+            await expect(p).resolves.toStrictEqual(undefined);
+            expect(mockEzspSend).toHaveBeenCalledTimes(3);
+        });
+
+        it("Adapter impl: sendZclFrameToAll fails after three transient BUSY sends", async () => {
+            mockEzspSend
+                .mockResolvedValueOnce([SLStatus.BUSY, ++mockMessageTag])
+                .mockResolvedValueOnce([SLStatus.BUSY, ++mockMessageTag])
+                .mockResolvedValueOnce([SLStatus.BUSY, ++mockMessageTag]);
+
+            const endpoint: number = 32;
+            const zclFrame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 1, 1, 0, [{}], {});
+            const p = defuseRejection(adapter.sendZclFrameToAll(endpoint, zclFrame, 1, ZSpec.BroadcastAddress.DEFAULT));
+
+            await vi.advanceTimersByTimeAsync(5000);
+            await expect(p).rejects.toThrow("~x~> [ZCL BROADCAST destination=65532] Failed to send with status=BUSY.");
+            expect(mockEzspSend).toHaveBeenCalledTimes(3);
+        });
+
+        it("Adapter impl: sendZclFrameToAll fails immediately on non-transient status", async () => {
             mockEzspSend.mockResolvedValueOnce([SLStatus.FAIL, 0]);
 
             const endpoint: number = 32;
