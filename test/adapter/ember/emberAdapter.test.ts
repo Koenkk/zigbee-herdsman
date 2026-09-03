@@ -2561,6 +2561,34 @@ describe("Ember Adapter Layer", () => {
             expect(mockEzspSendBroadcast).toHaveBeenCalledTimes(1);
         });
 
+        it("Adapter impl: permitJoin on router retries transient BUSY unicast (BUSY -> OK)", async () => {
+            const sender = 1234;
+            const apsFrame: EmberApsFrame = {
+                profileId: Zdo.ZDO_PROFILE_ID,
+                clusterId: Zdo.ClusterId.PERMIT_JOINING_RESPONSE,
+                sourceEndpoint: Zdo.ZDO_ENDPOINT,
+                destinationEndpoint: Zdo.ZDO_ENDPOINT,
+                options: 0,
+                groupId: 0,
+                sequence: 0,
+            };
+            const emitResponse = () => {
+                setTimeout(async () => {
+                    mockEzspEmitter.emit("zdoResponse", apsFrame, sender, Buffer.from([1, Zdo.Status.SUCCESS]));
+                    await flushPromises();
+                }, 300);
+
+                return [SLStatus.OK, ++mockAPSSequence];
+            };
+            // first attempt: NCP send returns BUSY and the frame was never accepted (no response emitted)
+            mockEzspSendUnicast.mockResolvedValueOnce([SLStatus.BUSY, ++mockAPSSequence]).mockImplementationOnce(emitResponse);
+
+            const p = adapter.permitJoin(250, sender);
+            await vi.advanceTimersByTimeAsync(1500);
+            await expect(p).resolves.toStrictEqual(undefined);
+            expect(mockEzspSendUnicast).toHaveBeenCalledTimes(2);
+        });
+
         it("Adapter impl: resolves undefined when permitJoin on router fails due to failed ZDO status", async () => {
             const spyResolveZDO = vi.spyOn(
                 // @ts-expect-error private

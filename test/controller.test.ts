@@ -2187,6 +2187,26 @@ describe("Controller", () => {
         expect(events.permitJoinChanged).toStrictEqual([]);
     });
 
+    it("Controller permit joining a device rolls back when Green Power commissioning fails", async () => {
+        await controller.start();
+
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        // with a device target, the Green Power stage uses a unicast GP commissioning frame
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce(new Error("Failed to send with status=BUSY."));
+
+        await expect(controller.permitJoin(254, device)).rejects.toThrow("Failed to send with status=BUSY.");
+
+        // rollback closes both stages with the same device target semantics
+        expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(2);
+        expect(mockAdapterPermitJoin).toHaveBeenNthCalledWith(1, 254, device.networkAddress);
+        expect(mockAdapterPermitJoin).toHaveBeenNthCalledWith(2, 0, device.networkAddress);
+
+        expect(controller.getPermitJoin()).toStrictEqual(false);
+        expect(controller.getPermitJoinEnd()).toBeUndefined();
+        expect(events.permitJoinChanged).toStrictEqual([]);
+    });
+
     it("Controller permit joining all rolls back when the adapter stage fails", async () => {
         await controller.start();
 
