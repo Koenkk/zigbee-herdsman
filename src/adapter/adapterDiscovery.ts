@@ -67,12 +67,21 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
         //     pathRegex: '.*.*',
         // },
         {
-            // Home Assistant Connect ZBT-1
+            // Home Assistant SkyConnect (pre ZBT-1 rename)
             vendorId: "10c4",
             productId: "ea60",
             manufacturer: "Nabu Casa",
             // /dev/serial/by-id/usb-Nabu_Casa_SkyConnect_v1.0_3abe54797c91ed118fc3cad13b20a111-if00-port0
             pathRegex: ".*Nabu_Casa_SkyConnect.*",
+            options: {rtscts: true},
+        },
+        {
+            // Home Assistant Connect ZBT-1
+            vendorId: "10c4",
+            productId: "ea60",
+            manufacturer: "Nabu Casa",
+            // ..Nabu_Casa_Home_Assistant_Connect_ZBT-1_..
+            pathRegex: ".*Nabu_Casa.*_ZBT-1.*",
             options: {rtscts: true},
         },
         {
