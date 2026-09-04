@@ -1,5 +1,14 @@
 # Changelog
 
+## [10.9.3](https://github.com/Koenkk/zigbee-herdsman/compare/v10.9.2...v10.9.3) (2026-09-04)
+
+
+### Bug Fixes
+
+* Better handle discovery errors ([#1858](https://github.com/Koenkk/zigbee-herdsman/issues/1858)) ([72eb422](https://github.com/Koenkk/zigbee-herdsman/commit/72eb42212e3e9c64fc7933eb1940dcbe4ee81d3f))
+* Honor group command response status ([#1855](https://github.com/Koenkk/zigbee-herdsman/issues/1855)) ([61d0c10](https://github.com/Koenkk/zigbee-herdsman/commit/61d0c1089656a02e2eeebcbac8b8717ff34ddce5))
+* Prevent creating groups with fractional IDs ([#1863](https://github.com/Koenkk/zigbee-herdsman/issues/1863)) ([cc7544f](https://github.com/Koenkk/zigbee-herdsman/commit/cc7544f92fd818d7833c1f8b7b102f6bfb97b2bc))
+
 ## [10.9.2](https://github.com/Koenkk/zigbee-herdsman/compare/v10.9.1...v10.9.2) (2026-09-03)
 
 
