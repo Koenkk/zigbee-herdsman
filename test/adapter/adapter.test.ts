@@ -36,38 +36,49 @@ vi.mock("node:os", () => ({
     platform: vi.fn(() => mockPlatform()),
 }));
 
-const mockBonjourResult = vi.fn().mockImplementation((type) => ({
-    name: "Mock Adapter",
-    type: `${type}_mdns`,
-    port: "1122",
-    host: "mock_adapter.local",
-    addresses: ["192.168.1.123"],
-    txt: {
-        radio_type: `${type}`,
-    },
-}));
-const mockBonjourFind = vi.fn((_opts: BrowserConfig | null, onup?: (service: Service) => void) => {
-    if (onup) {
-        onup(mockBonjourResult("zstack"));
-        onup(mockBonjourResult("ezsp")); // expected as `ember` Adapter
-        onup(mockBonjourResult("znp")); // expected as `zstack` Adapter
-    }
+const {mockBonjourResult, mockBonjourFind, mockBonjourFindOne, mockBonjourDestroy, mockBonjour} = vi.hoisted(() => {
+    const mockBonjourResult = vi.fn().mockImplementation((type) => ({
+        name: "Mock Adapter",
+        type: `${type}_mdns`,
+        port: "1122",
+        host: "mock_adapter.local",
+        addresses: ["192.168.1.123"],
+        txt: {
+            radio_type: `${type}`,
+        },
+    }));
+    const mockBonjourFind = vi.fn((_opts: BrowserConfig | null, onup?: (service: Service) => void) => {
+        if (onup) {
+            onup(mockBonjourResult("zstack"));
+            onup(mockBonjourResult("ezsp")); // expected as `ember` Adapter
+            onup(mockBonjourResult("znp")); // expected as `zstack` Adapter
+        }
 
-    return {start: vi.fn(), stop: vi.fn()};
-});
-const mockBonjourFindOne = vi.fn((opts: BrowserConfig | null, _timeout: number, callback?: (service: Service) => void) => {
-    if (callback) {
-        callback(mockBonjourResult(opts?.type));
-    }
-});
-const mockBonjourDestroy = vi.fn();
-
-vi.mock("bonjour-service", () => ({
-    Bonjour: vi.fn(() => ({
+        return {start: vi.fn(), stop: vi.fn()};
+    });
+    const mockBonjourFindOne = vi.fn((opts: BrowserConfig | null, _timeout: number, callback?: (service: Service) => void) => {
+        if (callback) {
+            callback(mockBonjourResult(opts?.type));
+        }
+    });
+    const mockBonjourDestroy = vi.fn();
+    const mockBonjour = vi.fn((_opts?: unknown, _errorCb?: (error: unknown) => void) => ({
         find: mockBonjourFind,
         findOne: mockBonjourFindOne,
         destroy: mockBonjourDestroy,
-    })),
+    }));
+
+    return {
+        mockBonjourResult,
+        mockBonjourFind,
+        mockBonjourFindOne,
+        mockBonjourDestroy,
+        mockBonjour,
+    };
+});
+
+vi.mock("bonjour-service", () => ({
+    Bonjour: mockBonjour,
 }));
 
 describe("Adapter", () => {
@@ -232,6 +243,65 @@ describe("Adapter", () => {
         expect(mockBonjourDestroy).toHaveBeenCalledTimes(1);
     });
 
+    it("handles serial error during find all devices", async () => {
+        vi.spyOn(SerialPort, "list").mockRejectedValueOnce(new Error("fail"));
+
+        const p = findAllDevices();
+
+        await vi.advanceTimersByTimeAsync(2500);
+
+        await expect(p).resolves.toStrictEqual([
+            {
+                name: "Mock Adapter (tcp://192.168.1.123:1122)",
+                path: "tcp://192.168.1.123:1122",
+                adapter: "zstack",
+            },
+            {
+                name: "Mock Adapter (tcp://192.168.1.123:1122)",
+                path: "tcp://192.168.1.123:1122",
+                adapter: "ember",
+            },
+            {
+                name: "Mock Adapter (tcp://192.168.1.123:1122)",
+                path: "tcp://192.168.1.123:1122",
+                adapter: "zstack",
+            },
+        ]);
+        expect(mockBonjourDestroy).toHaveBeenCalledTimes(1);
+    });
+
+    it("handles mdns error during find all devices", async () => {
+        vi.spyOn(SerialPort, "list").mockResolvedValueOnce([]);
+        mockBonjourResult.mockReturnValueOnce(null);
+
+        const p = findAllDevices();
+
+        await vi.advanceTimersByTimeAsync(2500);
+
+        await expect(p).resolves.toStrictEqual([]);
+        expect(mockBonjourDestroy).toHaveBeenCalledTimes(1);
+    });
+
+    it("handles nested mdns error during find all devices", async () => {
+        vi.spyOn(SerialPort, "list").mockResolvedValueOnce([]);
+        mockBonjour.mockImplementationOnce((_options?: unknown, errorCb?: (error: unknown) => void) => {
+            errorCb?.(new Error("failed"));
+
+            return {
+                find: mockBonjourFind,
+                findOne: mockBonjourFindOne,
+                destroy: mockBonjourDestroy,
+            };
+        });
+
+        const p = findAllDevices();
+
+        await vi.advanceTimersByTimeAsync(2500);
+
+        await expect(p).resolves.toStrictEqual([]);
+        expect(mockBonjourDestroy).toHaveBeenCalledTimes(0); // error before created
+    });
+
     describe("mDNS discovery", () => {
         it.each([
             ["deconz", DeconzAdapter],
@@ -314,6 +384,23 @@ describe("Adapter", () => {
                     "txt.radio_type, got: undefined\n" +
                     "port, got: 1122",
             );
+        });
+
+        it("errors inside mdns", async () => {
+            mockBonjour.mockImplementationOnce((_options?: unknown, errorCb?: (error: unknown) => void) => {
+                errorCb?.(new Error("failed"));
+
+                return {
+                    find: mockBonjourFind,
+                    findOne: mockBonjourFindOne,
+                    destroy: mockBonjourDestroy,
+                };
+            });
+            const fakeAdapterName = "mdns_test_device";
+
+            await expect(
+                Adapter.create({panID: 0, channelList: []}, {path: `mdns://${fakeAdapterName}`}, "test.db", {disableLED: false}),
+            ).rejects.toThrow("Failed to start mdns discovery: Error: failed");
         });
     });
 
