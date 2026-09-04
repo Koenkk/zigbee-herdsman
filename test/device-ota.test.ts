@@ -87,6 +87,92 @@ const createOtaDeviceWaitFor = (
     let previousBlock: {offset: number; size: number} | undefined;
 
     const pendingPromise = (): ReturnType<Adapter["waitFor"]>["promise"] => new Promise<never>(() => {}) as never;
+
+    // Device pacing: produce requests lazily, in arm-order, each gated on completion of the
+    // responses owed for the previous one (1 per block, blocks-per-page per page, 0 for frames
+    // that elicit no response) — like a real device, regardless of when waiters are armed.
+    type WaitForPayload = Awaited<ReturnType<Adapter["waitFor"]>["promise"]>;
+    type ProducedRequest = {value: WaitForPayload | Error | "pending"; responses: number};
+
+    let responseAttempts = 0;
+    let responseWaiters: {at: number; resolve: () => void}[] = [];
+    let producerTail: Promise<number> = Promise.resolve(0);
+
+    const afterResponses = (at: number): Promise<void> =>
+        responseAttempts >= at ? Promise.resolve() : new Promise((resolve) => responseWaiters.push({at, resolve}));
+
+    const onResponseAttempt = (): void => {
+        responseAttempts += 1;
+        const ready = responseWaiters.filter((waiter) => waiter.at <= responseAttempts);
+        responseWaiters = responseWaiters.filter((waiter) => waiter.at > responseAttempts);
+
+        for (const waiter of ready) {
+            waiter.resolve();
+        }
+    };
+
+    const chainProducer = (produce: () => ProducedRequest, timeout: number): ReturnType<Adapter["waitFor"]> => {
+        let canceled = false;
+        let timer: NodeJS.Timeout | undefined;
+        const prevTail = producerTail;
+        let resolveTail: ((threshold: number) => void) | undefined;
+        producerTail = new Promise<number>((resolve) => {
+            resolveTail = resolve;
+        });
+
+        const produced = (async (): Promise<WaitForPayload> => {
+            const threshold = await prevTail;
+            await afterResponses(threshold);
+
+            if (canceled) {
+                resolveTail?.(threshold);
+
+                return await new Promise<never>(() => {});
+            }
+
+            const {value, responses} = produce();
+
+            resolveTail?.(responseAttempts + responses);
+
+            if (value === "pending") {
+                return await new Promise<never>(() => {});
+            }
+
+            if (value instanceof Error) {
+                throw value;
+            }
+
+            return value;
+        })();
+
+        // mirror the real adapter waiter: reject on timeout unless produced or canceled first
+        const promise = new Promise<WaitForPayload>((resolve, reject) => {
+            if (timeout > 0) {
+                timer = setTimeout(() => reject(new Error("timeout")), timeout);
+            }
+
+            produced.then(
+                (value) => {
+                    clearTimeout(timer);
+                    resolve(value);
+                },
+                (error) => {
+                    clearTimeout(timer);
+                    reject(error);
+                },
+            );
+        });
+
+        void promise.catch(() => {}); // may reject while nothing is racing it
+
+        return {
+            promise: promise as ReturnType<Adapter["waitFor"]>["promise"],
+            cancel: (): void => {
+                canceled = true;
+                clearTimeout(timer);
+            },
+        };
+    };
     const makeFrame = (
         commandId: number,
         payload: TClusterCommandPayload<"genOta", "imageBlockRequest" | "imagePageRequest" | "upgradeEndRequest" | "queryNextImageRequest">,
@@ -131,7 +217,31 @@ const createOtaDeviceWaitFor = (
         });
     }
 
-    const handleBlockRequest = (endpointId: number, transactionSequenceNumber: number | undefined, networkAddress: number) => {
+    // Every imageBlockResponse attempt (except ABORT) advances the pacing gate. Accessor so
+    // tests that assign their own `commandResponse` swap the inner fn without losing pacing.
+    {
+        let innerCommandResponse = endpoint.commandResponse;
+
+        const pacedCommandResponse = vi.fn(async (clusterKey, commandKey, payload, options, transactionSequenceNumber) => {
+            try {
+                return await innerCommandResponse(clusterKey, commandKey, payload, options, transactionSequenceNumber);
+            } finally {
+                if (commandKey === "imageBlockResponse" && payload?.status !== Zcl.Status.ABORT) {
+                    onResponseAttempt();
+                }
+            }
+        });
+
+        Object.defineProperty(endpoint, "commandResponse", {
+            configurable: true,
+            get: () => pacedCommandResponse,
+            set: (fn) => {
+                innerCommandResponse = fn;
+            },
+        });
+    }
+
+    const produceBlockRequest = (endpointId: number, transactionSequenceNumber: number | undefined, networkAddress: number): ProducedRequest => {
         if (repeatLastBlock && previousBlock) {
             repeatLastBlock = false;
             // revert offset to previous block
@@ -154,7 +264,7 @@ const createOtaDeviceWaitFor = (
             settings.triggerDefaultResponse = undefined;
 
             return {
-                promise: Promise.resolve({
+                value: {
                     clusterID: OTA_CLUSTER_ID,
                     header: frame.header,
                     data: frame.toBuffer(),
@@ -164,16 +274,13 @@ const createOtaDeviceWaitFor = (
                     groupID: 0,
                     wasBroadcast: false,
                     destinationEndpoint: endpointId,
-                }),
-                cancel: () => {},
+                },
+                responses: 0,
             };
         }
 
         if (settings.stopAfterBlocks !== undefined && blocksServed >= settings.stopAfterBlocks) {
-            return {
-                promise: Promise.reject(new Error("device stopped requesting blocks")),
-                cancel: () => {},
-            };
+            return {value: new Error("device stopped requesting blocks"), responses: 0};
         }
 
         let fileOffset = nextOffset;
@@ -195,10 +302,8 @@ const createOtaDeviceWaitFor = (
         if (remaining <= 0) {
             maybeScheduleUpgradeEnd();
 
-            return {
-                promise: Promise.reject(new Error("all blocks sent")),
-                cancel: () => {},
-            };
+            // a real device goes silent once it has all blocks (upgradeEnd or waiter timeout follows)
+            return {value: "pending", responses: 0};
         }
 
         const payload: TClusterCommandPayload<"genOta", "imageBlockRequest"> = {
@@ -228,7 +333,7 @@ const createOtaDeviceWaitFor = (
         }
 
         return {
-            promise: Promise.resolve({
+            value: {
                 clusterID: OTA_CLUSTER_ID,
                 header: frame.header,
                 data: frame.toBuffer(),
@@ -238,21 +343,18 @@ const createOtaDeviceWaitFor = (
                 groupID: 0,
                 wasBroadcast: false,
                 destinationEndpoint: endpointId,
-            }),
-            cancel: () => {},
+            },
+            responses: 1,
         };
     };
 
-    const handlePageRequest = (endpointId: number, transactionSequenceNumber: number | undefined, networkAddress: number) => {
+    const producePageRequest = (endpointId: number, transactionSequenceNumber: number | undefined, networkAddress: number): ProducedRequest => {
         const remaining = image.header.totalImageSize - nextOffset;
 
         if (remaining <= 0) {
             maybeScheduleUpgradeEnd();
 
-            return {
-                promise: pendingPromise(),
-                cancel: () => {},
-            };
+            return {value: "pending", responses: 0};
         }
 
         const pageSize = Math.min(settings.pageSize ?? settings.baseSize * 16, remaining);
@@ -278,7 +380,7 @@ const createOtaDeviceWaitFor = (
         }
 
         return {
-            promise: Promise.resolve({
+            value: {
                 clusterID: OTA_CLUSTER_ID,
                 header: frame.header,
                 data: frame.toBuffer(),
@@ -288,8 +390,8 @@ const createOtaDeviceWaitFor = (
                 groupID: 0,
                 wasBroadcast: false,
                 destinationEndpoint: endpointId,
-            }),
-            cancel: () => {},
+            },
+            responses: Math.ceil(pageSize / settings.baseSize),
         };
     };
 
@@ -301,6 +403,7 @@ const createOtaDeviceWaitFor = (
         transactionSequenceNumber,
         clusterID,
         commandId,
+        _defaultRspCommandId,
         timeout,
     ) => {
         const fail = (message: string) => ({
@@ -370,7 +473,7 @@ const createOtaDeviceWaitFor = (
                 };
             }
 
-            return handlePageRequest(endpointId, transactionSequenceNumber, networkAddress!);
+            return chainProducer(() => producePageRequest(endpointId, transactionSequenceNumber, networkAddress!), timeout);
         }
 
         if (commandId === IMAGE_BLOCK_REQUEST_ID) {
@@ -381,7 +484,7 @@ const createOtaDeviceWaitFor = (
                 };
             }
 
-            return handleBlockRequest(endpointId, transactionSequenceNumber, networkAddress!);
+            return chainProducer(() => produceBlockRequest(endpointId, transactionSequenceNumber, networkAddress!), timeout);
         }
 
         return fail("unsupported commandId");
@@ -1963,7 +2066,7 @@ describe("Device OTA", () => {
                 fileVersion: image.header.fileVersion - 1,
             };
             const baseSize = 40;
-            const dataSettings: OtaDataSettings = {requestTimeout: 10, responseDelay: 250, baseSize};
+            const dataSettings: OtaDataSettings = {requestTimeout: 1000, responseDelay: 250, baseSize};
             // Mock time to ensure progress is reported at regular intervals
             let currentTime = 0;
             const timeDelays = [
