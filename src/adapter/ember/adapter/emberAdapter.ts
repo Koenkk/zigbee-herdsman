@@ -162,6 +162,8 @@ type StackConfig = {
      * A value of 0 will be converted to the EMBER_MAX_HOPS value set by the stack.
      */
     CONCENTRATOR_MAX_HOPS: number;
+    /** Optional Ember NCP source route table size override <0-255>. @see EzspConfigId.SOURCE_ROUTE_TABLE_SIZE */
+    SOURCE_ROUTE_TABLE_SIZE?: number;
     /** <6-64> (Default: 6) @see EzspConfigId.MAX_END_DEVICE_CHILDREN */
     MAX_END_DEVICE_CHILDREN: number;
     /** <-> (Default: 10000) @see EzspValueId.TRANSIENT_DEVICE_TIMEOUT */
@@ -328,6 +330,14 @@ export class EmberAdapter extends Adapter {
             if (!inRange(config.CONCENTRATOR_MAX_HOPS, 0, 30)) {
                 config.CONCENTRATOR_MAX_HOPS = DEFAULT_STACK_CONFIG.CONCENTRATOR_MAX_HOPS;
                 logger.error("[STACK CONFIG] Invalid CONCENTRATOR_MAX_HOPS, using default.", NS);
+            }
+
+            if (
+                config.SOURCE_ROUTE_TABLE_SIZE !== undefined &&
+                (!Number.isInteger(config.SOURCE_ROUTE_TABLE_SIZE) || !inRange(config.SOURCE_ROUTE_TABLE_SIZE, 0, 255))
+            ) {
+                config.SOURCE_ROUTE_TABLE_SIZE = undefined;
+                logger.error("[STACK CONFIG] Invalid SOURCE_ROUTE_TABLE_SIZE, ignoring.", NS);
             }
 
             if (!inRange(config.MAX_END_DEVICE_CHILDREN, 6, 64)) {
@@ -675,6 +685,9 @@ export class EmberAdapter extends Adapter {
         await this.emberSetEzspConfigValue(EzspConfigId.INDIRECT_TRANSMISSION_TIMEOUT, 7680);
         /** Max hops should be 2 * nwkMaxDepth, where nwkMaxDepth is 15 (STACK_PROFILE_ZIGBEE_PRO) */
         await this.emberSetEzspConfigValue(EzspConfigId.MAX_HOPS, 30);
+        if (this.stackConfig.SOURCE_ROUTE_TABLE_SIZE !== undefined) {
+            await this.emberSetEzspConfigValue(EzspConfigId.SOURCE_ROUTE_TABLE_SIZE, this.stackConfig.SOURCE_ROUTE_TABLE_SIZE);
+        }
         await this.emberSetEzspConfigValue(EzspConfigId.SUPPORTED_NETWORKS, 1);
         // allow other devices to modify the binding table
         await this.emberSetEzspPolicy(

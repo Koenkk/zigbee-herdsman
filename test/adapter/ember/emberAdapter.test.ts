@@ -508,6 +508,7 @@ describe("Ember Adapter Layer", () => {
             CONCENTRATOR_ROUTE_ERROR_THRESHOLD: 5,
             CONCENTRATOR_DELIVERY_FAILURE_THRESHOLD: 2,
             CONCENTRATOR_MAX_HOPS: 5,
+            SOURCE_ROUTE_TABLE_SIZE: 32,
             MAX_END_DEVICE_CHILDREN: 16,
             TRANSIENT_DEVICE_TIMEOUT: 1000,
             END_DEVICE_POLL_TIMEOUT: 12,
@@ -533,6 +534,7 @@ describe("Ember Adapter Layer", () => {
             CONCENTRATOR_ROUTE_ERROR_THRESHOLD: 500,
             CONCENTRATOR_DELIVERY_FAILURE_THRESHOLD: 200,
             CONCENTRATOR_MAX_HOPS: 35,
+            SOURCE_ROUTE_TABLE_SIZE: 256,
             MAX_END_DEVICE_CHILDREN: 65,
             TRANSIENT_DEVICE_TIMEOUT: 65536,
             END_DEVICE_POLL_TIMEOUT: 15,
@@ -544,7 +546,8 @@ describe("Ember Adapter Layer", () => {
 
         adapter = new EmberAdapter(DEFAULT_NETWORK_OPTIONS, DEFAULT_SERIAL_PORT_OPTIONS, backupPath, DEFAULT_ADAPTER_OPTIONS);
 
-        expect(adapter.stackConfig).toStrictEqual(DEFAULT_STACK_CONFIG);
+        expect(adapter.stackConfig).toStrictEqual({...DEFAULT_STACK_CONFIG, SOURCE_ROUTE_TABLE_SIZE: undefined});
+        expect(loggerSpies.error).toHaveBeenCalledWith("[STACK CONFIG] Invalid SOURCE_ROUTE_TABLE_SIZE, ignoring.", "zh:ember");
 
         // cleanup
         unlinkSync(STACK_CONFIG_PATH);
@@ -581,6 +584,7 @@ describe("Ember Adapter Layer", () => {
         await vi.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual("resumed");
         expect(mockEzspSetProtocolVersion).toHaveBeenCalledWith(EZSP_PROTOCOL_VERSION);
+        expect(mockEzspSetConfigurationValue).not.toHaveBeenCalledWith(EzspConfigId.SOURCE_ROUTE_TABLE_SIZE, expect.anything());
         expect(
             // @ts-expect-error private
             adapter.networkCache,
@@ -607,6 +611,7 @@ describe("Ember Adapter Layer", () => {
             CONCENTRATOR_ROUTE_ERROR_THRESHOLD: 5,
             CONCENTRATOR_DELIVERY_FAILURE_THRESHOLD: 2,
             CONCENTRATOR_MAX_HOPS: 5,
+            SOURCE_ROUTE_TABLE_SIZE: 32,
             MAX_END_DEVICE_CHILDREN: 16,
             TRANSIENT_DEVICE_TIMEOUT: 1000,
             END_DEVICE_POLL_TIMEOUT: 12,
@@ -623,6 +628,7 @@ describe("Ember Adapter Layer", () => {
         await expect(result).resolves.toStrictEqual("resumed");
         expect(mockEzspSetValue).toHaveBeenCalledWith(EzspValueId.TRANSIENT_DEVICE_TIMEOUT, 2, lowHighBytes(config.TRANSIENT_DEVICE_TIMEOUT));
         expect(mockEzspSetConfigurationValue).toHaveBeenCalledWith(EzspConfigId.MAX_END_DEVICE_CHILDREN, config.MAX_END_DEVICE_CHILDREN);
+        expect(mockEzspSetConfigurationValue).toHaveBeenCalledWith(EzspConfigId.SOURCE_ROUTE_TABLE_SIZE, config.SOURCE_ROUTE_TABLE_SIZE);
         expect(mockEzspSetConfigurationValue).toHaveBeenCalledWith(EzspConfigId.END_DEVICE_POLL_TIMEOUT, config.END_DEVICE_POLL_TIMEOUT);
         expect(mockEzspSetConfigurationValue).toHaveBeenCalledWith(EzspConfigId.TRANSIENT_KEY_TIMEOUT_S, config.TRANSIENT_KEY_TIMEOUT_S);
         expect(mockEzspSetConcentrator).toHaveBeenCalledWith(
@@ -635,6 +641,37 @@ describe("Ember Adapter Layer", () => {
             config.CONCENTRATOR_MAX_HOPS,
         );
         expect(mockEzspSetRadioIeee802154CcaMode).toHaveBeenCalledWith(IEEE802154CcaMode.SIGNAL_AND_RSSI);
+
+        // cleanup
+        unlinkSync(STACK_CONFIG_PATH);
+    });
+
+    it("Starts with source route table size zero", async () => {
+        writeFileSync(STACK_CONFIG_PATH, JSON.stringify({SOURCE_ROUTE_TABLE_SIZE: 0}, undefined, 2));
+
+        adapter = new EmberAdapter(DEFAULT_NETWORK_OPTIONS, DEFAULT_SERIAL_PORT_OPTIONS, backupPath, DEFAULT_ADAPTER_OPTIONS);
+        const result = adapter.start();
+
+        await vi.advanceTimersByTimeAsync(5000);
+        await expect(result).resolves.toStrictEqual("resumed");
+        expect(adapter.stackConfig.SOURCE_ROUTE_TABLE_SIZE).toBe(0);
+        expect(mockEzspSetConfigurationValue).toHaveBeenCalledWith(EzspConfigId.SOURCE_ROUTE_TABLE_SIZE, 0);
+
+        // cleanup
+        unlinkSync(STACK_CONFIG_PATH);
+    });
+
+    it("Starts while ignoring invalid source route table size", async () => {
+        writeFileSync(STACK_CONFIG_PATH, JSON.stringify({SOURCE_ROUTE_TABLE_SIZE: 256}, undefined, 2));
+
+        adapter = new EmberAdapter(DEFAULT_NETWORK_OPTIONS, DEFAULT_SERIAL_PORT_OPTIONS, backupPath, DEFAULT_ADAPTER_OPTIONS);
+        const result = adapter.start();
+
+        await vi.advanceTimersByTimeAsync(5000);
+        await expect(result).resolves.toStrictEqual("resumed");
+        expect(adapter.stackConfig.SOURCE_ROUTE_TABLE_SIZE).toBeUndefined();
+        expect(mockEzspSetConfigurationValue).not.toHaveBeenCalledWith(EzspConfigId.SOURCE_ROUTE_TABLE_SIZE, expect.anything());
+        expect(loggerSpies.error).toHaveBeenCalledWith("[STACK CONFIG] Invalid SOURCE_ROUTE_TABLE_SIZE, ignoring.", "zh:ember");
 
         // cleanup
         unlinkSync(STACK_CONFIG_PATH);
