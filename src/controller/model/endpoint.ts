@@ -1082,7 +1082,20 @@ export class Endpoint extends ZigbeeEntity {
     }
 
     public async addToGroup(group: Group): Promise<void> {
-        await this.zclCommand("genGroups", "add", {groupid: group.groupID, groupname: ""}, undefined, undefined, true, Zcl.FrameType.SPECIFIC);
+        const response = await this.zclCommand(
+            "genGroups",
+            "add",
+            {groupid: group.groupID, groupname: ""},
+            undefined,
+            undefined,
+            true,
+            Zcl.FrameType.SPECIFIC,
+        );
+
+        if (response?.payload.status !== undefined && response.payload.status !== Zcl.Status.SUCCESS) {
+            throw new Zcl.StatusError(response.payload.status);
+        }
+
         group.addMember(this);
     }
 
@@ -1104,7 +1117,7 @@ export class Endpoint extends ZigbeeEntity {
      * to zigbee-herdsman.
      */
     public async removeFromGroup(group: Group | number): Promise<void> {
-        await this.zclCommand(
+        const response = await this.zclCommand(
             "genGroups",
             "remove",
             {groupid: group instanceof Group ? group.groupID : group},
@@ -1113,6 +1126,12 @@ export class Endpoint extends ZigbeeEntity {
             true,
             Zcl.FrameType.SPECIFIC,
         );
+
+        if (response?.payload.status === Zcl.Status.NOT_FOUND) {
+            logger.info(`Group '${response.payload.groupid}' was not found on endpoint '${this.deviceIeeeAddress}/${this.ID}'`, NS);
+        } else if (response?.payload.status !== undefined && response.payload.status !== Zcl.Status.SUCCESS) {
+            throw new Zcl.StatusError(response.payload.status);
+        }
 
         if (group instanceof Group) {
             group.removeMember(this);

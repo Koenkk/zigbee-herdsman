@@ -5518,6 +5518,31 @@ describe("Controller", () => {
         );
     });
 
+    it("Does not add endpoint to group when Add Group response reports failure", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+        const group = controller.createGroup(2);
+
+        mocksendZclFrameToEndpoint.mockImplementationOnce((_ieeeAddr, _networkAddress, _endpoint, frame: Zcl.Frame) => {
+            const responseFrame = Zcl.Frame.create(
+                Zcl.FrameType.SPECIFIC,
+                Zcl.Direction.SERVER_TO_CLIENT,
+                true,
+                undefined,
+                frame.header.transactionSequenceNumber,
+                "addRsp",
+                frame.cluster.ID,
+                {status: Zcl.Status.INSUFFICIENT_SPACE, groupid: group.groupID},
+                {},
+            );
+            return {clusterID: responseFrame.cluster.ID, header: responseFrame.header, data: responseFrame.toBuffer()};
+        });
+
+        await expect(endpoint.addToGroup(group)).rejects.toThrow(/INSUFFICIENT_SPACE/);
+        expect(group.members).toStrictEqual([]);
+    });
+
     it("Remove endpoint from group", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
@@ -5534,6 +5559,59 @@ describe("Controller", () => {
         expect(deepClone(call[3])).toStrictEqual(
             deepClone(Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 9, "remove", 4, {groupid: 2}, {})),
         );
+        expect(group.members).toStrictEqual([]);
+    });
+
+    it("Does not remove endpoint from group when Remove Group response reports failure", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+        const group = controller.createGroup(2);
+        group.addMember(endpoint);
+
+        mocksendZclFrameToEndpoint.mockImplementationOnce((_ieeeAddr, _networkAddress, _endpoint, frame: Zcl.Frame) => {
+            const responseFrame = Zcl.Frame.create(
+                Zcl.FrameType.SPECIFIC,
+                Zcl.Direction.SERVER_TO_CLIENT,
+                true,
+                undefined,
+                frame.header.transactionSequenceNumber,
+                "removeRsp",
+                frame.cluster.ID,
+                {status: Zcl.Status.FAILURE, groupid: group.groupID},
+                {},
+            );
+            return {clusterID: responseFrame.cluster.ID, header: responseFrame.header, data: responseFrame.toBuffer()};
+        });
+
+        await expect(endpoint.removeFromGroup(group)).rejects.toThrow(/FAILURE/);
+        expect(group.members).toStrictEqual([endpoint]);
+    });
+
+    it("Removes endpoint from group database when Remove Group response reports NOT_FOUND", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+        const group = controller.createGroup(2);
+        group.addMember(endpoint);
+
+        mocksendZclFrameToEndpoint.mockImplementationOnce((_ieeeAddr, _networkAddress, _endpoint, frame: Zcl.Frame) => {
+            const responseFrame = Zcl.Frame.create(
+                Zcl.FrameType.SPECIFIC,
+                Zcl.Direction.SERVER_TO_CLIENT,
+                true,
+                undefined,
+                frame.header.transactionSequenceNumber,
+                "removeRsp",
+                frame.cluster.ID,
+                {status: Zcl.Status.NOT_FOUND, groupid: group.groupID},
+                {},
+            );
+            return {clusterID: responseFrame.cluster.ID, header: responseFrame.header, data: responseFrame.toBuffer()};
+        });
+
+        await expect(endpoint.removeFromGroup(group)).resolves.toBeUndefined();
+        expect(mockLogger.info).toHaveBeenCalledWith("Group '2' was not found on endpoint '0x129/1'", "zh:controller:endpoint");
         expect(group.members).toStrictEqual([]);
     });
 
