@@ -146,7 +146,10 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
                     const statusResponse: ZiGateObject = await resultPromise;
                     if (statusResponse.payload.status !== Status.E_SL_MSG_STATUS_SUCCESS) {
                         waitersId.map((id) => this.waitress.remove(id));
-                        return await Promise.reject(new Error(`${statusResponse}`));
+                        const status = statusResponse.payload.status as number;
+                        return await Promise.reject(
+                            new Error(`Status: ${Status[status] ?? status}, payload: ${JSON.stringify(statusResponse.payload)}`),
+                        );
                     }
 
                     if (waiters.length === 0) {
