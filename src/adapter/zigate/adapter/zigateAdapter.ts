@@ -26,6 +26,8 @@ export class ZiGateAdapter extends Adapter {
     private waitress: Waitress<ZclWaitressPayload, ClusterWaitressMatcher>;
     private closing: boolean;
     private queue: Queue;
+    /** Whether the coordinator firmware was built with GP_PROXY (Green Power) support. */
+    private hasGreenPowerSupport: boolean;
 
     public constructor(
         networkOptions: TsType.NetworkOptions,
@@ -40,6 +42,7 @@ export class ZiGateAdapter extends Adapter {
 
         this.joinPermitted = false;
         this.closing = false;
+        this.hasGreenPowerSupport = false;
         const concurrent = this.adapterOptions?.concurrent ? this.adapterOptions.concurrent : 2;
         logger.debug(`Adapter concurrent: ${concurrent}`, NS);
         this.queue = new Queue(concurrent);
@@ -75,6 +78,7 @@ export class ZiGateAdapter extends Adapter {
                 deviceType: DeviceType.Coordinator,
             });
             await this.initNetwork();
+            await this.detectGreenPowerSupport();
 
             await this.driver.sendCommand(ZiGateCommandCode.AddGroup, {
                 addressMode: AddressMode.Short,
@@ -331,7 +335,8 @@ export class ZiGateAdapter extends Adapter {
             targetShortAddress: networkAddress,
             sourceEndpoint: sourceEndpoint || ZSpec.HA_ENDPOINT,
             destinationEndpoint: endpoint,
-            profileID: profileId ?? ZSpec.HA_PROFILE_ID,
+            profileID:
+                profileId ?? (sourceEndpoint === ZSpec.GP_ENDPOINT && endpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID),
             clusterID: zclFrame.cluster.ID,
             securityMode: 0x02,
             radius: 30,
@@ -426,9 +431,9 @@ export class ZiGateAdapter extends Adapter {
         profileId?: number,
     ): Promise<void> {
         return await this.queue.execute<void>(async () => {
-            if (sourceEndpoint !== 0x01 /*&& sourceEndpoint !== 242*/) {
-                // @todo on zigate firmware without gp causes hang
-                logger.error(`source endpoint ${sourceEndpoint}, not supported`, NS);
+            if (sourceEndpoint !== ZSpec.HA_ENDPOINT && !(sourceEndpoint === ZSpec.GP_ENDPOINT && this.hasGreenPowerSupport)) {
+                // sending to endpoint 242 (Green Power) hangs firmware without GP_PROXY support
+                logger.warning(`source endpoint ${sourceEndpoint}, not supported`, NS);
                 return;
             }
 
@@ -438,7 +443,7 @@ export class ZiGateAdapter extends Adapter {
                 targetShortAddress: destination,
                 sourceEndpoint: sourceEndpoint,
                 destinationEndpoint: endpoint,
-                profileID: profileId ?? ZSpec.HA_PROFILE_ID,
+                profileID: profileId ?? (sourceEndpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID),
                 clusterID: zclFrame.cluster.ID,
                 securityMode: 0x02,
                 radius: 30,
@@ -508,6 +513,26 @@ export class ZiGateAdapter extends Adapter {
             // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
             logger.error((error as Error).stack!, NS);
         }
+    }
+
+    /**
+     * Determine whether the coordinator firmware was built with GP_PROXY (Green Power) support by checking
+     * whether it registered the Green Power endpoint (242) among its own active endpoints.
+     */
+    private async detectGreenPowerSupport(): Promise<void> {
+        try {
+            const clusterId = Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST;
+            const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, ZSpec.COORDINATOR_ADDRESS);
+            const response = await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.COORDINATOR_ADDRESS, clusterId, zdoPayload, false);
+
+            if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE>(response)) {
+                this.hasGreenPowerSupport = response[1].endpointList.includes(ZSpec.GP_ENDPOINT);
+            }
+        } catch (error) {
+            logger.warning(`Failed to determine Green Power support: ${(error as Error).message}`, NS);
+        }
+
+        logger.info(`Coordinator Green Power (GP_PROXY) support: ${this.hasGreenPowerSupport}`, NS);
     }
 
     public waitFor(

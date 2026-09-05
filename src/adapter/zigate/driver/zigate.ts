@@ -360,7 +360,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
                     this.waitress.resolve(ziGateObject);
 
                     if (code === ZiGateMessageCode.DataIndication) {
-                        if (ziGateObject.payload.profileID === ZSpec.HA_PROFILE_ID) {
+                        if (ziGateObject.payload.profileID === ZSpec.HA_PROFILE_ID || ziGateObject.payload.profileID === ZSpec.GP_PROFILE_ID) {
                             this.emit("received", ziGateObject);
                         } else {
                             logger.debug(`not implemented profile: ${ziGateObject.payload.profileID}`, NS);
