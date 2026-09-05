@@ -415,4 +415,148 @@ export const ZiGateCommand: {[key: string]: ZiGateCommandType} = {
             {name: "groupAddress", parameterType: ParameterType.UINT16},
         ],
     },
+
+    // --- OCB (Open Coordinator Backup) diagnostic UART extension. ---
+    [ZiGateCommandCode.OcbCapability]: {
+        // 0x0D0F
+        request: [
+            {name: "magic0", parameterType: ParameterType.UINT8},
+            {name: "magic1", parameterType: ParameterType.UINT8},
+            {name: "magic2", parameterType: ParameterType.UINT8},
+            {name: "magic3", parameterType: ParameterType.UINT8},
+            {name: "hostMajor", parameterType: ParameterType.UINT8},
+            {name: "hostMinor", parameterType: ParameterType.UINT8},
+            {name: "nonce", parameterType: ParameterType.UINT32},
+        ],
+        response: [[{receivedProperty: "code", matcher: equal, value: ZiGateMessageCode.OcbCapabilityResponse}]],
+    },
+    [ZiGateCommandCode.OcbExportBegin]: {
+        // 0x0D18
+        request: [
+            {name: "abi", parameterType: ParameterType.UINT8},
+            {name: "schema", parameterType: ParameterType.UINT8},
+            {name: "txn", parameterType: ParameterType.UINT32},
+        ],
+        response: [[{receivedProperty: "code", matcher: equal, value: ZiGateMessageCode.OcbExportBeginResponse}]],
+    },
+    [ZiGateCommandCode.OcbExportCore]: {
+        // 0x0D19
+        request: [
+            {name: "abi", parameterType: ParameterType.UINT8},
+            {name: "schema", parameterType: ParameterType.UINT8},
+            {name: "txn", parameterType: ParameterType.UINT32},
+            {name: "session", parameterType: ParameterType.UINT32},
+        ],
+        response: [[{receivedProperty: "code", matcher: equal, value: ZiGateMessageCode.OcbExportCoreResponse}]],
+    },
+    [ZiGateCommandCode.OcbExportEnd]: {
+        // 0x0D1B
+        request: [
+            {name: "abi", parameterType: ParameterType.UINT8},
+            {name: "schema", parameterType: ParameterType.UINT8},
+            {name: "txn", parameterType: ParameterType.UINT32},
+            {name: "session", parameterType: ParameterType.UINT32},
+        ],
+        response: [[{receivedProperty: "code", matcher: equal, value: ZiGateMessageCode.OcbExportEndResponse}]],
+    },
+    [ZiGateCommandCode.OcbChallenge]: {
+        // 0x0D20
+        request: [
+            {name: "abi", parameterType: ParameterType.UINT8},
+            {name: "schema", parameterType: ParameterType.UINT8},
+            {name: "txn", parameterType: ParameterType.UINT32},
+        ],
+        response: [[{receivedProperty: "code", matcher: equal, value: ZiGateMessageCode.OcbChallengeResponse}]],
+    },
+    [ZiGateCommandCode.OcbUnlock]: {
+        // 0x0D21
+        request: [
+            {name: "abi", parameterType: ParameterType.UINT8},
+            {name: "schema", parameterType: ParameterType.UINT8},
+            {name: "txn", parameterType: ParameterType.UINT32},
+            {name: "nonce", parameterType: ParameterType.UINT32},
+            {name: "confirmation", parameterType: ParameterType.UINT32},
+        ],
+        response: [[{receivedProperty: "code", matcher: equal, value: ZiGateMessageCode.OcbUnlockResponse}]],
+    },
+    [ZiGateCommandCode.OcbSecretCore]: {
+        // 0x0D22
+        request: [
+            {name: "abi", parameterType: ParameterType.UINT8},
+            {name: "schema", parameterType: ParameterType.UINT8},
+            {name: "txn", parameterType: ParameterType.UINT32},
+        ],
+        response: [[{receivedProperty: "code", matcher: equal, value: ZiGateMessageCode.OcbSecretCoreResponse}]],
+    },
+    [ZiGateCommandCode.OcbLinkKey]: {
+        // 0x0D23
+        request: [
+            {name: "abi", parameterType: ParameterType.UINT8},
+            {name: "schema", parameterType: ParameterType.UINT8},
+            {name: "txn", parameterType: ParameterType.UINT32},
+            {name: "kind", parameterType: ParameterType.UINT8},
+            {name: "index", parameterType: ParameterType.UINT8},
+        ],
+        response: [[{receivedProperty: "code", matcher: equal, value: ZiGateMessageCode.OcbLinkKeyResponse}]],
+    },
+    [ZiGateCommandCode.OcbRestoreBegin]: {
+        // 0x0D24
+        request: [
+            {name: "abi", parameterType: ParameterType.UINT8},
+            {name: "schema", parameterType: ParameterType.UINT8},
+            {name: "txn", parameterType: ParameterType.UINT32},
+        ],
+        response: [[{receivedProperty: "code", matcher: equal, value: ZiGateMessageCode.OcbRestoreBeginResponse}]],
+    },
+    [ZiGateCommandCode.OcbRestoreField]: {
+        // 0x0D25
+        request: [
+            {name: "abi", parameterType: ParameterType.UINT8},
+            {name: "schema", parameterType: ParameterType.UINT8},
+            {name: "txn", parameterType: ParameterType.UINT32},
+            {name: "fieldId", parameterType: ParameterType.UINT16},
+            {name: "length", parameterType: ParameterType.UINT16},
+            {name: "value", parameterType: ParameterType.BUFFER},
+        ],
+        response: [[{receivedProperty: "code", matcher: equal, value: ZiGateMessageCode.OcbRestoreFieldResponse}]],
+    },
+    [ZiGateCommandCode.OcbRestoreLink]: {
+        // 0x0D26
+        request: [
+            {name: "abi", parameterType: ParameterType.UINT8},
+            {name: "schema", parameterType: ParameterType.UINT8},
+            {name: "txn", parameterType: ParameterType.UINT32},
+            {name: "eui64", parameterType: ParameterType.IEEEADDR},
+            {name: "keyType", parameterType: ParameterType.UINT8},
+            {name: "key", parameterType: ParameterType.BUFFER16},
+        ],
+        response: [[{receivedProperty: "code", matcher: equal, value: ZiGateMessageCode.OcbRestoreLinkResponse}]],
+    },
+    [ZiGateCommandCode.OcbValidate]: {
+        // 0x0D27
+        request: [
+            {name: "abi", parameterType: ParameterType.UINT8},
+            {name: "schema", parameterType: ParameterType.UINT8},
+            {name: "txn", parameterType: ParameterType.UINT32},
+        ],
+        response: [[{receivedProperty: "code", matcher: equal, value: ZiGateMessageCode.OcbValidateResponse}]],
+    },
+    [ZiGateCommandCode.OcbCommit]: {
+        // 0x0D28
+        request: [
+            {name: "abi", parameterType: ParameterType.UINT8},
+            {name: "schema", parameterType: ParameterType.UINT8},
+            {name: "txn", parameterType: ParameterType.UINT32},
+        ],
+        response: [[{receivedProperty: "code", matcher: equal, value: ZiGateMessageCode.OcbCommitResponse}]],
+    },
+    [ZiGateCommandCode.OcbAbort]: {
+        // 0x0D2A
+        request: [
+            {name: "abi", parameterType: ParameterType.UINT8},
+            {name: "schema", parameterType: ParameterType.UINT8},
+            {name: "txn", parameterType: ParameterType.UINT32},
+        ],
+        response: [[{receivedProperty: "code", matcher: equal, value: ZiGateMessageCode.OcbAbortResponse}]],
+    },
 };

@@ -1,7 +1,7 @@
 /* v8 ignore start */
 
 import type * as Models from "../../../models";
-import {Queue, Waitress, wait} from "../../../utils";
+import {BackupUtils, Queue, Waitress, wait} from "../../../utils";
 import {logger} from "../../../utils/logger";
 import * as ZSpec from "../../../zspec";
 import type {BroadcastAddress} from "../../../zspec/enums";
@@ -11,10 +11,12 @@ import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
 import Adapter, {type ClusterWaitressMatcher, type ZclWaitressPayload} from "../../adapter";
 import type * as Events from "../../events";
 import type * as TsType from "../../tstype";
+import {readBackup} from "../../utils";
 import type {RawAPSDataRequestPayload} from "../driver/commandType";
 import {AddressMode, DeviceType, ZiGateCommandCode, ZiGateMessageCode, ZPSNwkKeyState} from "../driver/constants";
 import type ZiGateObject from "../driver/ziGateObject";
 import Driver from "../driver/zigate";
+import {OcbBackup} from "./ocbBackup";
 import {patchZdoBuffaloBE} from "./patchZdoBuffaloBE";
 
 const NS = "zh:zigate";
@@ -28,6 +30,9 @@ export class ZiGateAdapter extends Adapter {
     private queue: Queue;
     /** Whether the coordinator firmware was built with GP_PROXY (Green Power) support. */
     private hasGreenPowerSupport: boolean;
+    /** Whether the coordinator firmware supports the OCB (Open Coordinator Backup) experimental key export/restore. */
+    private hasOcbBackupSupport: boolean;
+    private ocbBackup: OcbBackup;
 
     public constructor(
         networkOptions: TsType.NetworkOptions,
@@ -43,11 +48,13 @@ export class ZiGateAdapter extends Adapter {
         this.joinPermitted = false;
         this.closing = false;
         this.hasGreenPowerSupport = false;
+        this.hasOcbBackupSupport = false;
         const concurrent = this.adapterOptions?.concurrent ? this.adapterOptions.concurrent : 2;
         logger.debug(`Adapter concurrent: ${concurrent}`, NS);
         this.queue = new Queue(concurrent);
         // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         this.driver = new Driver(serialPortOptions.path!, serialPortOptions);
+        this.ocbBackup = new OcbBackup(this.driver);
         this.waitress = new Waitress(Adapter.zclWaitressValidator, Adapter.clusterWaitressTimeoutFormatter);
 
         this.driver.on("received", this.dataListener.bind(this));
@@ -77,7 +84,31 @@ export class ZiGateAdapter extends Adapter {
             await this.driver.sendCommand(ZiGateCommandCode.SetDeviceType, {
                 deviceType: DeviceType.Coordinator,
             });
-            await this.initNetwork();
+
+            this.hasOcbBackupSupport = (await this.ocbBackup.detectCapability()).experimentalKeys;
+
+            let restored = false;
+            if (startResult === "reset") {
+                const storedBackup = this.getStoredBackup();
+
+                if (storedBackup) {
+                    if (this.hasOcbBackupSupport) {
+                        await this.restoreFromBackup(storedBackup);
+                        restored = true;
+                        startResult = "restored";
+                    } else {
+                        logger.warning(
+                            `Found a coordinator backup at '${this.backupPath}', but this firmware does not support OCB restore - forming a new network instead`,
+                            NS,
+                        );
+                    }
+                }
+            }
+
+            if (!restored) {
+                await this.initNetwork();
+            }
+
             await this.detectGreenPowerSupport();
 
             await this.driver.sendCommand(ZiGateCommandCode.AddGroup, {
@@ -179,13 +210,62 @@ export class ZiGateAdapter extends Adapter {
     /**
      * https://zigate.fr/documentation/deplacer-le-pdm-de-la-zigate/
      * pdm from host
+     *
+     * Backed by the OCB (Open Coordinator Backup) UART extension. Only firmware built with
+     * `OCB_KEY_EXPORT_RESTORE_EXPERIMENTAL=1` can actually export a network key, so that's the
+     * only case this reports as supported.
      */
     public async supportsBackup(): Promise<boolean> {
-        return await Promise.resolve(false);
+        return await Promise.resolve(this.hasOcbBackupSupport);
     }
 
-    public async backup(): Promise<Models.Backup> {
-        return await Promise.reject(new Error("This adapter does not support backup"));
+    public async backup(ieeeAddressesInDatabase: string[]): Promise<Models.Backup> {
+        if (!this.hasOcbBackupSupport) {
+            return await Promise.reject(new Error("This adapter does not support backup"));
+        }
+
+        return await this.ocbBackup.createBackup(ieeeAddressesInDatabase, this.networkOptions.networkKeyDistribute ?? false);
+    }
+
+    private getStoredBackup(): Models.Backup | undefined {
+        const data = readBackup(this.backupPath);
+
+        if (!data) {
+            return undefined;
+        }
+
+        if ("adapterType" in data) {
+            return BackupUtils.fromLegacyBackup(data);
+        }
+
+        if (data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
+            if (data.metadata?.version !== 1) {
+                throw new Error(`Unsupported open coordinator backup version (version=${data.metadata?.version})`);
+            }
+
+            return BackupUtils.fromUnifiedBackup(data);
+        }
+
+        throw new Error("Unknown backup format");
+    }
+
+    private async restoreFromBackup(backup: Models.Backup): Promise<void> {
+        logger.info("Coordinator is factory-new and a backup is available, restoring network via OCB", NS);
+        await this.ocbBackup.restoreBackup(backup);
+
+        // OCB COMMIT persists the restored network and reboots the coordinator.
+        // @todo tune this delay against real hardware.
+        await wait(3000);
+
+        const resetResponse = await this.driver.sendCommand(ZiGateCommandCode.Reset, {}, 5000);
+
+        if (resetResponse.code !== ZiGateMessageCode.RestartNonFactoryNew) {
+            throw new Error("Coordinator did not come back up as expected after OCB restore");
+        }
+
+        await this.driver.sendCommand(ZiGateCommandCode.RawMode, {enabled: 0x01});
+        await this.driver.sendCommand(ZiGateCommandCode.SetDeviceType, {deviceType: DeviceType.Coordinator});
+        logger.info("Coordinator successfully restored from backup", NS);
     }
 
     public async sendZdo(
