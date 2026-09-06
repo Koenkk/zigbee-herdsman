@@ -439,7 +439,10 @@ export class ZiGateAdapter extends Adapter {
 
             const data = zclFrame.toBuffer();
             const payload: RawAPSDataRequestPayload = {
-                addressMode: AddressMode.Short, //nwk
+                // firmware dispatches on addressMode (not on the address value), and `destination` is always
+                // one of the reserved broadcast addresses (0xFFFC/0xFFFD/0xFFFF) - addressing it as `Short`
+                // makes firmware attempt a unicast-with-ack "to" that address, which isn't a real device.
+                addressMode: AddressMode.Broadcast,
                 targetShortAddress: destination,
                 sourceEndpoint: sourceEndpoint,
                 destinationEndpoint: endpoint,
