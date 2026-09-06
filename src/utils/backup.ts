@@ -29,6 +29,17 @@ export const toUnifiedBackup = (backup: Models.Backup): Models.UnifiedBackupStor
             /* v8 ignore next */
             ...(backup.znp ? {zstack: {tclk_seed: backup.znp?.trustCenterLinkKeySeed?.toString("hex") || undefined}} : undefined),
             ...(backup.ezsp ? {ezsp: {hashed_tclk: backup.ezsp?.hashed_tclk?.toString("hex") || undefined}} : /* v8 ignore next */ undefined),
+            /* v8 ignore start */
+            ...(backup.zigate
+                ? {
+                      zigate: {
+                          tc_link_key: backup.zigate?.tcLinkKey?.toString("hex") || undefined,
+                          tc_key_type: backup.zigate?.tcKeyType,
+                          device_link_key_types: backup.zigate?.deviceLinkKeyTypes,
+                      },
+                  }
+                : undefined),
+            /* v8 ignore stop */
         },
         coordinator_ieee: backup.coordinatorIeeeAddress.toString("hex"),
         pan_id: backup.networkOptions.panId.toString(16),
@@ -95,6 +106,15 @@ export const fromUnifiedBackup = (backup: Models.UnifiedBackupStorage): Models.B
             version: backup.metadata.internal?.ezspVersion || undefined,
             hashed_tclk: backup.stack_specific?.ezsp?.hashed_tclk ? Buffer.from(backup.stack_specific.ezsp.hashed_tclk, "hex") : undefined,
         },
+        /* v8 ignore start */
+        zigate: backup.stack_specific?.zigate
+            ? {
+                  tcLinkKey: backup.stack_specific.zigate.tc_link_key ? Buffer.from(backup.stack_specific.zigate.tc_link_key, "hex") : undefined,
+                  tcKeyType: backup.stack_specific.zigate.tc_key_type,
+                  deviceLinkKeyTypes: backup.stack_specific.zigate.device_link_key_types,
+              }
+            : undefined,
+        /* v8 ignore stop */
     };
 };
 

@@ -34,4 +34,10 @@ export interface Backup {
         version?: number;
         hashed_tclk?: Buffer;
     };
+    zigate?: {
+        tcLinkKey?: Buffer;
+        tcKeyType?: number;
+        /** Per-device APS link key type, keyed by IEEE address as a `0x`-prefixed hex string. */
+        deviceLinkKeyTypes?: Record<string, number>;
+    };
 }

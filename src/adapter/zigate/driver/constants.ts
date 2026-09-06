@@ -90,6 +90,73 @@ export enum ZiGateCommandCode {
     SetTXpower = 0x0806,
     SetSecurityStateKey = 0x0022,
     AddGroup = 0x0060,
+
+    // OCB (Open Coordinator Backup) diagnostic UART extension.
+    // Only present on firmware built after v3.23.
+    OcbCapability = 0x0d0f,
+    OcbExportBegin = 0x0d18,
+    OcbExportCore = 0x0d19,
+    OcbExportEnd = 0x0d1b,
+    OcbChallenge = 0x0d20,
+    OcbUnlock = 0x0d21,
+    OcbSecretCore = 0x0d22,
+    OcbLinkKey = 0x0d23,
+    OcbRestoreBegin = 0x0d24,
+    OcbRestoreField = 0x0d25,
+    OcbRestoreLink = 0x0d26,
+    OcbValidate = 0x0d27,
+    OcbCommit = 0x0d28,
+    OcbAbort = 0x0d2a,
+}
+
+/** `cap_bitmap` bits returned by `ZiGateCommandCode.OcbCapability` (`0x8D0F`). */
+export enum OcbCapabilityBit {
+    /** Read-only typed metadata export (PAN/ext-PAN/channel/coordinator IEEE), no key material. */
+    MetadataExport = 15,
+    /** Full network/TC key export and streamed restore (0x0D20-0x0D2A). */
+    ExperimentalKeys = 16,
+    /** Reserved, production-qualified "BackupCapable" bit. Always clear today. */
+    BackupQualified = 17,
+}
+
+/** `field_id` values for `ZiGateCommandCode.OcbRestoreField` requests. */
+export enum OcbRestoreFieldId {
+    NwkKey = 0x0001,
+    NwkKeySeq = 0x0002,
+    NwkOutFc = 0x0003,
+    PanId = 0x0004,
+    ExtPanId = 0x0005,
+    Channel = 0x0006,
+    NwkAddr = 0x0007,
+    NwkUpdateId = 0x0008,
+    TcAddr = 0x0009,
+    TcLinkKey = 0x000a,
+    TcKeyType = 0x000b,
+    // AdoptIeee = 0x000c, // deliberately unsupported: firmware itself flags cross-device IEEE adoption as unsafe/unverified
+}
+
+/** `result` values echoed by `ZiGateCommandCode.OcbRestoreField`/`OcbRestoreLink` responses. */
+export enum OcbFieldResult {
+    Applied = 0,
+    SkippedUnknown = 1,
+    BadLength = 2,
+    Unavailable = 3,
+}
+
+/** `kind` values for `ZiGateCommandCode.OcbLinkKey` requests. */
+export enum OcbLinkKeyKind {
+    DefaultTc = 0,
+    ApsTable = 1,
+    FlashTclk = 2,
+}
+
+/** Number of flash TCLK slots the firmware enumerates (fixed, no dynamic count available). */
+export const OCB_FLASH_TCLK_ENTRIES = 70;
+
+/** `available` bitmap bits returned by `ZiGateCommandCode.OcbLinkKey` responses. */
+export enum OcbLinkKeyAvailableBit {
+    TcOrApsLinkKey = 2,
+    Eui64 = 5,
 }
 
 export const ZDO_REQ_CLUSTER_ID_TO_ZIGATE_COMMAND_ID: Readonly<Partial<Record<ZdoClusterId, ZiGateCommandCode>>> = {
@@ -138,6 +205,22 @@ export enum ZiGateMessageCode {
     RestartFactoryNew = 0x8007,
     ExtendedStatusCallBack = 0x9999,
     AddGroupResponse = 0x8060,
+
+    // OCB (Open Coordinator Backup), see ZiGateCommandCode.Ocb* above.
+    OcbCapabilityResponse = 0x8d0f,
+    OcbExportBeginResponse = 0x8d18,
+    OcbExportCoreResponse = 0x8d19,
+    OcbExportEndResponse = 0x8d1b,
+    OcbChallengeResponse = 0x8d20,
+    OcbUnlockResponse = 0x8d21,
+    OcbSecretCoreResponse = 0x8d22,
+    OcbLinkKeyResponse = 0x8d23,
+    OcbRestoreBeginResponse = 0x8d24,
+    OcbRestoreFieldResponse = 0x8d25,
+    OcbRestoreLinkResponse = 0x8d26,
+    OcbValidateResponse = 0x8d27,
+    OcbCommitResponse = 0x8d28,
+    OcbAbortResponse = 0x8d2a,
 }
 // biome-ignore lint/suspicious/noExplicitAny: API
 export type ZiGateObjectPayload = any;
