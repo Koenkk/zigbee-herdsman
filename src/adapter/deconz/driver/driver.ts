@@ -188,6 +188,7 @@ class Driver extends events.EventEmitter {
         }, 100);
 
         this.onParsed = this.onParsed.bind(this);
+        this.onPortClose = this.onPortClose.bind(this);
         this.frameParserEvent.on("deviceStateUpdated", (data: number) => {
             this.checkDeviceStatus(data);
         });
@@ -856,7 +857,7 @@ class Driver extends events.EventEmitter {
                 this.writer.pipe(this.serialPort);
                 this.serialPort.pipe(this.parser);
                 this.parser.on("parsed", this.onParsed);
-                this.serialPort.on("close", this.onPortClose.bind(this));
+                this.serialPort.on("close", this.onPortClose);
                 this.serialPort.on("error", this.onPortError.bind(this));
             }
 
