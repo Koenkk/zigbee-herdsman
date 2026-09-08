@@ -523,6 +523,7 @@ export const Foundation = {
     discover: {
         name: "discover",
         ID: 0x0c,
+        response: 0x0d, // discoverRsp
         parse(buffalo) {
             const startAttrId = buffalo.readUInt16();
             const maxAttrIds = buffalo.readUInt8();
