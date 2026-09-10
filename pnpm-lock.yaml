@@ -147,7 +147,7 @@ importers:
         specifier: ^1.2.4
         version: 1.2.4
       '@types/node':
-        specifier: ^26.4.0
+        specifier: ^26.5.0
         version: 26.5.0
       '@vitest/coverage-v8':
         specifier: ^3.2.6
