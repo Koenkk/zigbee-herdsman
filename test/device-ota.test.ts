@@ -1023,40 +1023,39 @@ describe("Device OTA", () => {
             expect(getOtaIndexSpy).toHaveResolvedWith([indexMeta]);
         });
 
-        it.each([
-            "lumi.airrtc.agl001",
-            "lumi.curtain.acn003",
-            "lumi.curtain.agl001",
-        ])("overrides %s file version with meta and reports upgrade availability", async (modelID) => {
-            const fileName = OTA_FILES[0];
-            const [image, filePath] = await loadImage(fileName);
-            const {device} = createSimpleDevice({
-                modelID,
-                manufacturerName: "Aqara",
-                meta: {lumiFileVersion: image.header.fileVersion - 1},
-            });
-            const current: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
-                fieldControl: 0,
-                manufacturerCode: image.header.manufacturerCode,
-                imageType: image.header.imageType,
-                fileVersion: 1,
-            };
-            const result = await device.checkOta({}, current, {});
+        it.each(["lumi.airrtc.agl001", "lumi.curtain.acn003", "lumi.curtain.agl001"])(
+            "overrides %s file version with meta and reports upgrade availability",
+            async (modelID) => {
+                const fileName = OTA_FILES[0];
+                const [image, filePath] = await loadImage(fileName);
+                const {device} = createSimpleDevice({
+                    modelID,
+                    manufacturerName: "Aqara",
+                    meta: {lumiFileVersion: image.header.fileVersion - 1},
+                });
+                const current: TClusterCommandPayload<"genOta", "queryNextImageRequest"> = {
+                    fieldControl: 0,
+                    manufacturerCode: image.header.manufacturerCode,
+                    imageType: image.header.imageType,
+                    fileVersion: 1,
+                };
+                const result = await device.checkOta({}, current, {});
 
-            expect(result).toStrictEqual({
-                current: {...current, fileVersion: image.header.fileVersion - 1},
-                available: true,
-                availableMeta: {
-                    fileName,
-                    fileVersion: image.header.fileVersion,
-                    imageType: current.imageType,
-                    manufacturerCode: current.manufacturerCode,
-                    url: filePath,
-                    sha512: OTA_FILES_SHA512[0],
-                },
-            });
-            expect(fetchMock).toHaveBeenCalledTimes(1);
-        });
+                expect(result).toStrictEqual({
+                    current: {...current, fileVersion: image.header.fileVersion - 1},
+                    available: true,
+                    availableMeta: {
+                        fileName,
+                        fileVersion: image.header.fileVersion,
+                        imageType: current.imageType,
+                        manufacturerCode: current.manufacturerCode,
+                        url: filePath,
+                        sha512: OTA_FILES_SHA512[0],
+                    },
+                });
+                expect(fetchMock).toHaveBeenCalledTimes(1);
+            },
+        );
 
         it("writes scenes group before checking OTA for PP-WHT-US", async () => {
             const fileName = OTA_FILES[2];

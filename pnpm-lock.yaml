@@ -138,7 +138,7 @@ importers:
         version: 0.2.4
     devDependencies:
       '@biomejs/biome':
-        specifier: ^2.5.3
+        specifier: ^2.5.12
         version: 2.5.12
       '@serialport/binding-mock':
         specifier: ^10.2.2
