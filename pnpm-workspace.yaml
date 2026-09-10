@@ -1,8 +1,5 @@
 verifyDepsBeforeRun: false
 
-patchedDependencies:
-  "@serialport/bindings-cpp@13.0.1": patches/@serialport__bindings-cpp@13.0.1.patch
-
 allowBuilds:
   "@serialport/bindings-cpp": true
   esbuild: true
