@@ -14,7 +14,7 @@ import * as Zdo from "../../../zspec/zdo";
 import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
 import Adapter, {type ClusterWaitressMatcher, type ZclWaitressPayload} from "../../adapter";
 import type * as Events from "../../events";
-import type {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from "../../tstype";
+import type {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, StartResult, TransportOptions} from "../../tstype";
 import {readBackup} from "../../utils";
 import PARAM, {
     ApsAddressMode,
@@ -39,8 +39,8 @@ export class DeconzAdapter extends Adapter {
     private waitress: Waitress<ZclWaitressPayload, ClusterWaitressMatcher>;
     private joinPermitted = false;
 
-    public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
-        super(networkOptions, serialPortOptions, backupPath, adapterOptions);
+    public constructor(networkOptions: NetworkOptions, transportOptions: TransportOptions, backupPath: string, adapterOptions: AdapterOptions) {
+        super(networkOptions, transportOptions, backupPath, adapterOptions);
         this.hasZdoMessageOverhead = true;
         this.manufacturerID = Zcl.ManufacturerCode.DRESDEN_ELEKTRONIK_INGENIEURTECHNIK_GMBH;
 
@@ -66,7 +66,7 @@ export class DeconzAdapter extends Adapter {
             }
         }
 
-        this.driver = new Driver(serialPortOptions, networkOptions, this.getStoredBackup(), firmwareLog);
+        this.driver = new Driver(this.transport, networkOptions, this.getStoredBackup(), firmwareLog);
 
         this.driver.on("rxFrame", (frame) => processFrame(frame));
         this.openRequestsQueue = [];

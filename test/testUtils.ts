@@ -1,3 +1,5 @@
+import {vi} from "vitest";
+
 function duplicateArray(amount, value) {
     let result = [];
     for (let i = 0; i < amount; i++) {
@@ -16,5 +18,10 @@ const ieeeaAddr2 = {
     string: "0xaf440112005b1200",
     hex: [0x00, 0x12, 0x5b, 0x00, 0x12, 0x01, 0x44, 0xaf],
 };
+
+export async function flushPromises(): Promise<void> {
+    const {setImmediate} = await vi.importActual<typeof import("node:timers")>("node:timers");
+    return new Promise((resolve) => setImmediate(resolve));
+}
 
 export {duplicateArray, ieeeaAddr1, ieeeaAddr2};

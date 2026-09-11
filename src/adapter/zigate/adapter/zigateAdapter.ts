@@ -24,33 +24,29 @@ export class ZiGateAdapter extends Adapter {
     private driver: Driver;
     private joinPermitted: boolean;
     private waitress: Waitress<ZclWaitressPayload, ClusterWaitressMatcher>;
-    private closing: boolean;
     private queue: Queue;
 
     public constructor(
         networkOptions: TsType.NetworkOptions,
-        serialPortOptions: TsType.SerialPortOptions,
+        transportOptions: TsType.TransportOptions,
         backupPath: string,
         adapterOptions: TsType.AdapterOptions,
     ) {
         patchZdoBuffaloBE();
-        super(networkOptions, serialPortOptions, backupPath, adapterOptions);
+        super(networkOptions, transportOptions, backupPath, adapterOptions);
         this.hasZdoMessageOverhead = false; // false for requests, true for responses
         this.manufacturerID = Zcl.ManufacturerCode.RESERVED_10;
 
         this.joinPermitted = false;
-        this.closing = false;
         const concurrent = this.adapterOptions?.concurrent ? this.adapterOptions.concurrent : 2;
         logger.debug(`Adapter concurrent: ${concurrent}`, NS);
         this.queue = new Queue(concurrent);
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        this.driver = new Driver(serialPortOptions.path!, serialPortOptions);
+        this.driver = new Driver(this.transport);
         this.waitress = new Waitress(Adapter.zclWaitressValidator, Adapter.clusterWaitressTimeoutFormatter);
 
         this.driver.on("received", this.dataListener.bind(this));
         this.driver.on("LeaveIndication", this.leaveIndicationListener.bind(this));
         this.driver.on("DeviceAnnounce", this.deviceAnnounceListener.bind(this));
-        this.driver.on("close", this.onZiGateClose.bind(this));
         this.driver.on("zdoResponse", this.onZdoResponse.bind(this));
     }
 
@@ -60,7 +56,7 @@ export class ZiGateAdapter extends Adapter {
     public async start(): Promise<TsType.StartResult> {
         let startResult: TsType.StartResult = "resumed";
         try {
-            await this.driver.open();
+            await this.transport.open(true);
             logger.info("Connected to ZiGate adapter successfully.", NS);
 
             const resetResponse = await this.driver.sendCommand(ZiGateCommandCode.Reset, {}, 5000);
@@ -95,7 +91,6 @@ export class ZiGateAdapter extends Adapter {
     }
 
     public async stop(): Promise<void> {
-        this.closing = true;
         await this.driver.close();
     }
 
@@ -592,11 +587,5 @@ export class ZiGateAdapter extends Adapter {
             ieeeAddr: <string>ziGateObject.payload.extendedAddress,
         };
         this.emit("deviceLeave", payload);
-    }
-
-    private onZiGateClose(): void {
-        if (!this.closing) {
-            this.emit("disconnected");
-        }
     }
 }
