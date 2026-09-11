@@ -452,6 +452,55 @@ export class Endpoint extends ZigbeeEntity {
     /*
      * Zigbee functions
      */
+
+    /**
+     * Send a raw, non-ZCL APS payload to this endpoint.
+     *
+     * Some vendors (e.g. Control4) carry proprietary protocols in bare APS payloads that are
+     * not ZCL frames. The regular command/write paths always serialize a ZCL header, so they
+     * cannot produce such payloads. This sends `data` verbatim on `clusterId`, typically
+     * combined with `options.profileId` to address a custom profile.
+     *
+     * No response correlation is performed: replies (if any) are emitted through the normal
+     * incoming message path for the converter to match. `options.disableResponse` defaults
+     * to true accordingly.
+     */
+    public async sendRaw(clusterId: number, data: Buffer, options?: Options): Promise<void> {
+        const optionsWithDefaults = this.getOptionsWithDefaults({disableResponse: true, ...options}, true, Zcl.Direction.CLIENT_TO_SERVER, undefined);
+        const transactionSequenceNumber = optionsWithDefaults.transactionSequenceNumber ?? zclTransactionSequenceNumber.next();
+        // A minimal frame-shaped carrier. The request pipeline and the adapters only read
+        // cluster.ID, command, header.frameControl and toBuffer(), and serialize the message
+        // with toBuffer(), so the payload goes out exactly as provided with no ZCL framing.
+        const frame = {
+            cluster: {ID: clusterId, name: `raw_0x${clusterId.toString(16)}`},
+            command: {ID: 0, name: "raw", parameters: []},
+            header: {
+                transactionSequenceNumber,
+                frameControl: {
+                    frameType: Zcl.FrameType.SPECIFIC,
+                    direction: Zcl.Direction.CLIENT_TO_SERVER,
+                    disableDefaultResponse: true,
+                    manufacturerSpecific: false,
+                },
+            },
+            toBuffer: () => data,
+        } as unknown as Zcl.Frame;
+
+        const createLogMessage = (): string =>
+            `SendRaw ${this.deviceIeeeAddress}/${this.ID} cluster=${clusterId} len=${data.length} (${JSON.stringify(optionsWithDefaults)})`;
+        logger.debug(createLogMessage, NS);
+
+        try {
+            await this.sendRequest(frame, optionsWithDefaults);
+        } catch (error) {
+            const err = error as Error;
+            err.message = `${createLogMessage()} failed (${err.message})`;
+            // biome-ignore lint/style/noNonNullAssertion: matches sibling command paths
+            logger.debug(err.stack!, NS);
+            throw error;
+        }
+    }
+
     private checkStatus(payload: [{status: Zcl.Status}] | {cmdId: number; statusCode: number}): void {
         const codes = Array.isArray(payload) ? payload.map((i) => i.status) : [payload.statusCode];
         const invalid = codes.find((c) => c !== Zcl.Status.SUCCESS);
