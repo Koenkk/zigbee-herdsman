@@ -11,6 +11,7 @@ import * as ZSpec from "../../../zspec";
 import {Clusters} from "../../../zspec/zcl/definition/cluster";
 import * as Zdo from "../../../zspec/zdo";
 import type {GenericZdoResponse} from "../../../zspec/zdo/definition/tstypes";
+import type {AdapterTransport} from "../../transport";
 import type * as TsType from "./../../tstype";
 import {EZSPAdapterBackup} from "../adapter/backup";
 import type {ParamsDesc} from "./commands";
@@ -115,14 +116,14 @@ export class Driver extends EventEmitter {
     private multicast: Multicast;
     private waitress: Waitress<EmberFrame, EmberWaitressMatcher>;
     private transactionID = 1;
-    private serialOpt: TsType.SerialPortOptions;
+    private readonly transport: AdapterTransport;
     public backupMan: EZSPAdapterBackup;
 
-    constructor(serialOpt: TsType.SerialPortOptions, nwkOpt: TsType.NetworkOptions, backupPath: string) {
+    constructor(transport: AdapterTransport, nwkOpt: TsType.NetworkOptions, backupPath: string) {
         super();
 
         this.nwkOpt = nwkOpt;
-        this.serialOpt = serialOpt;
+        this.transport = transport;
         this.waitress = new Waitress<EmberFrame, EmberWaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
         this.backupMan = new EZSPAdapterBackup(this, backupPath);
     }
@@ -136,8 +137,7 @@ export class Driver extends EventEmitter {
         logger.debug("Reset connection.", NS);
 
         try {
-            // don't emit 'close' on stop since we don't want this to bubble back up as 'disconnected' to the controller.
-            await this.stop(false);
+            await this.stop();
         } catch (err) {
             logger.debug(`Stop error ${err}`, NS);
         }
@@ -149,7 +149,6 @@ export class Driver extends EventEmitter {
             logger.debug(`Reset error ${err}`, NS);
 
             try {
-                // here we let emit
                 await this.stop();
             } catch (stopErr) {
                 logger.debug(`Failed to stop after failed reset ${stopErr}`, NS);
@@ -162,16 +161,11 @@ export class Driver extends EventEmitter {
         await this.reset();
     }
 
-    private onEzspClose(): void {
-        logger.debug("onEzspClose()", NS);
-        this.emit("close");
-    }
-
-    public async stop(emitClose = true): Promise<void> {
+    public async stop(): Promise<void> {
         logger.debug("Stopping driver", NS);
 
         if (this.ezsp) {
-            return await this.ezsp.close(emitClose);
+            return await this.ezsp.close();
         }
     }
 
@@ -179,11 +173,10 @@ export class Driver extends EventEmitter {
         let result: TsType.StartResult = "resumed";
         this.transactionID = 1;
         // this.ezsp = undefined;
-        this.ezsp = new Ezsp();
-        this.ezsp.on("close", this.onEzspClose.bind(this));
+        this.ezsp = new Ezsp(this.transport);
 
         try {
-            await this.ezsp.connect(this.serialOpt);
+            await this.ezsp.connect();
         } catch (error) {
             logger.debug(`EZSP could not connect: ${error}`, NS);
 

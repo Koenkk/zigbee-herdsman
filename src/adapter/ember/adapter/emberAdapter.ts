@@ -250,11 +250,11 @@ export class EmberAdapter extends Adapter {
 
     constructor(
         networkOptions: TsType.NetworkOptions,
-        serialPortOptions: TsType.SerialPortOptions,
+        transportOptions: TsType.TransportOptions,
         backupPath: string,
         adapterOptions: TsType.AdapterOptions,
     ) {
-        super(networkOptions, serialPortOptions, backupPath, adapterOptions);
+        super(networkOptions, transportOptions, backupPath, adapterOptions);
         this.hasZdoMessageOverhead = true;
         this.manufacturerID = Zcl.ManufacturerCode.SILICON_LABORATORIES;
 
@@ -278,7 +278,7 @@ export class EmberAdapter extends Adapter {
         this.queue = new Queue(this.adapterOptions.concurrent || 16); // ORed to avoid 0 (not checked in settings/queue constructor)
         this.oneWaitress = new EmberOneWaitress();
 
-        this.ezsp = new Ezsp(serialPortOptions);
+        this.ezsp = new Ezsp(this.transport);
 
         this.ezsp.on("zdoResponse", this.onZDOResponse.bind(this));
         this.ezsp.on("incomingMessage", this.onIncomingMessage.bind(this));

@@ -2,17 +2,13 @@
 
 import assert from "node:assert";
 import {EventEmitter} from "node:events";
-import net from "node:net";
-import {DelimiterParser} from "@serialport/parser-delimiter";
 import {AsyncMutex} from "../../../utils/async-mutex";
 import {logger} from "../../../utils/logger";
 import {Waitress} from "../../../utils/waitress";
 import * as ZSpec from "../../../zspec";
 import * as Zdo from "../../../zspec/zdo";
 import type {EndDeviceAnnounce, GenericZdoResponse, ResponseMap as ZdoResponseMap} from "../../../zspec/zdo/definition/tstypes";
-import {SerialPort} from "../../serialPort";
-import type {SerialPortOptions} from "../../tstype";
-import {isTcpPath, parseTcpPath} from "../../utils";
+import type {AdapterTransport} from "../../transport";
 import {equal, type ZiGateResponseMatcher, type ZiGateResponseMatcherRule} from "./commandType";
 import {Status, ZDO_REQ_CLUSTER_ID_TO_ZIGATE_COMMAND_ID, ZiGateCommandCode, ZiGateMessageCode, type ZiGateObjectPayload} from "./constants";
 import ZiGateFrame from "./frame";
@@ -70,30 +66,22 @@ interface ZiGateEventMap {
 }
 
 export default class ZiGate extends EventEmitter<ZiGateEventMap> {
-    private path: string;
-    private baudRate: number;
-    private initialized: boolean;
+    private readonly transport: AdapterTransport;
 
-    private parser?: EventEmitter;
-    private serialPort?: SerialPort;
-    private socketPort?: net.Socket;
+    private inputBuffer = Buffer.alloc(0);
     private queue: AsyncMutex;
 
-    public portWrite?: SerialPort | net.Socket;
     private waitress: Waitress<ZiGateObject, WaitressMatcher>;
     private zdoWaitress: Waitress<ZdoWaitressPayload, ZdoWaitressMatcher>;
 
-    public constructor(path: string, serialPortOptions: SerialPortOptions) {
+    public constructor(transport: AdapterTransport) {
         super();
-        this.path = path;
-        this.baudRate = typeof serialPortOptions.baudRate === "number" ? serialPortOptions.baudRate : 115200;
-        // XXX: not used?
-        // this.rtscts = typeof serialPortOptions.rtscts === 'boolean' ? serialPortOptions.rtscts : false;
-        this.initialized = false;
+        this.transport = transport;
         this.queue = new AsyncMutex();
-
         this.waitress = new Waitress<ZiGateObject, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
         this.zdoWaitress = new Waitress<ZdoWaitressPayload, ZdoWaitressMatcher>(this.zdoWaitressValidator, this.waitressTimeoutFormatter);
+
+        this.transport.on("data", this.onTransportData.bind(this));
     }
 
     public async sendCommand(
@@ -138,8 +126,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
                     resultPromise = statusWaiter.promise;
                 }
 
-                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                this.portWrite!.write(sendBuffer);
+                this.transport.write(sendBuffer);
 
                 // biome-ignore lint/nursery/noMisusedPromises: ignore
                 if (ziGateObject.command.waitStatus !== false && resultPromise) {
@@ -184,8 +171,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
 
             const statusWaiter = this.waitress.waitFor({rules: ruleStatus}, timeouts.default);
 
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            this.portWrite!.write(sendBuffer);
+            this.transport.write(sendBuffer);
 
             const statusResponse: ZiGateObject = await statusWaiter.start().promise;
 
@@ -193,118 +179,26 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
         });
     }
 
-    public open(): Promise<void> {
-        return isTcpPath(this.path) ? this.openSocketPort() : this.openSerialPort();
-    }
-
     public async close(): Promise<void> {
         logger.info("closing", NS);
         this.queue.clear();
 
-        if (this.initialized) {
-            this.portWrite = undefined;
-            this.initialized = false;
-
-            if (this.serialPort) {
-                try {
-                    await this.serialPort.asyncFlushAndClose();
-                } catch (error) {
-                    this.emit("close");
-
-                    throw error;
-                }
-            } else {
-                this.socketPort?.destroy();
-            }
-        }
-
-        this.emit("close");
+        await this.transport.close();
     }
 
-    private async openSerialPort(): Promise<void> {
-        this.serialPort = new SerialPort({
-            path: this.path,
-            baudRate: this.baudRate,
-            dataBits: 8,
-            parity: "none" /* one of ['none', 'even', 'mark', 'odd', 'space'] */,
-            stopBits: 1 /* one of [1,2] */,
-            autoOpen: false,
-        });
-        this.parser = this.serialPort.pipe(new DelimiterParser({delimiter: [ZiGateFrame.STOP_BYTE], includeDelimiter: true}));
-        this.parser.on("data", this.onSerialData.bind(this));
+    private onTransportData(data: Buffer): void {
+        this.inputBuffer = Buffer.concat([this.inputBuffer, data]);
+        let end = this.inputBuffer.indexOf(ZiGateFrame.STOP_BYTE);
 
-        this.portWrite = this.serialPort;
+        while (end !== -1) {
+            this.onFrame(this.inputBuffer.subarray(0, end + 1));
 
-        try {
-            await this.serialPort.asyncOpen();
-            logger.debug("Serialport opened", NS);
-
-            this.serialPort.once("close", this.onPortClose.bind(this));
-            this.serialPort.once("error", this.onPortError.bind(this));
-
-            this.initialized = true;
-        } catch (error) {
-            this.initialized = false;
-
-            if (this.serialPort.isOpen) {
-                this.serialPort.close();
-            }
-
-            throw error;
+            this.inputBuffer = this.inputBuffer.subarray(end + 1);
+            end = this.inputBuffer.indexOf(ZiGateFrame.STOP_BYTE);
         }
     }
 
-    private async openSocketPort(): Promise<void> {
-        const info = parseTcpPath(this.path);
-        logger.debug(`Opening TCP socket with ${info.host}:${info.port}`, NS);
-
-        this.socketPort = new net.Socket();
-        this.socketPort.setNoDelay(true);
-        this.socketPort.setKeepAlive(true, 15000);
-
-        this.parser = this.socketPort.pipe(new DelimiterParser({delimiter: [ZiGateFrame.STOP_BYTE], includeDelimiter: true}));
-        this.parser.on("data", this.onSerialData.bind(this));
-
-        this.portWrite = this.socketPort;
-        return await new Promise((resolve, reject): void => {
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            this.socketPort!.on("connect", () => {
-                logger.debug("Socket connected", NS);
-            });
-
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            this.socketPort!.on("ready", () => {
-                logger.debug("Socket ready", NS);
-                this.initialized = true;
-                resolve();
-            });
-
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            this.socketPort!.once("close", this.onPortClose.bind(this));
-
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            this.socketPort!.on("error", (error) => {
-                logger.error(`Socket error ${error}`, NS);
-                reject(new Error("Error while opening socket"));
-                this.initialized = false;
-            });
-
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            this.socketPort!.connect(info.port, info.host);
-        });
-    }
-
-    private onPortError(error: Error): void {
-        logger.error(`Port error: ${error}`, NS);
-    }
-
-    private onPortClose(): void {
-        logger.debug("Port closed", NS);
-        this.initialized = false;
-        this.emit("close");
-    }
-
-    private onSerialData(buffer: Buffer): void {
+    private onFrame(buffer: Buffer): void {
         try {
             // logger.debug(() => `--- parseNext ${JSON.stringify(buffer)}`, NS);
 

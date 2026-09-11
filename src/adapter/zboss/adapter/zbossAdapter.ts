@@ -11,7 +11,7 @@ import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
 import {Adapter, type ClusterWaitressMatcher, type ZclWaitressPayload} from "../../adapter";
 import {WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE} from "../../const";
 import type {ZclPayload} from "../../events";
-import type {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from "../../tstype";
+import type {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, StartResult, TransportOptions} from "../../tstype";
 import {ZBOSSDriver} from "../driver";
 import {CommandId, DeviceUpdateStatus} from "../enums";
 import {FrameType, type ZBOSSFrame} from "../frame";
@@ -24,8 +24,8 @@ export class ZBOSSAdapter extends Adapter {
     private waitress: Waitress<ZclWaitressPayload, ClusterWaitressMatcher>;
     private currentManufacturerCode: Zcl.ManufacturerCode;
 
-    constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
-        super(networkOptions, serialPortOptions, backupPath, adapterOptions);
+    constructor(networkOptions: NetworkOptions, transportOptions: TransportOptions, backupPath: string, adapterOptions: AdapterOptions) {
+        super(networkOptions, transportOptions, backupPath, adapterOptions);
         this.hasZdoMessageOverhead = false;
         this.manufacturerID = Zcl.ManufacturerCode.NORDIC_SEMICONDUCTOR_ASA;
         this.currentManufacturerCode = Zcl.ManufacturerCode.NORDIC_SEMICONDUCTOR_ASA;
@@ -34,14 +34,8 @@ export class ZBOSSAdapter extends Adapter {
         this.queue = new Queue(concurrent);
 
         this.waitress = new Waitress(Adapter.zclWaitressValidator, Adapter.clusterWaitressTimeoutFormatter);
-        this.driver = new ZBOSSDriver(serialPortOptions, networkOptions);
+        this.driver = new ZBOSSDriver(this.transport, networkOptions);
         this.driver.on("frame", this.processMessage.bind(this));
-        this.driver.on("close", this.onDriverClose.bind(this));
-    }
-
-    private onDriverClose(): void {
-        logger.error("Driver connection closed unexpectedly", NS);
-        this.emit("disconnected");
     }
 
     private async processMessage(frame: ZBOSSFrame): Promise<void> {
@@ -190,40 +184,38 @@ export class ZBOSSAdapter extends Adapter {
     }
 
     public async permitJoin(seconds: number, networkAddress?: number): Promise<void> {
-        if (this.driver.isInitialized()) {
-            if (this.currentManufacturerCode !== this.manufacturerID) {
-                logger.debug(`[WORKAROUND] Resetting coordinator manufacturer code to ${Zcl.ManufacturerCode[this.manufacturerID]}.`, NS);
+        if (this.currentManufacturerCode !== this.manufacturerID) {
+            logger.debug(`[WORKAROUND] Resetting coordinator manufacturer code to ${Zcl.ManufacturerCode[this.manufacturerID]}.`, NS);
 
-                await this.driver.execCommand(CommandId.ZDO_SET_NODE_DESC_MANUF_CODE, {manufacturerCode: this.manufacturerID});
+            await this.driver.execCommand(CommandId.ZDO_SET_NODE_DESC_MANUF_CODE, {manufacturerCode: this.manufacturerID});
 
-                this.currentManufacturerCode = this.manufacturerID;
+            this.currentManufacturerCode = this.manufacturerID;
+        }
+
+        const clusterId = Zdo.ClusterId.PERMIT_JOINING_REQUEST;
+        // `authentication`: TC significance always 1 (zb specs)
+        const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, seconds, 1, []);
+
+        if (networkAddress) {
+            // `device-only`
+            const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
+
+            if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.PERMIT_JOINING_RESPONSE>(result)) {
+                // TODO: will disappear once moved upstream
+                throw new Zdo.StatusError(result[0]);
+            }
+        } else {
+            // `coordinator-only` (for `all` too)
+            const result = await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.COORDINATOR_ADDRESS, clusterId, zdoPayload, false);
+
+            if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.PERMIT_JOINING_RESPONSE>(result)) {
+                // TODO: will disappear once moved upstream
+                throw new Zdo.StatusError(result[0]);
             }
 
-            const clusterId = Zdo.ClusterId.PERMIT_JOINING_REQUEST;
-            // `authentication`: TC significance always 1 (zb specs)
-            const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, seconds, 1, []);
-
-            if (networkAddress) {
-                // `device-only`
-                const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
-
-                if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.PERMIT_JOINING_RESPONSE>(result)) {
-                    // TODO: will disappear once moved upstream
-                    throw new Zdo.StatusError(result[0]);
-                }
-            } else {
-                // `coordinator-only` (for `all` too)
-                const result = await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.COORDINATOR_ADDRESS, clusterId, zdoPayload, false);
-
-                if (!Zdo.Buffalo.checkStatus<Zdo.ClusterId.PERMIT_JOINING_RESPONSE>(result)) {
-                    // TODO: will disappear once moved upstream
-                    throw new Zdo.StatusError(result[0]);
-                }
-
-                if (networkAddress === undefined) {
-                    // `all`: broadcast
-                    await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.BroadcastAddress.DEFAULT, clusterId, zdoPayload, true);
-                }
+            if (networkAddress === undefined) {
+                // `all`: broadcast
+                await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.BroadcastAddress.DEFAULT, clusterId, zdoPayload, true);
             }
         }
     }
