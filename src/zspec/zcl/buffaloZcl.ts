@@ -643,10 +643,11 @@ export class BuffaloZcl extends Buffalo {
 
                 return frame;
             }
+            default: {
+                // might contain `gppNwkAddr`, `gppGpdLink` & `mic` from ZCL cluster after this, so limit by `payloadSize`
+                return {raw: this.readBuffer(options.payload.payloadSize)};
+            }
         }
-
-        // might contain `gppNwkAddr`, `gppGpdLink` & `mic` from ZCL cluster after this, so limit by `payloadSize`
-        return {raw: this.readBuffer(options.payload.payloadSize)};
     }
 
     public writeStructuredSelector(value: StructuredSelector): void {

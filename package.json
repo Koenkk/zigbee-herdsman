@@ -6,7 +6,7 @@
     "bugs": {
         "url": "https://github.com/koenkk/zigbee-herdsman/issues"
     },
-    "packageManager": "pnpm@10.33.0",
+    "packageManager": "pnpm@12.3.4",
     "contributors": [
         {
             "name": "Koen Kanters",
@@ -39,7 +39,7 @@
     "deprecated": false,
     "description": "An open source Zigbee gateway solution with node.js.",
     "devDependencies": {
-        "@biomejs/biome": "^2.5.3",
+        "@biomejs/biome": "^2.5.12",
         "@serialport/binding-mock": "^10.2.2",
         "@types/debounce": "^1.2.4",
         "@types/node": "^26.5.0",
@@ -63,8 +63,10 @@
     "module": "./dist/index.js",
     "name": "zigbee-herdsman",
     "files": [
-        "./dist",
-        "./CHANGELOG.md"
+        "dist",
+        "patches",
+        "pnpm-workspace.yaml",
+        "CHANGELOG.md"
     ],
     "repository": {
         "type": "git",
@@ -83,14 +85,7 @@
         "prepack": "pnpm run clean && pnpm run build"
     },
     "version": "10.9.3",
-    "pnpm": {
-        "onlyBuiltDependencies": [
-            "@biomejs/biome",
-            "@serialport/bindings-cpp",
-            "esbuild"
-        ],
-        "patchedDependencies": {
-            "@serialport/bindings-cpp@13.0.1": "patches/@serialport__bindings-cpp@13.0.1.patch"
-        }
+    "engines": {
+        "node": "^22.2.0 || ^24 || <=26.2"
     }
 }
