@@ -22,9 +22,7 @@ import type {CustomClusters} from "../src/zspec/zcl/definition/tstype";
 import * as Zdo from "../src/zspec/zdo";
 import type {IEEEAddressResponse, NetworkAddressResponse} from "../src/zspec/zdo/definition/tstypes";
 import {DEFAULT_184_CHECKIN_INTERVAL, LQI_TABLE_ENTRY_DEFAULTS, MOCK_DEVICES, ROUTING_TABLE_ENTRY_DEFAULTS} from "./mockDevices";
-
-const globalSetImmediate = setImmediate;
-const flushPromises = () => new Promise(globalSetImmediate);
+import {flushPromises} from "./testUtils";
 
 const mockLogger = {
     debug: vi.fn((messageOrLambda) => {
@@ -458,7 +456,7 @@ const options = {
         panID: 0x1a63,
         channelList: [15],
     },
-    serialPort: {
+    transport: {
         baudRate: 115200,
         rtscts: true,
         path: "/dev/ttyUSB0",

@@ -1,15 +1,12 @@
 /* v8 ignore start */
 
 import events from "node:events";
-import net from "node:net";
-
 import slip from "slip";
 import {Buffalo} from "../../../buffalo";
 import type {Backup} from "../../../models";
 import {logger} from "../../../utils/logger";
-import {SerialPort} from "../../serialPort";
-import type {NetworkOptions, SerialPortOptions} from "../../tstype";
-import {isTcpPath, parseTcpPath} from "../../utils";
+import type {AdapterTransport} from "../../transport";
+import type {NetworkOptions} from "../../tstype";
 import PARAM, {
     ApsAddressMode,
     type ApsDataRequest,
@@ -23,10 +20,7 @@ import PARAM, {
     type Request,
     stackParameters,
 } from "./constants";
-
 import {frameParserEvents} from "./frameParser";
-import Parser from "./parser";
-import Writer from "./writer";
 
 const NS = "zh:deconz:driver";
 
@@ -80,16 +74,13 @@ interface CommandResult {
 type DriverEventData = number | CommandResult;
 
 class Driver extends events.EventEmitter {
-    private serialPort?: SerialPort;
-    private serialPortOptions: SerialPortOptions;
-    private writer: Writer;
-    private parser: Parser;
+    private readonly transport: AdapterTransport;
+    private readonly decoder: slip.Decoder;
     private frameParserEvent = frameParserEvents;
     private seqNumber: number;
     private deviceStatus = 0;
     // biome-ignore lint/correctness/noUnusedPrivateClassMembers: ignore
     private configChanged: number;
-    private socketPort?: net.Socket;
     // biome-ignore lint/correctness/noUnusedPrivateClassMembers: ignore
     private timeoutCounter = 0;
     private watchdogTriggeredTime = 0;
@@ -127,17 +118,33 @@ class Driver extends events.EventEmitter {
     public paramFrameCounter = 0;
     public paramApsUseExtPanid = 0n;
 
-    public constructor(serialPortOptions: SerialPortOptions, networkOptions: NetworkOptions, backup: Backup | undefined, firmwareLog: string[]) {
+    public constructor(transport: AdapterTransport, networkOptions: NetworkOptions, backup: Backup | undefined, firmwareLog: string[]) {
         super();
         this.seqNumber = 0;
         this.configChanged = 0;
         this.networkOptions = networkOptions;
-        this.serialPortOptions = serialPortOptions;
+        this.transport = transport;
         this.backup = backup;
         this.firmwareLog = firmwareLog;
 
-        this.writer = new Writer();
-        this.parser = new Parser();
+        this.decoder = new slip.Decoder({
+            onMessage: this.onParsed,
+            onError: (_message, error) => logger.debug(`<-- error '${error}'`, NS),
+            maxMessageSize: 1000000,
+            bufferSize: 2048,
+        });
+
+        this.transport.on("data", (data) => this.decoder.decode(data));
+        this.transport.on("close", () => {
+            this.emitStateEvent(DriverEvent.Disconnected);
+
+            for (const interval of this.intervals) {
+                clearInterval(interval);
+            }
+
+            this.timeoutCounter = 0;
+            this.cleanupAllQueues();
+        });
 
         this.fixParamEndpoint0 = Buffer.from([
             0x00, // index
@@ -190,15 +197,6 @@ class Driver extends events.EventEmitter {
         this.onParsed = this.onParsed.bind(this);
         this.frameParserEvent.on("deviceStateUpdated", (data: number) => {
             this.checkDeviceStatus(data);
-        });
-
-        this.on("close", () => {
-            for (const interval of this.intervals) {
-                clearInterval(interval);
-            }
-
-            this.timeoutCounter = 0;
-            this.cleanupAllQueues();
         });
 
         this.on(DRIVER_EVENT, (event, data) => {
@@ -352,34 +350,11 @@ class Driver extends events.EventEmitter {
             // E.g. connect with baudrate XY, query firmware, on timeout try other baudrate.
             // Most units out there are ConBee2/3 which support 115200.
             // The 38400 default is outdated now and only works for a few units.
-            const baudrate = this.serialPortOptions.baudRate || 38400;
-
-            if (!this.serialPortOptions.path) {
-                // unlikely but handle it anyway
+            this.transport.open(true).catch((err) => {
+                logger.debug(`${err}`, NS);
                 this.driverStateStart = Date.now();
                 this.driverState = DriverState.WaitToReconnect;
-                return;
-            }
-
-            let prom: Promise<void> | undefined;
-            if (isTcpPath(this.serialPortOptions.path)) {
-                prom = this.openSocketPort();
-            } else if (baudrate) {
-                prom = this.openSerialPort(baudrate);
-            } else {
-                // unlikely but handle it anyway
-                this.driverStateStart = Date.now();
-                this.driverState = DriverState.WaitToReconnect;
-            }
-
-            // biome-ignore lint/nursery/noMisusedPromises: ignore
-            if (prom) {
-                prom.catch((err) => {
-                    logger.debug(`${err}`, NS);
-                    this.driverStateStart = Date.now();
-                    this.driverState = DriverState.WaitToReconnect;
-                });
-            }
+            });
         } else if (event === DriverEvent.Connected) {
             this.driverStateStart = Date.now();
             this.driverState = DriverState.ReadConfiguration;
@@ -748,7 +723,7 @@ class Driver extends events.EventEmitter {
             if (1000 < Date.now() - this.driverStateStart) {
                 // if the connection is open try to close it every second.
                 this.driverStateStart = Date.now();
-                if (this.isOpen()) {
+                if (this.transport.isOpen) {
                     this.close().catch(() => {});
                 } else {
                     this.driverState = DriverState.WaitToReconnect;
@@ -818,152 +793,8 @@ class Driver extends events.EventEmitter {
         }
     }
 
-    private onPortClose(error: boolean | Error): void {
-        if (error) {
-            logger.info(`Port close: state: ${DriverState[this.driverState]}, reason: ${error}`, NS);
-        } else {
-            logger.debug(`Port closed in state: ${DriverState[this.driverState]}`, NS);
-        }
-
-        this.emitStateEvent(DriverEvent.Disconnected);
-        this.emit("close");
-    }
-
-    private onPortError(error: Error): void {
-        logger.error(`Port error: ${error}`, NS);
-        this.emitStateEvent(DriverEvent.Disconnected);
-        this.emit("close");
-    }
-
-    private isOpen(): boolean {
-        if (this.serialPort) return this.serialPort.isOpen;
-        if (this.socketPort) return this.socketPort.readyState !== "closed";
-        return false;
-    }
-
-    public openSerialPort(baudrate: number): Promise<void> {
-        return new Promise((resolve, reject): void => {
-            if (!this.serialPortOptions.path) {
-                reject(new Error("Failed to open serial port, path is undefined"));
-            }
-
-            logger.debug(`Opening serial port: ${this.serialPortOptions.path}`, NS);
-
-            const path = this.serialPortOptions.path || "";
-
-            if (!this.serialPort) {
-                this.serialPort = new SerialPort({path, baudRate: baudrate, autoOpen: false});
-                this.writer.pipe(this.serialPort);
-                this.serialPort.pipe(this.parser);
-                this.parser.on("parsed", this.onParsed);
-                this.serialPort.on("close", this.onPortClose.bind(this));
-                this.serialPort.on("error", this.onPortError.bind(this));
-            }
-
-            if (!this.serialPort) {
-                reject(new Error("Failed to create SerialPort instance"));
-                return;
-            }
-
-            if (this.serialPort.isOpen) {
-                resolve();
-                return;
-            }
-
-            this.serialPort.open((error) => {
-                if (error) {
-                    reject(new Error(`Error while opening serialport '${error}'`));
-
-                    if (this.serialPort) {
-                        if (this.serialPort.isOpen) {
-                            this.emitStateEvent(DriverEvent.ConnectError);
-                            //this.serialPort!.close();
-                        }
-                    }
-                } else {
-                    logger.debug("Serialport opened", NS);
-                    this.emitStateEvent(DriverEvent.Connected);
-                    resolve();
-                }
-            });
-        });
-    }
-
-    private async openSocketPort(): Promise<void> {
-        if (!this.serialPortOptions.path) {
-            throw new Error("No serial port TCP path specified");
-        }
-
-        const info = parseTcpPath(this.serialPortOptions.path);
-        logger.debug(`Opening TCP socket with ${info.host}:${info.port}`, NS);
-        this.socketPort = new net.Socket();
-        this.socketPort.setNoDelay(true);
-        this.socketPort.setKeepAlive(true, 15000);
-
-        this.writer = new Writer();
-        this.writer.pipe(this.socketPort);
-
-        this.parser = new Parser();
-        this.socketPort.pipe(this.parser);
-        this.parser.on("parsed", this.onParsed);
-
-        return await new Promise((resolve, reject): void => {
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            this.socketPort!.on("connect", () => {
-                logger.debug("Socket connected", NS);
-            });
-
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            this.socketPort!.on("ready", () => {
-                logger.debug("Socket ready", NS);
-                this.emitStateEvent(DriverEvent.Connected);
-                resolve();
-            });
-
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            this.socketPort!.once("close", this.onPortClose);
-
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            this.socketPort!.on("error", (error) => {
-                logger.error(`Socket error ${error}`, NS);
-                reject(new Error("Error while opening socket"));
-            });
-
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            this.socketPort!.connect(info.port, info.host);
-        });
-    }
-
-    public close(): Promise<void> {
-        return new Promise((resolve, reject): void => {
-            if (this.serialPort) {
-                if (this.serialPort.isOpen) {
-                    // wait until remaining data is written
-                    this.serialPort.flush();
-                    this.serialPort.close((error): void => {
-                        if (error) {
-                            // TODO(mpi): monitor, this must not happen after drain
-                            // close() failes if there is pending data to write!
-                            this.emitStateEvent(DriverEvent.CloseError);
-                            reject(new Error(`Error while closing serialport '${error}'`));
-                            return;
-                        }
-                    });
-                }
-
-                this.emitStateEvent(DriverEvent.Disconnected);
-                this.emit("close");
-                resolve();
-            } else if (this.socketPort) {
-                this.socketPort.destroy();
-                this.socketPort = undefined;
-                this.emitStateEvent(DriverEvent.Disconnected);
-                resolve();
-            } else {
-                resolve();
-                this.emit("close");
-            }
-        });
+    public async close(): Promise<void> {
+        await this.transport.close();
     }
 
     public readParameterRequest(parameterId: ParamId, parameter?: Buffer | number | bigint): Promise<unknown> {
@@ -1164,36 +995,7 @@ class Driver extends events.EventEmitter {
             throw new Error("send unexpected long slip frame");
         }
 
-        let written = false;
-
-        if (this.serialPort) {
-            if (!this.serialPort.isOpen) {
-                throw new Error("Can't write to serial port while it isn't open");
-            }
-
-            for (let retry = 0; retry < 3 && !written; retry++) {
-                written = this.serialPort.write(slipframe, (err) => {
-                    if (err) {
-                        throw new Error(`Failed to write to serial port: ${err.message}`);
-                    }
-                });
-
-                // if written is false, we also need to wait for drain()
-                this.serialPort.drain(); // flush
-            }
-        } else if (this.socketPort) {
-            written = this.socketPort.write(slipframe, (err) => {
-                if (err) {
-                    throw new Error(`Failed to write to serial port: ${err.message}`);
-                }
-                written = true;
-            });
-
-            // handle in upper functions
-            // if (!written) {
-            //     await this.sleep(1000);
-            // }
-        }
+        const written = this.transport.write(Buffer.from(slipframe));
 
         if (!written) {
             throw new Error(`Failed to send request cmd: ${frame[0]}, seq: ${frame[1]}`);

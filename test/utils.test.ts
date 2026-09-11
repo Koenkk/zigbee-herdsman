@@ -287,6 +287,12 @@ describe("Utils", () => {
         expect(warningSpy).toHaveBeenCalledWith(expect.stringMatching(/^\[\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d\d\dZ\] zh: warning$/));
         logger.error("error", "zh");
         expect(errorSpy).toHaveBeenCalledWith(expect.stringMatching(/^\[\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d\d\dZ\] zh: error$/));
+        logger.debug(() => "debug", "zh");
+        expect(debugSpy).toHaveBeenCalledWith(expect.stringMatching(/^\[\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d\d\dZ\] zh: debug$/));
+        logger.info(() => "info", "zh");
+        expect(infoSpy).toHaveBeenCalledWith(expect.stringMatching(/^\[\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d\d\dZ\] zh: info$/));
+        logger.warning(() => "warning", "zh");
+        expect(warningSpy).toHaveBeenCalledWith(expect.stringMatching(/^\[\d\d\d\d-\d\d-\d\dT\d\d:\d\d:\d\d.\d\d\dZ\] zh: warning$/));
 
         setLogger(mockLogger);
         expect(logger).toEqual(mockLogger);
@@ -298,6 +304,12 @@ describe("Utils", () => {
         expect(mockLogger.warning).toHaveBeenCalledWith("warning", "zh");
         logger.error("error", "zh");
         expect(mockLogger.error).toHaveBeenCalledWith("error", "zh");
+        logger.debug(() => "debug", "zh");
+        expect(mockLogger.debug).toHaveBeenCalledWith(expect.any(Function), "zh");
+        logger.info(() => "info", "zh");
+        expect(mockLogger.info).toHaveBeenCalledWith(expect.any(Function), "zh");
+        logger.warning(() => "warning", "zh");
+        expect(mockLogger.warning).toHaveBeenCalledWith(expect.any(Function), "zh");
     });
 
     it("Checks install codes of all lengths", () => {

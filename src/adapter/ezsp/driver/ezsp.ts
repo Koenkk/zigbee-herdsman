@@ -4,7 +4,7 @@ import {EventEmitter} from "node:events";
 import {Waitress, wait} from "../../../utils";
 import {AsyncMutex} from "../../../utils/async-mutex";
 import {logger} from "../../../utils/logger";
-import type {SerialPortOptions} from "../../tstype";
+import type {AdapterTransport} from "../../transport";
 import {
     type EZSPFrameDesc,
     FRAME_NAMES_BY_ID,
@@ -326,17 +326,16 @@ export class Ezsp extends EventEmitter {
     private failures = 0;
     private inResetingProcess = false;
 
-    constructor() {
+    constructor(transport: AdapterTransport) {
         super();
         this.queue = new AsyncMutex();
         this.waitress = new Waitress<EZSPFrame, EZSPWaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
 
-        this.serialDriver = new SerialDriver();
+        this.serialDriver = new SerialDriver(transport);
         this.serialDriver.on("received", this.onFrameReceived.bind(this));
-        this.serialDriver.on("close", this.onSerialClose.bind(this));
     }
 
-    public async connect(options: SerialPortOptions): Promise<void> {
+    public async connect(): Promise<void> {
         let lastError = null;
 
         const resetForReconnect = (): void => {
@@ -346,7 +345,7 @@ export class Ezsp extends EventEmitter {
 
         for (let i = 1; i <= MAX_SERIAL_CONNECT_ATTEMPTS; i++) {
             try {
-                await this.serialDriver.connect(options);
+                await this.serialDriver.connect();
                 break;
             } catch (error) {
                 logger.error(`Connection attempt ${i} error: ${error}`, NS);
@@ -385,19 +384,12 @@ export class Ezsp extends EventEmitter {
         this.emit("reset");
     }
 
-    private onSerialClose(): void {
-        logger.debug("onSerialClose()", NS);
-        if (!this.inResetingProcess) {
-            this.emit("close");
-        }
-    }
-
-    public async close(emitClose: boolean): Promise<void> {
+    public async close(): Promise<void> {
         logger.debug("Closing Ezsp", NS);
 
         clearTimeout(this.watchdogTimer);
         this.queue.clear();
-        await this.serialDriver.close(emitClose);
+        await this.serialDriver.close();
     }
 
     /**

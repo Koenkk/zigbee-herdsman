@@ -1,6 +1,7 @@
 import {randomBytes} from "node:crypto";
 import {mkdirSync, rmSync, writeFileSync} from "node:fs";
 import {join} from "node:path";
+import {MockBinding, type MockPortBinding} from "@serialport/binding-mock";
 import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
 import {encodeSpinelFrame, SPINEL_HEADER_FLG_SPINEL} from "zigbee-on-host/dist/spinel/spinel";
 import {SpinelStatus} from "zigbee-on-host/dist/spinel/statuses";
@@ -11,6 +12,7 @@ import {DEFAULT_STACK_CONFIG, type StackConfigJSON, ZoHAdapter} from "../../../s
 import * as ZSpec from "../../../src/zspec";
 import * as Zcl from "../../../src/zspec/zcl";
 import * as Zdo from "../../../src/zspec/zdo";
+import {flushPromises} from "../../testUtils";
 
 const TEMP_PATH = "zoh-tmp";
 const TEMP_PATH_SAVE = join(TEMP_PATH, "zoh.save");
@@ -87,6 +89,8 @@ const COMMON_RFD_MAC_CAP: MACCapabilities = {
     allocateAddress: true,
 };
 
+const ADAPTER_PATH = "/dev/serial/by-id/mock-adapter";
+
 describe("Zigbee on Host", () => {
     let adapter: ZoHAdapter;
     let nextTidFromStartup = 1;
@@ -103,7 +107,7 @@ describe("Zigbee on Host", () => {
         };
         const encRespHdlcFrame = encodeSpinelFrame(respSpinelFrame);
 
-        return Buffer.from(encRespHdlcFrame.data.subarray(0, encRespHdlcFrame.length));
+        return Buffer.from(encRespHdlcFrame.subarray(0, encRespHdlcFrame.length));
     };
 
     // biome-ignore lint/correctness/noUnusedVariables: dev
@@ -125,7 +129,7 @@ describe("Zigbee on Host", () => {
         };
         const encHdlcFrame = encodeSpinelFrame(spinelFrame);
 
-        return Buffer.from(encHdlcFrame.data.subarray(0, encHdlcFrame.length));
+        return Buffer.from(encHdlcFrame.subarray(0, encHdlcFrame.length));
     };
 
     const mockStart = async (loadState = true, frames = START_FRAMES_SILABS) => {
@@ -136,7 +140,6 @@ describe("Zigbee on Host", () => {
                 loadStateSpy = vi.spyOn(adapter.driver.context, "loadState").mockResolvedValue(undefined);
             }
 
-            let i = -1;
             const orderedFrames = [
                 frames.protocolVersion,
                 frames.ncpVersion,
@@ -146,23 +149,20 @@ describe("Zigbee on Host", () => {
                 frames.resetPowerOn,
             ];
 
-            const reply = async () => {
-                await vi.advanceTimersByTimeAsync(5);
+            const writeSpy = vi.spyOn(adapter.driver.transport, "write");
 
-                // skip cancel byte
-                if (i >= 0) {
-                    adapter.driver.parser._transform(Buffer.from(orderedFrames[i], "hex"), "utf8", () => {});
-                    await vi.advanceTimersByTimeAsync(5);
-                }
+            // skip cancel byte
+            writeSpy.mockImplementationOnce(() => false);
 
-                i++;
+            for (const frame of orderedFrames) {
+                writeSpy.mockImplementationOnce(() => {
+                    (adapter.transport.serialPortInstance!.port as MockPortBinding).emitData(Buffer.from(frame, "hex"));
+                    void flushPromises();
 
-                if (i === orderedFrames.length) {
-                    adapter.driver.writer.removeListener("data", reply);
-                }
-            };
+                    return false;
+                });
+            }
 
-            adapter.driver.writer.on("data", reply);
             await adapter.driver.start();
             loadStateSpy?.mockRestore();
             await vi.advanceTimersByTimeAsync(100); // flush
@@ -191,7 +191,6 @@ describe("Zigbee on Host", () => {
 
     const mockFormNetwork = async (registerTimers = false, frames = FORM_FRAMES_SILABS) => {
         if (adapter.driver) {
-            let i = 0;
             const orderedFrames = [
                 frames.phyEnabled,
                 frames.phyChan,
@@ -207,19 +206,16 @@ describe("Zigbee on Host", () => {
                 frames.phyCCAThresholdGet,
             ];
 
-            const reply = async () => {
-                await vi.advanceTimersByTimeAsync(5);
-                adapter.driver.parser._transform(Buffer.from(orderedFrames[i], "hex"), "utf8", () => {});
-                await vi.advanceTimersByTimeAsync(5);
+            const writeSpy = vi.spyOn(adapter.driver.transport, "write");
 
-                i++;
+            for (const frame of orderedFrames) {
+                writeSpy.mockImplementationOnce(() => {
+                    (adapter.transport.serialPortInstance!.port as MockPortBinding).emitData(Buffer.from(frame, "hex"));
+                    void flushPromises();
 
-                if (i === orderedFrames.length) {
-                    adapter.driver.writer.removeListener("data", reply);
-                }
-            };
-
-            adapter.driver.writer.on("data", reply);
+                    return false;
+                });
+            }
 
             let registerTimersSpy: ReturnType<typeof vi.spyOn> | undefined;
 
@@ -251,8 +247,8 @@ describe("Zigbee on Host", () => {
                 linksSpy = links;
                 const p = adapter.driver.nwkHandler.sendLinkStatus(links);
                 // LINK_STATUS => OK
-                adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup), "utf8", () => {});
-                await vi.advanceTimersByTimeAsync(10);
+                (adapter.transport.serialPortInstance!.port as MockPortBinding).emitData(makeSpinelLastStatus(nextTidFromStartup));
+                await flushPromises();
                 await p;
             });
             const sendRouteReqSpy = vi.spyOn(adapter.driver.nwkHandler, "sendRouteReq").mockImplementationOnce(async (manyToOne, destination16) => {
@@ -260,8 +256,8 @@ describe("Zigbee on Host", () => {
                 destination16Spy = destination16;
                 const p = adapter.driver.nwkHandler.sendRouteReq(manyToOne, destination16);
                 // ROUTE_REQ => OK
-                adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup + 1), "utf8", () => {});
-                await vi.advanceTimersByTimeAsync(10);
+                (adapter.transport.serialPortInstance!.port as MockPortBinding).emitData(makeSpinelLastStatus(nextTidFromStartup + 1));
+                await flushPromises();
                 return await p;
             });
             await adapter.driver.startStack();
@@ -307,7 +303,7 @@ describe("Zigbee on Host", () => {
             {
                 baudRate: 921600,
                 rtscts: true,
-                path: "/dev/serial/by-id/mock-adapter",
+                path: ADAPTER_PATH,
                 adapter: "zoh",
             },
             join(TEMP_PATH, "coordinator_backup.json"),
@@ -317,8 +313,10 @@ describe("Zigbee on Host", () => {
                 transmitPower: DEFAULT_TX_POWER,
             },
         );
+        adapter.transport.serialPortBinding = MockBinding;
 
-        vi.spyOn(adapter, "initPort").mockImplementation(async () => {});
+        MockBinding.createPort(ADAPTER_PATH, {record: true});
+
         vi.spyOn(adapter.driver, "start").mockImplementationOnce(async () => {
             await mockStart();
         });
@@ -328,12 +326,6 @@ describe("Zigbee on Host", () => {
         vi.spyOn(adapter.driver, "stop").mockImplementationOnce(async () => {
             await mockStop();
         });
-        vi.spyOn(adapter.driver.writer, "pipe").mockImplementation(
-            // @ts-expect-error mock noop
-            () => {},
-        );
-
-        adapter.driver.parser.on("data", adapter.driver.onFrame.bind(adapter.driver));
     });
 
     afterEach(async () => {
@@ -374,9 +366,8 @@ describe("Zigbee on Host", () => {
             false,
         );
 
-        await vi.advanceTimersByTimeAsync(10);
-        adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup, SpinelStatus.OK), "utf8", () => {});
-        await vi.advanceTimersByTimeAsync(10);
+        (adapter.transport.serialPortInstance!.port as MockPortBinding).emitData(makeSpinelLastStatus(nextTidFromStartup, SpinelStatus.OK));
+        await flushPromises();
         adapter.onFrame(
             0x2211,
             BigInt("0x0807060504030201"),
@@ -417,9 +408,8 @@ describe("Zigbee on Host", () => {
             false,
         );
 
-        await vi.advanceTimersByTimeAsync(10);
-        adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup + 1, SpinelStatus.OK), "utf8", () => {});
-        await vi.advanceTimersByTimeAsync(10);
+        (adapter.transport.serialPortInstance!.port as MockPortBinding).emitData(makeSpinelLastStatus(nextTidFromStartup + 1, SpinelStatus.OK));
+        await flushPromises();
         adapter.onFrame(
             0x2211,
             BigInt("0x0807060504030201"),
@@ -577,9 +567,8 @@ describe("Zigbee on Host", () => {
 
         const p1 = adapter.sendZclFrameToEndpoint("0x00000000000004d2", 0x9876, 1, zclFrame, 10000, false, false, 2);
 
-        await vi.advanceTimersByTimeAsync(10);
-        adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup, SpinelStatus.OK), "utf8", () => {});
-        await vi.advanceTimersByTimeAsync(10);
+        (adapter.transport.serialPortInstance!.port as MockPortBinding).emitData(makeSpinelLastStatus(nextTidFromStartup, SpinelStatus.OK));
+        await flushPromises();
         adapter.onFrame(
             0x9876,
             undefined,
@@ -628,9 +617,8 @@ describe("Zigbee on Host", () => {
 
         const p2 = adapter.sendZclFrameToEndpoint("0x00000000000004d2", 0x9876, 1, zclFrame, 10000, true, false);
 
-        await vi.advanceTimersByTimeAsync(10);
-        adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup + 1, SpinelStatus.OK), "utf8", () => {});
-        await vi.advanceTimersByTimeAsync(10);
+        (adapter.transport.serialPortInstance!.port as MockPortBinding).emitData(makeSpinelLastStatus(nextTidFromStartup + 1, SpinelStatus.OK));
+        await flushPromises();
         await expect(p2).resolves.toStrictEqual(undefined);
         expect(sendUnicastSpy).toHaveBeenLastCalledWith(zclFrame.toBuffer(), ZSpec.HA_PROFILE_ID, Zcl.Clusters.genGroups.ID, 0x9876, undefined, 1, 1);
 
@@ -641,9 +629,8 @@ describe("Zigbee on Host", () => {
 
         const p3 = adapter.sendZclFrameToEndpoint("0x00000000000004d2", 0x9876, 1, zclFrameDefRsp, 10000, true, false, 2);
 
-        await vi.advanceTimersByTimeAsync(10);
-        adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup + 2, SpinelStatus.OK), "utf8", () => {});
-        await vi.advanceTimersByTimeAsync(10);
+        (adapter.transport.serialPortInstance!.port as MockPortBinding).emitData(makeSpinelLastStatus(nextTidFromStartup + 2, SpinelStatus.OK));
+        await flushPromises();
         adapter.onFrame(
             0x9876,
             undefined,
@@ -701,9 +688,8 @@ describe("Zigbee on Host", () => {
 
         const p4 = adapter.sendZclFrameToEndpoint("0x00000000000004d2", 0x9876, 1, zclFrame, 10000, false, false, 2);
 
-        await vi.advanceTimersByTimeAsync(10);
-        adapter.driver.parser._transform(makeSpinelLastStatus(nextTidFromStartup + 3, SpinelStatus.OK), "utf8", () => {});
-        await vi.advanceTimersByTimeAsync(10);
+        (adapter.transport.serialPortInstance!.port as MockPortBinding).emitData(makeSpinelLastStatus(nextTidFromStartup + 3, SpinelStatus.OK));
+        await flushPromises();
         adapter.onFrame(
             0x9876,
             undefined,
