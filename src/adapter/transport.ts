@@ -34,6 +34,10 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
         return !this.opening && !this.closing && (this.serialPort?.isOpen ?? (this.socket !== undefined && !this.socket.closed));
     }
 
+    get isOpening(): boolean {
+        return this.opening;
+    }
+
     get isClosing(): boolean {
         return this.closing;
     }
@@ -113,16 +117,13 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
         // expensive and very verbose, enable locally only if necessary
         // logger.debug(() => `>>>> [TRANSPORT ${data.toString("hex")}]`, NS);
 
-        return (this.serialPort ?? this.socket)?.write(data) ?? false;
+        // biome-ignore lint/style/noNonNullAssertion: one always valid from top check
+        return (this.serialPort ?? this.socket)!.write(data);
     }
 
     public async set(options: SetOptions): Promise<void> {
-        if (!this.serialPort) {
-            throw new Error("Serial control operations are unavailable on a TCP transport");
-        }
-
-        if (!this.serialPort.isOpen) {
-            throw new Error("Cannot set while transport is closed");
+        if (!this.serialPort?.isOpen) {
+            throw new Error("Cannot set while serial transport is closed");
         }
 
         await new Promise<void>((resolve, reject): void => {
@@ -131,12 +132,8 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
     }
 
     public async get(): Promise<Parameters<ModemBitsCallback>[1]> {
-        if (!this.serialPort) {
-            throw new Error("Serial control operations are unavailable on a TCP transport");
-        }
-
-        if (!this.serialPort.isOpen) {
-            throw new Error("Cannot get while transport is closed");
+        if (!this.serialPort?.isOpen) {
+            throw new Error("Cannot get while serial transport is closed");
         }
 
         return await new Promise((resolve, reject): void => {
@@ -188,13 +185,15 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
         serialPort.on("error", (error) => logger.error(`Serial port error: ${error}`, NS));
 
         // TODO: WORKAROUND https://github.com/serialport/node-serialport/issues/3148
+        /* v8 ignore start */
         {
             const [nodeMajor = 0, nodeMinor = 0] = process.versions.node.split(".").map(Number);
 
-            if (nodeMajor > 26 || (nodeMajor === 26 && nodeMinor >= 4)) {
+            if (nodeMajor > 26 || (nodeMajor === 26 && nodeMinor > 3)) {
                 setInterval(() => undefined, 16).unref();
             }
         }
+        /* v8 ignore stop */
 
         try {
             await new Promise<void>((resolve, reject): void => {
@@ -207,11 +206,14 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
 
             serialPort.removeAllListeners();
 
+            // defensive but likely unreachable, can't test
+            /* v8 ignore start */
             if (serialPort.isOpen) {
                 await new Promise<void>((resolve, reject): void => {
                     serialPort.close((err) => (err ? reject(err) : resolve()));
                 });
             }
+            /* v8 ignore stop */
 
             throw error;
         }
@@ -262,9 +264,12 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
             this.serialPort = undefined;
         } else if (port === this.socket) {
             this.socket = undefined;
+            // defensive but likely unreachable, can't test
+            /* v8 ignore start */
         } else {
             return;
         }
+        /* v8 ignore stop */
 
         this.emit("close", error);
     }
