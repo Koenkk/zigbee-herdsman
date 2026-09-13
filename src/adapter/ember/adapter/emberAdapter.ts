@@ -6,6 +6,7 @@ import equals from "fast-deep-equal/es6";
 import type {Backup} from "../../../models";
 import {BackupUtils, Queue, wait} from "../../../utils";
 import {logger} from "../../../utils/logger";
+import {MetricType, metrics} from "../../../utils/metrics";
 import * as ZSpec from "../../../zspec";
 import type {Eui64, ExtendedPanId, NodeId, PanId} from "../../../zspec/tstypes";
 import * as Zcl from "../../../zspec/zcl";
@@ -1750,21 +1751,7 @@ export class EmberAdapter extends Adapter {
     //---- ZDO
 
     // queued, non-InterPAN
-    public async sendZdo(
-        ieeeAddress: string,
-        networkAddress: number,
-        clusterId: Zdo.ClusterId,
-        payload: Buffer,
-        disableResponse: true,
-    ): Promise<void>;
-    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
-        ieeeAddress: string,
-        networkAddress: number,
-        clusterId: K,
-        payload: Buffer,
-        disableResponse: false,
-    ): Promise<ZdoTypes.RequestToResponseMap[K]>;
-    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
+    protected async sendZdoImpl<K extends keyof ZdoTypes.RequestToResponseMap>(
         ieeeAddress: string,
         networkAddress: number,
         clusterId: K,
@@ -1930,7 +1917,7 @@ export class EmberAdapter extends Adapter {
     //---- ZCL
 
     // queued, non-InterPAN
-    public async sendZclFrameToEndpoint(
+    protected async sendZclFrameToEndpointImpl(
         ieeeAddr: string,
         networkAddress: number,
         endpoint: number,
@@ -2020,6 +2007,13 @@ export class EmberAdapter extends Adapter {
                 }
 
                 if (status === SLStatus.ZIGBEE_MAX_MESSAGE_LIMIT_REACHED || status === SLStatus.BUSY) {
+                    /* v8 ignore next 6 */
+                    metrics.emit("metric", {
+                        type: MetricType.AdapterRetry,
+                        adapterType: "ember",
+                        ieeeAddr,
+                        reason: SLStatus[status] ?? String(status),
+                    });
                     await wait(QUEUE_BUSY_DEFER_MSEC);
                 } else if (status === SLStatus.NETWORK_DOWN) {
                     await wait(QUEUE_NETWORK_DOWN_DEFER_MSEC);
@@ -2053,7 +2047,7 @@ export class EmberAdapter extends Adapter {
     }
 
     // queued, non-InterPAN
-    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
+    protected async sendZclFrameToGroupImpl(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
         const apsFrame: EmberApsFrame = {
             profileId:
                 profileId ?? ((sourceEndpoint && FIXED_ENDPOINTS.find((epi) => epi.endpoint === sourceEndpoint)) || FIXED_ENDPOINTS[0]).profileId,
@@ -2089,7 +2083,7 @@ export class EmberAdapter extends Adapter {
     }
 
     // queued, non-InterPAN
-    public async sendZclFrameToAll(
+    protected async sendZclFrameToAllImpl(
         endpoint: number,
         zclFrame: Zcl.Frame,
         sourceEndpoint: number,

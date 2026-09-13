@@ -3,6 +3,7 @@ import debounce from "debounce";
 import type * as Models from "../../../models";
 import {Queue, Waitress, wait} from "../../../utils";
 import {logger} from "../../../utils/logger";
+import {MetricType, metrics} from "../../../utils/metrics";
 import * as ZSpec from "../../../zspec";
 import type {BroadcastAddress} from "../../../zspec/enums";
 import type {Eui64} from "../../../zspec/tstypes";
@@ -307,21 +308,7 @@ export class ZStackAdapter extends Adapter {
         return buf;
     }
 
-    public async sendZdo(
-        ieeeAddress: string,
-        networkAddress: number,
-        clusterId: Zdo.ClusterId,
-        payload: Buffer,
-        disableResponse: true,
-    ): Promise<void>;
-    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
-        ieeeAddress: string,
-        networkAddress: number,
-        clusterId: K,
-        payload: Buffer,
-        disableResponse: false,
-    ): Promise<ZdoTypes.RequestToResponseMap[K]>;
-    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
+    protected async sendZdoImpl<K extends keyof ZdoTypes.RequestToResponseMap>(
         ieeeAddress: string,
         networkAddress: number,
         clusterId: K,
@@ -454,7 +441,7 @@ export class ZStackAdapter extends Adapter {
         return skipQueue ? await func() : await this.queue.execute(func, networkAddress);
     }
 
-    public async sendZclFrameToEndpoint(
+    protected async sendZclFrameToEndpointImpl(
         ieeeAddr: string,
         networkAddress: number,
         endpoint: number,
@@ -586,6 +573,13 @@ export class ZStackAdapter extends Adapter {
                  * MAC_NO_RESOURCES: Operation could not be completed because no memory resources are available,
                  * wait some time and retry.
                  */
+                metrics.emit("metric", {
+                    type: MetricType.AdapterRetry,
+                    adapterType: "zstack",
+                    ieeeAddr,
+                    /* v8 ignore next */
+                    reason: ZnpCommandStatus[dataConfirmResult] ?? String(dataConfirmResult),
+                });
                 await wait(2000);
                 return await this.sendZclFrameToEndpointInternal(
                     ieeeAddr,
@@ -667,6 +661,13 @@ export class ZStackAdapter extends Adapter {
                 await wait(2000);
             }
 
+            /* v8 ignore next 6 */
+            metrics.emit("metric", {
+                type: MetricType.AdapterRetry,
+                adapterType: "zstack",
+                ieeeAddr,
+                reason: ZnpCommandStatus[dataConfirmResult] ?? String(dataConfirmResult),
+            });
             return await this.sendZclFrameToEndpointInternal(
                 ieeeAddr,
                 networkAddress,
@@ -718,6 +719,7 @@ export class ZStackAdapter extends Adapter {
                         });
                     }
                     // No response could be of invalid route, e.g. when message is send to wrong parent of end device.
+                    metrics.emit("metric", {type: MetricType.AdapterRetry, adapterType: "zstack", ieeeAddr, reason: "no_response"});
                     await this.discoverRoute(networkAddress);
                     return await this.sendZclFrameToEndpointInternal(
                         ieeeAddr,
@@ -742,7 +744,7 @@ export class ZStackAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
+    protected async sendZclFrameToGroupImpl(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
         const srcEndpoint = this.selectSourceEndpoint(sourceEndpoint, profileId);
 
         return await this.queue.execute<void>(async () => {
@@ -769,7 +771,7 @@ export class ZStackAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameToAll(
+    protected async sendZclFrameToAllImpl(
         endpoint: number,
         zclFrame: Zcl.Frame,
         sourceEndpoint: number,
