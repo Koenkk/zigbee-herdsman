@@ -1789,56 +1789,71 @@ export class EmberAdapter extends Adapter {
             let status: SLStatus | undefined;
             let apsSequence: number | undefined;
 
-            if (ZSpec.Utils.isBroadcastAddress(networkAddress)) {
-                logger.debug(
-                    () => `~~~> [ZDO ${clusterName} BROADCAST to=${networkAddress} messageTag=${messageTag} payload=${payload.toString("hex")}]`,
-                    NS,
-                );
+            const isBroadcast = ZSpec.Utils.isBroadcastAddress(networkAddress);
 
-                [status, apsSequence] = await this.ezsp.ezspSendBroadcast(
-                    ZSpec.NULL_NODE_ID, // alias
-                    networkAddress,
-                    0, // nwkSequence
-                    apsFrame,
-                    ZDO_REQUEST_RADIUS,
-                    messageTag,
-                    payload,
-                );
-
-                apsFrame.sequence = apsSequence;
-
-                logger.debug(`~~~> [SENT ZDO BROADCAST messageTag=${messageTag} apsSequence=${apsSequence} status=${SLStatus[status]}]`, NS);
-
-                if (status !== SLStatus.OK) {
-                    throw new Error(
-                        `~x~> [ZDO ${clusterName} BROADCAST to=${networkAddress} messageTag=${messageTag}] Failed to send request with status=${SLStatus[status]}.`,
+            // Transient send-pressure statuses are retried within the same logical request
+            // (same messageTag/payload: the NCP never accepted the frame), mirroring the
+            // recovery the ZCL unicast path already has.
+            for (let attempt = 1; attempt <= QUEUE_MAX_SEND_ATTEMPTS; attempt++) {
+                if (isBroadcast) {
+                    logger.debug(
+                        () => `~~~> [ZDO ${clusterName} BROADCAST to=${networkAddress} messageTag=${messageTag} payload=${payload.toString("hex")}]`,
+                        NS,
                     );
+
+                    [status, apsSequence] = await this.ezsp.ezspSendBroadcast(
+                        ZSpec.NULL_NODE_ID, // alias
+                        networkAddress,
+                        0, // nwkSequence
+                        apsFrame,
+                        ZDO_REQUEST_RADIUS,
+                        messageTag,
+                        payload,
+                    );
+
+                    apsFrame.sequence = apsSequence;
+
+                    logger.debug(`~~~> [SENT ZDO BROADCAST messageTag=${messageTag} apsSequence=${apsSequence} status=${SLStatus[status]}]`, NS);
+                } else {
+                    logger.debug(
+                        () =>
+                            `~~~> [ZDO ${clusterName} UNICAST to=${ieeeAddress}:${networkAddress} messageTag=${messageTag} payload=${payload.toString("hex")}]`,
+                        NS,
+                    );
+
+                    [status, apsSequence] = await this.ezsp.ezspSendUnicast(
+                        EmberOutgoingMessageType.DIRECT,
+                        networkAddress,
+                        apsFrame,
+                        messageTag,
+                        payload,
+                    );
+                    apsFrame.sequence = apsSequence;
+
+                    logger.debug(`~~~> [SENT ZDO UNICAST messageTag=${messageTag} apsSequence=${apsSequence} status=${SLStatus[status]}]`, NS);
                 }
-            } else {
-                logger.debug(
-                    () =>
-                        `~~~> [ZDO ${clusterName} UNICAST to=${ieeeAddress}:${networkAddress} messageTag=${messageTag} payload=${payload.toString("hex")}]`,
-                    NS,
-                );
 
-                [status, apsSequence] = await this.ezsp.ezspSendUnicast(
-                    EmberOutgoingMessageType.DIRECT,
-                    networkAddress,
-                    apsFrame,
-                    messageTag,
-                    payload,
-                );
-                apsFrame.sequence = apsSequence;
+                if (status === SLStatus.OK) {
+                    break;
+                }
 
-                logger.debug(`~~~> [SENT ZDO UNICAST messageTag=${messageTag} apsSequence=${apsSequence} status=${SLStatus[status]}]`, NS);
-
-                if (status !== SLStatus.OK) {
+                if ((status !== SLStatus.BUSY && status !== SLStatus.ZIGBEE_MAX_MESSAGE_LIMIT_REACHED) || attempt === QUEUE_MAX_SEND_ATTEMPTS) {
+                    if (isBroadcast) {
+                        throw new Error(
+                            `~x~> [ZDO ${clusterName} BROADCAST to=${networkAddress} messageTag=${messageTag}] Failed to send request with status=${SLStatus[status]}.`,
+                        );
+                    }
                     throw new Error(
                         `~x~> [ZDO ${clusterName} UNICAST to=${ieeeAddress}:${networkAddress} messageTag=${messageTag}] Failed to send request with status=${SLStatus[status]}.`,
                     );
                 }
-            }
 
+                logger.debug(
+                    `~x~> [ZDO ${clusterName} ${isBroadcast ? "BROADCAST" : "UNICAST"} to=${networkAddress}] Failed to send request attempt ${attempt}/${QUEUE_MAX_SEND_ATTEMPTS} with status=${SLStatus[status]}.`,
+                    NS,
+                );
+                await wait(QUEUE_BUSY_DEFER_MSEC);
+            }
             if (!disableResponse) {
                 const responseClusterId = Zdo.Utils.getResponseClusterId(clusterId);
 
@@ -2112,17 +2127,34 @@ export class EmberAdapter extends Adapter {
             this.checkInterpanLock();
 
             logger.debug(() => `~~~> [ZCL BROADCAST apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`, NS);
-            const [status] = await this.ezsp.send(
-                EmberOutgoingMessageType.BROADCAST,
-                destination,
-                apsFrame,
-                data,
-                0, // alias
-                0, // alias seq
-            );
+            let status: SLStatus = SLStatus.FAIL;
 
-            if (status !== SLStatus.OK) {
-                throw new Error(`~x~> [ZCL BROADCAST destination=${destination}] Failed to send with status=${SLStatus[status]}.`);
+            // Transient send-pressure statuses are retried within the same logical request
+            // (the NCP never accepted the frame), mirroring the ZCL unicast recovery. This
+            // stage is part of Controller.permitJoin() via Green Power commissioning.
+            for (let attempt = 1; attempt <= QUEUE_MAX_SEND_ATTEMPTS; attempt++) {
+                [status] = await this.ezsp.send(
+                    EmberOutgoingMessageType.BROADCAST,
+                    destination,
+                    apsFrame,
+                    data,
+                    0, // alias
+                    0, // alias seq
+                );
+
+                if (status === SLStatus.OK) {
+                    break;
+                }
+
+                if ((status !== SLStatus.BUSY && status !== SLStatus.ZIGBEE_MAX_MESSAGE_LIMIT_REACHED) || attempt === QUEUE_MAX_SEND_ATTEMPTS) {
+                    throw new Error(`~x~> [ZCL BROADCAST destination=${destination}] Failed to send with status=${SLStatus[status]}.`);
+                }
+
+                logger.debug(
+                    `~x~> [ZCL BROADCAST destination=${destination}] Failed to send attempt ${attempt}/${QUEUE_MAX_SEND_ATTEMPTS} with status=${SLStatus[status]}.`,
+                    NS,
+                );
+                await wait(QUEUE_BUSY_DEFER_MSEC);
             }
 
             // NOTE: since ezspMessageSentHandler could take a while here, we don't block, it'll just be logged if the delivery failed
