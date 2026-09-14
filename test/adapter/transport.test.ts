@@ -138,6 +138,7 @@ describe("Adapter transport", () => {
         test("opens and closes", async () => {
             const transportOpenSpy = vi.spyOn(transport, "open");
             const transportCloseSpy = vi.spyOn(transport, "close");
+            const emitSpy = vi.spyOn(transport, "emit");
 
             await transport.open();
 
@@ -149,6 +150,7 @@ describe("Adapter transport", () => {
 
             await transport.close();
 
+            expect(emitSpy).toHaveBeenCalledTimes(0);
             expect(transportOpenSpy).toHaveBeenCalledTimes(1);
             expect(transportCloseSpy).toHaveBeenCalledTimes(1);
             expect(removeAllListenersSpy).toHaveBeenCalledTimes(1);
@@ -377,6 +379,7 @@ describe("Adapter transport", () => {
         test("opens and closes", async () => {
             const transportOpenSpy = vi.spyOn(transport, "open");
             const transportCloseSpy = vi.spyOn(transport, "close");
+            const emitSpy = vi.spyOn(transport, "emit");
 
             await transport.open();
 
@@ -388,6 +391,7 @@ describe("Adapter transport", () => {
 
             await transport.close();
 
+            expect(emitSpy).toHaveBeenCalledTimes(0);
             expect(transportOpenSpy).toHaveBeenCalledTimes(1);
             expect(transportCloseSpy).toHaveBeenCalledTimes(1);
             expect(removeAllListenersSpy).toHaveBeenCalledTimes(1);
