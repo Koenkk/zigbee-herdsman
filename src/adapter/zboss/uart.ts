@@ -278,11 +278,11 @@ export class ZBOSSUart extends EventEmitter {
         }
 
         this.recvSeq = sequence;
-        // Send ACK
-        logger.debug(`--> ACK (${this.recvSeq})`, NS);
-        await this.sendACK(this.recvSeq);
-
         try {
+            // Send ACK
+            logger.debug(`--> ACK (${this.recvSeq})`, NS);
+            await this.sendACK(this.recvSeq);
+
             logger.debug(`<-- FRAME: ${body.toString("hex")}`, NS);
             const frame = readZBOSSFrame(body);
             if (frame) {
