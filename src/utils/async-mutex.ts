@@ -1,3 +1,9 @@
+export class MutexCancelledError extends Error {
+    constructor() {
+        super("Mutex cleared");
+    }
+}
+
 export class AsyncMutex {
     #locked = false;
     readonly #queue: Array<{resolve: () => void; reject: (error: Error) => void}> = [];
@@ -30,7 +36,7 @@ export class AsyncMutex {
     /** Reject pending acquisitions without interrupting the active operation. */
     clear(): void {
         for (const waiter of this.#queue.splice(0)) {
-            waiter.reject(new Error("Mutex cleared"));
+            waiter.reject(new MutexCancelledError());
         }
     }
 }

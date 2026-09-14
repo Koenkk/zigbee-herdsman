@@ -5,6 +5,7 @@ import {Constants as UnpiConstants, Frame as UnpiFrame} from "../../../src/adapt
 import {Znp, ZpiObject} from "../../../src/adapter/z-stack/znp";
 import BuffaloZnp from "../../../src/adapter/z-stack/znp/buffaloZnp";
 import ParameterType from "../../../src/adapter/z-stack/znp/parameterType";
+import {MutexCancelledError} from "../../../src/utils/async-mutex";
 import {logger} from "../../../src/utils/logger";
 import * as Zdo from "../../../src/zspec/zdo";
 import {duplicateArray, ieeeaAddr1, ieeeaAddr2} from "../../testUtils";
@@ -258,6 +259,40 @@ describe("ZNP", () => {
         expect(mockSerialPortClose).toHaveBeenCalledTimes(0);
         expect(mockUnpiWriterWriteBuffer).toHaveBeenCalledTimes(0);
         expect(mockSerialPortOnce).toHaveBeenCalledTimes(0);
+    });
+
+    it.each([
+        [false, false],
+        [false, true],
+        [true, false],
+        [true, true],
+    ])("Cancels queued requests on close and cleans up response waiters (ZDO=%s, waiter=%s)", async (zdo, withWaiter) => {
+        await znp.open();
+        requestSpy.mockRestore();
+        let release!: () => void;
+        // biome-ignore lint/complexity/useLiteralKeys: Access the private mutex for the shutdown regression.
+        const active = znp["queue"].run(
+            () =>
+                new Promise<void>((resolve) => {
+                    release = resolve;
+                }),
+        );
+        const response = withWaiter
+            ? znp.waitFor(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.AF, "dataConfirm", undefined, 1, undefined)
+            : undefined;
+        const result = zdo
+            ? znp.requestZdo(Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, Buffer.from([0x11, 0x11]), response?.ID)
+            : znp.request(UnpiConstants.Subsystem.SYS, "ping", {capabilities: 1}, response?.ID);
+        const rejection = expect(result).rejects.toBeInstanceOf(MutexCancelledError);
+        try {
+            await znp.close();
+            await rejection;
+            // biome-ignore lint/complexity/useLiteralKeys: Check private response waiter cleanup.
+            expect(znp["waitress"]["waiters"].size).toBe(0);
+        } finally {
+            release();
+            await active;
+        }
     });
 
     it("Open and close", async () => {
@@ -676,8 +711,7 @@ describe("ZNP", () => {
         requestSpy.mockRestore();
 
         const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, "osalNvRead");
-        // biome-ignore lint/nursery/noFloatingPromises: ignore
-        znp.request(UnpiConstants.Subsystem.SYS, "osalNvRead", {id: 1, offset: 2});
+        void znp.request(UnpiConstants.Subsystem.SYS, "osalNvRead", {id: 1, offset: 2});
 
         parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x00, 0x02, 0x01, 0x02])));
 
@@ -724,8 +758,7 @@ describe("ZNP", () => {
 
         const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.ZDO, "nodeDescReq");
         const zdoPayload = Buffer.from([2 & 0xff, (2 >> 8) & 0xff, ...Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, 2)]);
-        // biome-ignore lint/nursery/noFloatingPromises: ignore
-        znp.requestZdo(Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, zdoPayload, 1);
+        void znp.requestZdo(Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, zdoPayload, 1);
 
         parsedCb(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.ZDO, 2, Buffer.from([0x00])));
 

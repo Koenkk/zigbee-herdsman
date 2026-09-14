@@ -8,6 +8,7 @@ import {Frame, FrameType} from "../../../src/adapter/ezsp/driver/frame";
 import {Parser} from "../../../src/adapter/ezsp/driver/parser";
 import {EmberEUI64, EmberNetworkStatus, EmberNodeType, EmberStatus} from "../../../src/adapter/ezsp/driver/types";
 import {Writer} from "../../../src/adapter/ezsp/driver/writer";
+import {MutexCancelledError} from "../../../src/utils/async-mutex";
 import {logger} from "../../../src/utils/logger";
 import * as Zcl from "../../../src/zspec/zcl";
 
@@ -20,6 +21,7 @@ const ports: MockSerialPort[] = [];
 class MockSerialPort extends Duplex {
     isOpen = false;
     dropUnicast = false;
+    closeDelay = 0;
     readonly unicasts: {destination: number; retry: boolean}[] = [];
     readonly commands: string[] = [];
     private readonly parser = new Parser();
@@ -40,6 +42,15 @@ class MockSerialPort extends Duplex {
     }
 
     asyncFlushAndClose(): Promise<void> {
+        if (this.closeDelay) {
+            return new Promise((resolve) =>
+                setTimeout(() => {
+                    this.isOpen = false;
+                    this.emit("close");
+                    resolve();
+                }, this.closeDelay),
+            );
+        }
         this.isOpen = false;
         this.emit("close");
         return Promise.resolve();
@@ -182,6 +193,64 @@ describe("EZSP recovery", () => {
         vi.restoreAllMocks();
     });
 
+    it.each([0, 10000])("does not retry or reset during shutdown with a queued watchdog (close delay %i ms)", async (closeDelay) => {
+        const started = adapter.start();
+        await vi.advanceTimersByTimeAsync(11000);
+        await expect(started).resolves.toBe("resumed");
+        const driver = adapter["driver"];
+        const ezsp = driver.ezsp;
+        ezsp["failures"] = 4;
+        const reset = vi.spyOn(driver, "reset");
+        const logErrors = vi.spyOn(logger, "error");
+        const port = ports[0];
+        port.closeDelay = closeDelay;
+        port.dropUnicast = true;
+        const frame = Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, false, undefined, 1, "on", "genOnOff", {}, {});
+        const errors: Error[] = [];
+        const commands = [0x1111, 0x2222].map((address) =>
+            adapter
+                .sendZclFrameToEndpoint(`0x${address.toString(16).padStart(16, "0")}`, address, 1, frame, 1000, false, false)
+                .catch((error: Error) => {
+                    errors.push(error);
+                }),
+        );
+        await vi.advanceTimersByTimeAsync(1001);
+        expect(ezsp["queue"].count).toBe(2); // second device command and watchdog
+        const stopping = adapter.stop();
+        await vi.advanceTimersByTimeAsync(15000);
+        await stopping;
+        expect(reset).not.toHaveBeenCalled();
+        expect(logErrors).not.toHaveBeenCalled();
+        expect(ports).toHaveLength(1);
+        expect(port.unicasts).toEqual([{destination: 0x1111, retry: false}]);
+        expect(errors).toEqual([new MutexCancelledError(), new MutexCancelledError()]);
+        await Promise.all(commands);
+        expect(adapter["queue"].count()).toBe(0);
+        expect(adapter["waitress"]["waiters"].size).toBe(0);
+        expect(ezsp["failures"]).toBe(4);
+    });
+
+    it("cancels an active command when shutdown occurs during the UART retry delay", async () => {
+        const started = adapter.start();
+        await vi.advanceTimersByTimeAsync(3500);
+        await started;
+        const port = ports[0];
+        port.dropUnicast = true;
+        const frame = Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 1, "on", "genOnOff", {}, {});
+        const command = adapter.sendZclFrameToEndpoint("0x0000000000001111", 0x1111, 1, frame, 1000, true, false);
+        const rejection = expect(command).rejects.toBeInstanceOf(MutexCancelledError);
+        await vi.advanceTimersByTimeAsync(4000);
+        const logErrors = vi.spyOn(logger, "error");
+        const reset = vi.spyOn(adapter["driver"], "reset");
+        await adapter.stop();
+        await vi.advanceTimersByTimeAsync(5000);
+        await rejection;
+        expect(port.unicasts).toEqual([{destination: 0x1111, retry: false}]);
+        expect(reset).not.toHaveBeenCalled();
+        expect(logErrors).not.toHaveBeenCalled();
+        expect(adapter["queue"].count()).toBe(0);
+    });
+
     it("releases device slots after both UART ACKs time out and completes commands after reconnect", async () => {
         const started = adapter.start();
         const logErrors = vi.spyOn(logger, "error");
@@ -198,11 +267,11 @@ describe("EZSP recovery", () => {
         const frame = Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 1, "on", "genOnOff", {}, {});
         const send = (address: number) =>
             adapter.sendZclFrameToEndpoint(`0x${address.toString(16).padStart(16, "0")}`, address, 1, frame, 1000, true, false);
-        const results: string[] = [];
+        const results: unknown[] = [];
         const interrupted = [0x1111, 0x2222, 0x3333].map((address) =>
             send(address).then(
                 () => results.push("resolved"),
-                (error: Error) => results.push(error.message),
+                (error: Error) => results.push(error),
             ),
         );
 
@@ -217,7 +286,7 @@ describe("EZSP recovery", () => {
         await vi.advanceTimersByTimeAsync(4000);
         expect(reset).toHaveBeenCalledTimes(1);
         expect(firstPort.isOpen).toBe(false);
-        expect(results).toEqual(Array(3).fill("sendZclFrameToEndpointInternal error"));
+        expect(results).toEqual(Array.from({length: 3}, () => new MutexCancelledError()));
         await Promise.all(interrupted);
         expect(adapter["queue"].count()).toBe(0);
 

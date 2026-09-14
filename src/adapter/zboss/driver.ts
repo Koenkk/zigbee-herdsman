@@ -5,7 +5,7 @@ import EventEmitter from "node:events";
 import equals from "fast-deep-equal/es6";
 import type {KeyValue} from "../../controller/tstype";
 import {Waitress} from "../../utils";
-import {AsyncMutex} from "../../utils/async-mutex";
+import {AsyncMutex, MutexCancelledError} from "../../utils/async-mutex";
 import {logger} from "../../utils/logger";
 import type * as ZSpec from "../../zspec";
 import * as Zcl from "../../zspec/zcl";
@@ -286,6 +286,9 @@ export class ZBOSSDriver extends EventEmitter {
                 return response;
             } catch (error) {
                 this.waitress.remove(waiter.ID);
+                if (error instanceof MutexCancelledError) {
+                    throw error;
+                }
                 logger.error(`==> Error: ${error}`, NS);
                 throw new Error(`Failure send ${commandId}:${JSON.stringify(frame)}`);
             }

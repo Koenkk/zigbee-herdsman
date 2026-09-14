@@ -1,5 +1,5 @@
 import {describe, expect, it, vi} from "vitest";
-import {AsyncMutex} from "../src/utils/async-mutex";
+import {AsyncMutex, MutexCancelledError} from "../src/utils/async-mutex";
 import {Queue} from "../src/utils/queue";
 
 function deferred<T>() {
@@ -28,7 +28,7 @@ describe("AsyncMutex cancellation", () => {
         const nextResult = mutex.run(next);
         await Promise.resolve();
         await Promise.resolve();
-        expect(errors).toEqual([new Error("Mutex cleared"), new Error("Mutex cleared")]);
+        expect(errors).toEqual([new MutexCancelledError(), new MutexCancelledError()]);
         expect(errors[0]).not.toBe(errors[1]);
         expect(cancelled).not.toHaveBeenCalled();
         expect(next).not.toHaveBeenCalled();
@@ -57,7 +57,7 @@ describe("AsyncMutex cancellation", () => {
         const deviceA = vi.fn().mockResolvedValue("A");
         const nextA = queue.execute(() => mutex.run(deviceA), "deviceA");
         await expect(queue.execute(() => mutex.run(() => Promise.resolve("B")), "deviceB")).resolves.toBe("B");
-        expect(errors).toEqual([new Error("Mutex cleared")]);
+        expect(errors).toEqual([new MutexCancelledError()]);
         await pending;
         await expect(nextA).resolves.toBe("A");
         expect(cancelled).not.toHaveBeenCalled();

@@ -13,6 +13,7 @@ import {Znp, type ZpiObject} from "../../../src/adapter/z-stack/znp";
 import Definition from "../../../src/adapter/z-stack/znp/definition";
 import type {ZpiObjectPayload} from "../../../src/adapter/z-stack/znp/tstype";
 import type {UnifiedBackupStorage} from "../../../src/models";
+import {MutexCancelledError} from "../../../src/utils/async-mutex";
 import {setLogger} from "../../../src/utils/logger";
 import * as ZSpec from "../../../src/zspec";
 import {BroadcastAddress} from "../../../src/zspec/enums";
@@ -4292,6 +4293,20 @@ describe("zstack-adapter", () => {
         expect(mockZnpRequestZdo).toHaveBeenNthCalledWith(2, clusterId, Buffer.from([1234 & 0xff, (1234 >> 8) & 0xff, ...zdoPayload]), undefined);
         expect(mockZnpRequest).toHaveBeenCalledTimes(1);
         expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.ZDO, "extRouteDisc", {dstAddr: 1234, options: 0, radius: 30});
+    });
+
+    it("Does not discover a route or retry a cancelled node descriptor request", async () => {
+        basicMocks();
+        await adapter.start();
+        mockZnpRequest.mockClear();
+        mockZnpRequestZdo.mockClear();
+        const cancelled = new MutexCancelledError();
+        mockZnpRequestZdo.mockRejectedValueOnce(cancelled);
+        const clusterId = Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST;
+        const payload = Zdo.Buffalo.buildRequest(false, clusterId, 0x1234);
+        await expect(adapter.sendZdo(ZSpec.BLANK_EUI64, 0x1234, clusterId, payload, true)).rejects.toBe(cancelled);
+        expect(mockZnpRequestZdo).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequest).not.toHaveBeenCalled();
     });
 
     it("Should throw error when ZDO call fails", async () => {
