@@ -1683,7 +1683,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                 response: 0x02,
                 parameters: [
                     {name: "fieldControl", type: DataType.BITMAP8},
-                    {name: "manufacturerCode", type: DataType.UINT16},
+                    {name: "manufacturerCode", type: DataType.UINT16, max: 0xffff},
                     {name: "imageType", type: DataType.UINT16, max: 0xffbf},
                     {name: "fileVersion", type: DataType.UINT32},
                     {
@@ -1700,7 +1700,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                 response: 0x05,
                 parameters: [
                     {name: "fieldControl", type: DataType.BITMAP8},
-                    {name: "manufacturerCode", type: DataType.UINT16},
+                    {name: "manufacturerCode", type: DataType.UINT16, max: 0xffff},
                     {name: "imageType", type: DataType.UINT16, max: 0xffbf},
                     {name: "fileVersion", type: DataType.UINT32},
                     {name: "fileOffset", type: DataType.UINT32},
@@ -1728,7 +1728,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                 response: 0x05,
                 parameters: [
                     {name: "fieldControl", type: DataType.BITMAP8},
-                    {name: "manufacturerCode", type: DataType.UINT16},
+                    {name: "manufacturerCode", type: DataType.UINT16, max: 0xffff},
                     {name: "imageType", type: DataType.UINT16, max: 0xffbf},
                     {name: "fileVersion", type: DataType.UINT32},
                     {name: "fileOffset", type: DataType.UINT32},
@@ -1748,7 +1748,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                 response: 0x07,
                 parameters: [
                     {name: "status", type: DataType.ENUM8},
-                    {name: "manufacturerCode", type: DataType.UINT16},
+                    {name: "manufacturerCode", type: DataType.UINT16, max: 0xffff},
                     {name: "imageType", type: DataType.UINT16, max: 0xffbf},
                     {name: "fileVersion", type: DataType.UINT32},
                 ],
@@ -1760,7 +1760,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                 response: 0x09,
                 parameters: [
                     {name: "eui64", type: DataType.IEEE_ADDR},
-                    {name: "manufacturerCode", type: DataType.UINT16},
+                    {name: "manufacturerCode", type: DataType.UINT16, max: 0xffff},
                     {name: "imageType", type: DataType.UINT16, min: 0xffc0, max: 0xfffe},
                     {name: "fileVersion", type: DataType.UINT32},
                     {name: "zigbeeStackVersion", type: DataType.UINT16},

@@ -1041,6 +1041,21 @@ describe("Zcl", () => {
         expect(frame.toBuffer()).toStrictEqual(expected);
     });
 
+    it("ZclFrame from buffer genOta queryNextImageRequest keeps 0xFFFF manufacturerCode", () => {
+        const payload = {fieldControl: 0, manufacturerCode: 0xffff, imageType: 0, fileVersion: 260};
+        const frame = Zcl.Frame.create(FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, false, undefined, 8, "queryNextImageRequest", 25, payload, {});
+        const parsed = Zcl.Frame.fromBuffer(Zcl.Clusters.genOta.ID, Zcl.Header.fromBuffer(frame.toBuffer())!, frame.toBuffer(), {});
+
+        expect(parsed.payload).toStrictEqual(payload);
+    });
+
+    it("ZclFrame from buffer genOta upgradeEndRequest keeps 0xFFFF manufacturerCode", () => {
+        const payload = {status: 0, manufacturerCode: 0xffff, imageType: 0, fileVersion: 260};
+        const frame = Zcl.Frame.create(FrameType.SPECIFIC, Direction.CLIENT_TO_SERVER, false, undefined, 8, "upgradeEndRequest", 25, payload, {});
+        const parsed = Zcl.Frame.fromBuffer(Zcl.Clusters.genOta.ID, Zcl.Header.fromBuffer(frame.toBuffer())!, frame.toBuffer(), {});
+        expect(parsed.payload).toStrictEqual(payload);
+    });
+
     it("ZclFrame to buffer queryNextImageResponse with zero status and missing parameters", () => {
         const payload = {status: 0};
         const frame = Zcl.Frame.create(
