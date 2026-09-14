@@ -1,5 +1,14 @@
 # Changelog
 
+## [10.9.4](https://github.com/Koenkk/zigbee-herdsman/compare/v10.9.3...v10.9.4) (2026-09-14)
+
+
+### Bug Fixes
+
+* Fix missing response ID for the foundation discover command ([#1866](https://github.com/Koenkk/zigbee-herdsman/issues/1866)) ([59d730f](https://github.com/Koenkk/zigbee-herdsman/commit/59d730f9660202125b1be6f18d1e7fa4634d3824))
+* **ignore:** bump @types/node from 26.4.0 to 26.5.0 in the minor-patch group ([#1870](https://github.com/Koenkk/zigbee-herdsman/issues/1870)) ([37d5776](https://github.com/Koenkk/zigbee-herdsman/commit/37d5776e6994f28c8034c17e21a3ab1d0fed8d74))
+* Preserve 0xFFFF manufacturerCode in genOta requests ([#1874](https://github.com/Koenkk/zigbee-herdsman/issues/1874)) ([b4863e4](https://github.com/Koenkk/zigbee-herdsman/commit/b4863e4814a7c783f670a6d0cb8a2bf1840a36b3))
+
 ## [10.9.3](https://github.com/Koenkk/zigbee-herdsman/compare/v10.9.2...v10.9.3) (2026-09-04)
 
 
