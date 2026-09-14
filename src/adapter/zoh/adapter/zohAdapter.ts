@@ -1,5 +1,4 @@
 import {readFileSync} from "node:fs";
-import {Socket} from "node:net";
 import {dirname, join} from "node:path";
 import {OTRCPDriver} from "zigbee-on-host";
 import {setLogger} from "zigbee-on-host/dist/utils/logger";
@@ -17,9 +16,7 @@ import * as Zdo from "../../../zspec/zdo";
 import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
 import {Adapter, type ClusterWaitressMatcher, type ZclWaitressPayload} from "../../adapter";
 import type {ZclPayload} from "../../events";
-import {SerialPort} from "../../serialPort";
 import type * as TsType from "../../tstype";
-import {isTcpPath} from "../../utils";
 import {bigUInt64ToHexBE} from "./utils";
 
 const NS = "zh:zoh";
@@ -60,12 +57,6 @@ export const DEFAULT_STACK_CONFIG: Readonly<StackConfig> = {
 };
 
 export class ZoHAdapter extends Adapter {
-    private serialPort?: SerialPort;
-    private socketPort?: Socket;
-    /** True when adapter is currently closing */
-    // biome-ignore lint/correctness/noUnusedPrivateClassMembers: ignore
-    private closing: boolean;
-
     private interpanLock: boolean;
 
     public readonly stackConfig: StackConfig;
@@ -76,19 +67,19 @@ export class ZoHAdapter extends Adapter {
 
     constructor(
         networkOptions: TsType.NetworkOptions,
-        serialPortOptions: TsType.SerialPortOptions,
+        transportOptions: TsType.TransportOptions,
         backupPath: string,
         adapterOptions: TsType.AdapterOptions,
     ) {
-        super(networkOptions, serialPortOptions, backupPath, adapterOptions);
+        super(networkOptions, transportOptions, backupPath, adapterOptions);
 
         this.hasZdoMessageOverhead = true;
         this.manufacturerID = Zcl.ManufacturerCode.CONNECTIVITY_STANDARDS_ALLIANCE;
-        this.closing = false;
         this.stackConfig = this.loadStackConfig();
 
         const channel = networkOptions.channelList[0];
         this.driver = new OTRCPDriver(
+            this.transport,
             {
                 /* v8 ignore start */
                 onFatalError: (message) => {
@@ -201,163 +192,21 @@ export class ZoHAdapter extends Adapter {
         return config;
     }
 
-    /**
-     * Init the serial or socket port and hook parser/writer.
-     */
-    /* v8 ignore start */
-    public async initPort(): Promise<void> {
-        await this.closePort(); // will do nothing if nothing's open
-
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        if (isTcpPath(this.serialPortOptions.path!)) {
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            const pathUrl = new URL(this.serialPortOptions.path!);
-            const hostname = pathUrl.hostname;
-            const port = Number.parseInt(pathUrl.port, 10);
-
-            logger.debug(`Opening TCP socket with ${hostname}:${port}`, NS);
-
-            this.socketPort = new Socket();
-
-            this.socketPort.setNoDelay(true);
-            this.socketPort.setKeepAlive(true, 15000);
-            this.driver.writer.pipe(this.socketPort);
-            this.socketPort.pipe(this.driver.parser);
-            this.driver.parser.on("data", this.driver.onFrame.bind(this.driver));
-
-            return await new Promise((resolve, reject): void => {
-                const openError = async (err: Error): Promise<void> => {
-                    await this.closePort();
-
-                    reject(err);
-                };
-
-                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                this.socketPort!.on("connect", () => {
-                    logger.debug("Socket connected", NS);
-                });
-                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                this.socketPort!.on("ready", (): void => {
-                    logger.info("Socket ready", NS);
-                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                    this.socketPort!.removeListener("error", openError);
-                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                    this.socketPort!.once("close", this.onPortClose.bind(this));
-                    // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                    this.socketPort!.on("error", this.onPortError.bind(this));
-
-                    resolve();
-                });
-                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                this.socketPort!.once("error", openError);
-
-                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                this.socketPort!.connect(port, hostname);
-            });
-        }
-
-        const serialOpts = {
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            path: this.serialPortOptions.path!,
-            baudRate: typeof this.serialPortOptions.baudRate === "number" ? this.serialPortOptions.baudRate : 115200,
-            rtscts: typeof this.serialPortOptions.rtscts === "boolean" ? this.serialPortOptions.rtscts : false,
-            autoOpen: false,
-            parity: "none" as const,
-            stopBits: 1 as const,
-            xon: false,
-            xoff: false,
-        };
-
-        // enable software flow control if RTS/CTS not enabled in config
-        if (!serialOpts.rtscts) {
-            logger.info("RTS/CTS config is off, enabling software flow control.", NS);
-            serialOpts.xon = true;
-            serialOpts.xoff = true;
-        }
-
-        logger.debug(() => `Opening serial port with [path=${serialOpts.path} baudRate=${serialOpts.baudRate} rtscts=${serialOpts.rtscts}]`, NS);
-        this.serialPort = new SerialPort(serialOpts);
-
-        this.driver.writer.pipe(this.serialPort);
-        this.serialPort.pipe(this.driver.parser);
-        this.driver.parser.on("data", this.driver.onFrame.bind(this.driver));
-
-        try {
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            await this.serialPort!.asyncOpen();
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            await this.serialPort!.asyncFlush();
-
-            logger.info("Serial port opened", NS);
-
-            this.serialPort.once("close", this.onPortClose.bind(this));
-            this.serialPort.on("error", this.onPortError.bind(this));
-
-            if (this.stackConfig.tiSerialSkipBootloader) {
-                // skipping bootloader is required for some CC2652/CC1352 devices (auto-entered)
-                logger.info("TI skip bootloader", NS);
-                await this.serialPort.asyncSet({dtr: false, rts: false});
-                await wait(150);
-                await this.serialPort.asyncSet({dtr: false, rts: true});
-                await wait(150);
-                await this.serialPort.asyncSet({dtr: false, rts: false});
-                await wait(150);
-            }
-        } catch (error) {
-            await this.closePort();
-
-            throw error;
-        }
-    }
-    /* v8 ignore stop */
-
-    /**
-     * Handle port closing
-     * @param err A boolean for Socket, an Error for serialport
-     */
-    /* v8 ignore start */
-    private onPortClose(error: boolean | Error): void {
-        logger.info(`Port closed ${error}`, NS);
-
-        this.emit("disconnected");
-    }
-    /* v8 ignore stop */
-
-    /**
-     * Handle port error
-     * @param error
-     */
-    /* v8 ignore start */
-    private onPortError(error: Error): void {
-        logger.error(`Port ${error}`, NS);
-    }
-    /* v8 ignore stop */
-
-    /* v8 ignore start */
-    public async closePort(): Promise<void> {
-        if (this.serialPort?.isOpen) {
-            try {
-                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                await this.serialPort!.asyncFlushAndClose();
-            } catch (err) {
-                logger.error(`Failed to close serial port ${err}.`, NS);
-            }
-
-            this.serialPort.removeAllListeners();
-
-            this.serialPort = undefined;
-        } else if (this.socketPort != null && !this.socketPort.closed) {
-            this.socketPort.destroy();
-            this.socketPort.removeAllListeners();
-
-            this.socketPort = undefined;
-        }
-    }
-    /* v8 ignore stop */
-
     public async start(): Promise<TsType.StartResult> {
         setLogger(logger); // pass the logger to ZoH
-        await this.initPort();
+        await this.transport.open();
+
+        /* v8 ignore start */
+        if (this.stackConfig.tiSerialSkipBootloader && this.transport.isSerial) {
+            logger.info("TI skip bootloader", NS);
+            await this.transport.set({dtr: false, rts: false});
+            await wait(150);
+            await this.transport.set({dtr: false, rts: true});
+            await wait(150);
+            await this.transport.set({dtr: false, rts: false});
+            await wait(150);
+        }
+        /* v8 ignore stop */
 
         let result: TsType.StartResult = "resumed";
         const currentNetParams = await this.driver.context.readNetworkState();
@@ -388,8 +237,6 @@ export class ZoHAdapter extends Adapter {
     }
 
     public async stop(): Promise<void> {
-        this.closing = true;
-
         this.queue.clear();
         this.zclWaitress.clear();
         this.zdoWaitress.clear();

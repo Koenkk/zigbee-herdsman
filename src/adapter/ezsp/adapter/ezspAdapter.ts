@@ -10,7 +10,7 @@ import * as Zdo from "../../../zspec/zdo";
 import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
 import Adapter, {type ClusterWaitressMatcher, type ZclWaitressPayload} from "../../adapter";
 import type {ZclPayload} from "../../events";
-import type {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from "../../tstype";
+import type {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, StartResult, TransportOptions} from "../../tstype";
 import {Driver, type EmberIncomingMessage} from "../driver";
 import {EmberEUI64, EmberStatus} from "../driver/types";
 
@@ -21,23 +21,20 @@ export class EZSPAdapter extends Adapter {
     private waitress: Waitress<ZclWaitressPayload, ClusterWaitressMatcher>;
     private interpanLock: boolean;
     private queue: Queue;
-    private closing: boolean;
 
-    public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
-        super(networkOptions, serialPortOptions, backupPath, adapterOptions);
+    public constructor(networkOptions: NetworkOptions, transportOptions: TransportOptions, backupPath: string, adapterOptions: AdapterOptions) {
+        super(networkOptions, transportOptions, backupPath, adapterOptions);
         this.hasZdoMessageOverhead = true;
         this.manufacturerID = Zcl.ManufacturerCode.SILICON_LABORATORIES;
 
         this.waitress = new Waitress(Adapter.zclWaitressValidator, Adapter.clusterWaitressTimeoutFormatter);
         this.interpanLock = false;
-        this.closing = false;
 
         const concurrent = adapterOptions?.concurrent ? adapterOptions.concurrent : 8;
         logger.debug(`Adapter concurrent: ${concurrent}`, NS);
         this.queue = new Queue(concurrent);
 
-        this.driver = new Driver(this.serialPortOptions, this.networkOptions, backupPath);
-        this.driver.on("close", this.onDriverClose.bind(this));
+        this.driver = new Driver(this.transport, this.networkOptions, backupPath);
         this.driver.on("deviceJoined", this.handleDeviceJoin.bind(this));
         this.driver.on("deviceLeft", this.handleDeviceLeft.bind(this));
         this.driver.on("incomingMessage", this.processMessage.bind(this));
@@ -154,16 +151,7 @@ export class EZSPAdapter extends Adapter {
     }
 
     public async stop(): Promise<void> {
-        this.closing = true;
         await this.driver.stop();
-    }
-
-    public onDriverClose(): void {
-        logger.debug("onDriverClose()", NS);
-
-        if (!this.closing) {
-            this.emit("disconnected");
-        }
     }
 
     public async getCoordinatorIEEE(): Promise<string> {

@@ -8,7 +8,7 @@ import type {Eui64, ExtendedPanId, NodeId, PanId} from "../../../zspec/tstypes";
 import * as Zcl from "../../../zspec/zcl";
 import {Clusters} from "../../../zspec/zcl/definition/cluster";
 import * as Zdo from "../../../zspec/zdo";
-import type {SerialPortOptions} from "../../tstype";
+import type {AdapterTransport} from "../../transport";
 import {FIXED_ENDPOINTS} from "../adapter/endpoints";
 import {
     INTERPAN_APS_FRAME_CONTROL_NO_DELIVERY_MODE,
@@ -245,7 +245,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
     /** Counter for Queue Full errors */
     public counterErrQueueFull: number;
 
-    constructor(options: SerialPortOptions) {
+    constructor(transport: AdapterTransport) {
         super();
 
         this.frameContents = Buffer.alloc(EZSP_MAX_FRAME_LENGTH);
@@ -254,7 +254,7 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         this.callbackBuffalo = new EzspBuffalo(this.callbackFrameContents, 0);
 
         this.queue = new AsyncMutex();
-        this.ash = new UartAsh(options);
+        this.ash = new UartAsh(transport);
 
         this.version = 0;
         this.frameLength = 0;
