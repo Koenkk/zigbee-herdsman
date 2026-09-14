@@ -24,6 +24,9 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
     /** Access to the lower level, arch-specific binding. Mainly for tests. */
     serialPortBinding: OpenOptions["binding"] | undefined;
 
+    // TODO: WORKAROUND https://github.com/serialport/node-serialport/issues/3148
+    private node26SerialWorkaround: NodeJS.Timeout | undefined;
+
     constructor(options: TransportOptions) {
         super();
 
@@ -94,6 +97,9 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
         try {
             if (serialPort) {
                 serialPort.removeAllListeners();
+                clearInterval(this.node26SerialWorkaround);
+
+                this.node26SerialWorkaround = undefined;
 
                 if (serialPort.isOpen) {
                     await new Promise<void>((resolve, reject): void => {
@@ -190,7 +196,7 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
             const [nodeMajor = 0, nodeMinor = 0] = process.versions.node.split(".").map(Number);
 
             if (nodeMajor > 26 || (nodeMajor === 26 && nodeMinor > 3)) {
-                setInterval(() => undefined, 16).unref();
+                this.node26SerialWorkaround = setInterval(() => undefined, 16).unref();
             }
         }
         /* v8 ignore stop */
@@ -202,6 +208,9 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
 
             logger.info("Serial port opened", NS);
         } catch (error) {
+            clearInterval(this.node26SerialWorkaround);
+
+            this.node26SerialWorkaround = undefined;
             this.serialPort = undefined;
 
             serialPort.removeAllListeners();
@@ -261,6 +270,9 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
 
     private onClose(port: SerialPortStream | Socket, error?: boolean | Error): void {
         if (port === this.serialPort) {
+            clearInterval(this.node26SerialWorkaround);
+
+            this.node26SerialWorkaround = undefined;
             this.serialPort = undefined;
         } else if (port === this.socket) {
             this.socket = undefined;
