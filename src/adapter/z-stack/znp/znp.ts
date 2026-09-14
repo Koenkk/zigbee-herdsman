@@ -1,7 +1,7 @@
 import assert from "node:assert";
 import {EventEmitter} from "node:events";
 import {Waitress, wait} from "../../../utils";
-import {AsyncMutex} from "../../../utils/async-mutex";
+import {AsyncMutex, MutexCancelledError} from "../../../utils/async-mutex";
 import {logger} from "../../../utils/logger";
 import {ClusterId as ZdoClusterId} from "../../../zspec/zdo";
 import type {AdapterTransport} from "../../transport";
@@ -176,7 +176,7 @@ export class Znp extends EventEmitter<ZnpEventMap> {
 
         const object = ZpiObject.createRequest(subsystem, command, payload);
 
-        return this.queue.run<ZpiObject | undefined>(async () => {
+        const pending = this.queue.run<ZpiObject | undefined>(async () => {
             logger.debug(() => `--> ${object}`, NS);
 
             if (object.type === Type.SREQ) {
@@ -214,10 +214,16 @@ export class Znp extends EventEmitter<ZnpEventMap> {
             }
             /* v8 ignore stop */
         });
+        return pending.catch((error: unknown) => {
+            if (error instanceof MutexCancelledError && waiterID !== undefined) {
+                this.waitress.remove(waiterID);
+            }
+            throw error;
+        });
     }
 
     public requestZdo(clusterId: ZdoClusterId, payload: Buffer, waiterID?: number): Promise<void> {
-        return this.queue.run(async () => {
+        const pending = this.queue.run(async () => {
             const cmd = Definition[Subsystem.ZDO].find((c) => isMtCmdSreqZdo(c) && c.zdoClusterId === clusterId);
             assert(cmd, `Command for ZDO cluster ID '${clusterId}' not supported.`);
 
@@ -237,6 +243,12 @@ export class Znp extends EventEmitter<ZnpEventMap> {
                     `--> 'SREQ: ZDO - ${ZdoClusterId[clusterId]} - ${payload.toString("hex")}' failed with status '${statusDescription(result.payload.status)}'`,
                 );
             }
+        });
+        return pending.catch((error: unknown) => {
+            if (error instanceof MutexCancelledError && waiterID !== undefined) {
+                this.waitress.remove(waiterID);
+            }
+            throw error;
         });
     }
 

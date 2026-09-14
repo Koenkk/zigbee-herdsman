@@ -1,4 +1,5 @@
 import equal from "fast-deep-equal/es6";
+import {MutexCancelledError} from "../../utils/async-mutex";
 import {logger} from "../../utils/logger";
 import type * as Zcl from "../../zspec/zcl";
 import type {Endpoint} from "../model";
@@ -49,6 +50,11 @@ export class RequestQueue extends Set<Request> {
                     request.resolve(result);
                     this.delete(request);
                 } catch (error) {
+                    if (error instanceof MutexCancelledError) {
+                        request.reject(error);
+                        this.delete(request);
+                        break;
+                    }
                     logger.debug(
                         `Request Queue (${this.deviceIeeeAddress}/${this.id}): send failed, expires in ` +
                             `${(request.expires - now) / 1000} seconds (${(error as Error).message})`,

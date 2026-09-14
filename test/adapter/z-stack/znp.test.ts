@@ -6,6 +6,7 @@ import {Constants, Constants as UnpiConstants, Frame as UnpiFrame} from "../../.
 import {Znp, ZpiObject} from "../../../src/adapter/z-stack/znp";
 import BuffaloZnp from "../../../src/adapter/z-stack/znp/buffaloZnp";
 import ParameterType from "../../../src/adapter/z-stack/znp/parameterType";
+import {MutexCancelledError} from "../../../src/utils/async-mutex";
 import * as Zdo from "../../../src/zspec/zdo";
 import {duplicateArray, flushPromises, ieeeaAddr1, ieeeaAddr2} from "../../testUtils";
 
@@ -57,6 +58,40 @@ describe("ZNP", () => {
         await znp.open();
 
         expect(transportSetSpy).toHaveBeenCalledTimes(3);
+    });
+
+    it.each([
+        [false, false],
+        [false, true],
+        [true, false],
+        [true, true],
+    ])("Cancels queued requests on close and cleans up response waiters (ZDO=%s, waiter=%s)", async (zdo, withWaiter) => {
+        await znp.open();
+        requestSpy.mockRestore();
+        let release!: () => void;
+        // biome-ignore lint/complexity/useLiteralKeys: Access the private mutex for the shutdown regression.
+        const active = znp["queue"].run(
+            () =>
+                new Promise<void>((resolve) => {
+                    release = resolve;
+                }),
+        );
+        const response = withWaiter
+            ? znp.waitFor(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.AF, "dataConfirm", undefined, 1, undefined)
+            : undefined;
+        const result = zdo
+            ? znp.requestZdo(Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, Buffer.from([0x11, 0x11]), response?.ID)
+            : znp.request(UnpiConstants.Subsystem.SYS, "ping", {capabilities: 1}, response?.ID);
+        const rejection = expect(result).rejects.toBeInstanceOf(MutexCancelledError);
+        try {
+            await znp.close();
+            await rejection;
+            // biome-ignore lint/complexity/useLiteralKeys: Check private response waiter cleanup.
+            expect(znp["waitress"]["waiters"].size).toBe(0);
+        } finally {
+            release();
+            await active;
+        }
     });
 
     it("open and close", async () => {

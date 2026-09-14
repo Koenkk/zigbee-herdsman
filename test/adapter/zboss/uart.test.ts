@@ -1,13 +1,17 @@
 // biome-ignore-all lint/complexity/useLiteralKeys: Bracket access preserves type checking of private members in tests.
 
 import {expect, it, vi} from "vitest";
+import {AdapterTransport} from "../../../src/adapter";
 import {ZBOSS_FLAG_FIRST_FRAGMENT, ZBOSS_FLAG_LAST_FRAGMENT, ZBOSS_NCP_API_HL} from "../../../src/adapter/zboss/consts";
+import {ZBOSSDriver} from "../../../src/adapter/zboss/driver";
+import {CommandId} from "../../../src/adapter/zboss/enums";
 import {ZBOSSUart} from "../../../src/adapter/zboss/uart";
 import {crc8, crc16} from "../../../src/adapter/zboss/utils";
+import {MutexCancelledError} from "../../../src/utils/async-mutex";
 import {logger} from "../../../src/utils/logger";
 
 it("handles cancellation of a queued receive ACK during ZBOSS shutdown", async () => {
-    const uart = new ZBOSSUart({path: "/dev/ttyMOCK"});
+    const uart = new ZBOSSUart(new AdapterTransport({path: "/dev/ttyMOCK"}));
     const frameReceived = vi.fn();
     uart.on("frame", frameReceived);
     const log = vi.spyOn(logger, "debug");
@@ -29,7 +33,7 @@ it("handles cancellation of a queued receive ACK during ZBOSS shutdown", async (
     body.copy(packet, 7);
 
     try {
-        const received = uart["onPackage"](packet);
+        const received = uart["onFrame"](packet);
         const result = expect(received).resolves.toBeUndefined();
         expect(uart["queue"].count).toBe(1);
         await uart.stop();
@@ -39,6 +43,33 @@ it("handles cancellation of a queued receive ACK during ZBOSS shutdown", async (
     } finally {
         release();
         await active;
+        log.mockRestore();
+    }
+});
+
+it("propagates queued ZBOSS send cancellation and removes the driver's response waiter", async () => {
+    const driver = new ZBOSSDriver(new AdapterTransport({path: "/dev/ttyMOCK"}), {panID: 0x1234, channelList: [11]});
+    const open = vi.spyOn(driver.uart, "portOpen", "get").mockReturnValue(true);
+    const log = vi.spyOn(logger, "error");
+    let release!: () => void;
+    const active = driver.uart["queue"].run(
+        () =>
+            new Promise<void>((resolve) => {
+                release = resolve;
+            }),
+    );
+    try {
+        const command = driver.execCommand(CommandId.GET_MODULE_VERSION);
+        const rejection = expect(command).rejects.toBeInstanceOf(MutexCancelledError);
+        expect(driver.uart["queue"].count).toBe(1);
+        await driver.stop();
+        await rejection;
+        expect(driver["waitress"]["waiters"].size).toBe(0);
+        expect(log).not.toHaveBeenCalled();
+    } finally {
+        release();
+        await active;
+        open.mockRestore();
         log.mockRestore();
     }
 });

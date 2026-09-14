@@ -3,15 +3,16 @@
 import {Duplex} from "node:stream";
 import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
 import {EZSPAdapter} from "../../../src/adapter/ezsp/adapter/ezspAdapter";
+import * as consts from "../../../src/adapter/ezsp/driver/consts";
 import {EZSPFrameData} from "../../../src/adapter/ezsp/driver/ezsp";
 import {Frame, FrameType} from "../../../src/adapter/ezsp/driver/frame";
-import {Parser} from "../../../src/adapter/ezsp/driver/parser";
 import {EmberEUI64, EmberNetworkStatus, EmberNodeType, EmberStatus} from "../../../src/adapter/ezsp/driver/types";
-import {Writer} from "../../../src/adapter/ezsp/driver/writer";
+import {crc16ccitt} from "../../../src/adapter/ezsp/driver/utils";
+import {MutexCancelledError} from "../../../src/utils/async-mutex";
 import {logger} from "../../../src/utils/logger";
 import * as Zcl from "../../../src/zspec/zcl";
 
-vi.mock("../../../src/adapter/serialPort", () => ({SerialPort: vi.fn(() => new MockSerialPort())}));
+vi.mock("@serialport/stream", () => ({SerialPortStream: vi.fn(() => new MockSerialPort())}));
 
 const networkOptions = {panID: 0x1234, extendedPanID: [1, 2, 3, 4, 5, 6, 7, 8], channelList: [11], networkKey: Array(16).fill(0)};
 const ports: MockSerialPort[] = [];
@@ -20,42 +21,64 @@ const ports: MockSerialPort[] = [];
 class MockSerialPort extends Duplex {
     isOpen = false;
     dropUnicast = false;
+    closeDelay = 0;
     readonly unicasts: {destination: number; retry: boolean}[] = [];
     readonly commands: string[] = [];
-    private readonly parser = new Parser();
-    private readonly writer = new Writer();
     private protocolVersion = 4;
     private sequence = 0;
 
     constructor() {
         super();
         ports.push(this);
-        this.parser.on("parsed", (frame: Frame) => this.onFrame(frame));
-        this.writer.on("data", (data: Buffer) => this.push(data));
     }
 
-    asyncOpen(): Promise<void> {
+    open(callback: () => void): void {
         this.isOpen = true;
-        return Promise.resolve();
+        callback();
     }
 
-    asyncFlushAndClose(): Promise<void> {
+    close(callback: () => void): void {
+        if (this.closeDelay) {
+            setTimeout(() => {
+                this.isOpen = false;
+                this.emit("close");
+                callback();
+            }, this.closeDelay);
+            return;
+        }
         this.isOpen = false;
         this.emit("close");
-        return Promise.resolve();
+        callback();
     }
 
     override _read(): void {}
 
     override _write(data: Buffer, _encoding: BufferEncoding, callback: (error?: Error | null) => void): void {
-        this.parser.write(data);
+        // Each host write is one ASH frame. Decode only the simulated peer's wire input.
+        const decoded: number[] = [];
+        let escaped = false;
+        for (const byte of data) {
+            if (escaped) {
+                decoded.push(byte ^ consts.STUFF);
+                escaped = false;
+            } else if (byte === consts.ESCAPE) {
+                escaped = true;
+            } else if (byte !== consts.CANCEL && byte !== consts.XON && byte !== consts.XOFF) {
+                decoded.push(byte);
+            }
+        }
+        this.onFrame(Frame.fromBuffer(Buffer.from(decoded)));
         callback();
     }
 
     private respond(name: string, params: Record<string, unknown>, commandSequence: number, ack: number): void {
         const frame = new EZSPFrameData(name, false, params);
         const header = this.protocolVersion < 8 ? [commandSequence, 0x80, frame.id] : [commandSequence, 0x80, 0x01, frame.id & 0xff, frame.id >> 8];
-        this.writer.sendData(Frame.makeRandomizedBuffer(Buffer.concat([Buffer.from(header), frame.serialize()])), this.sequence, 0, ack);
+        const packet = [(this.sequence << 4) | ack, ...Frame.makeRandomizedBuffer(Buffer.concat([Buffer.from(header), frame.serialize()]))];
+        const crc = crc16ccitt(packet, 65535);
+        packet.push(crc >> 8, crc & 0xff);
+        const encoded = packet.flatMap((byte) => (consts.RESERVED.includes(byte) ? [consts.ESCAPE, byte ^ consts.STUFF] : [byte]));
+        this.push(Buffer.from([...encoded, consts.FLAG]));
         this.sequence = (this.sequence + 1) & 7;
     }
 
@@ -182,6 +205,64 @@ describe("EZSP recovery", () => {
         vi.restoreAllMocks();
     });
 
+    it.each([0, 10000])("does not retry or reset during shutdown with a queued watchdog (close delay %i ms)", async (closeDelay) => {
+        const started = adapter.start();
+        await vi.advanceTimersByTimeAsync(11000);
+        await expect(started).resolves.toBe("resumed");
+        const driver = adapter["driver"];
+        const ezsp = driver.ezsp;
+        ezsp["failures"] = 4;
+        const reset = vi.spyOn(driver, "reset");
+        const logErrors = vi.spyOn(logger, "error");
+        const port = ports[0];
+        port.closeDelay = closeDelay;
+        port.dropUnicast = true;
+        const frame = Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, false, undefined, 1, "on", "genOnOff", {}, {});
+        const errors: Error[] = [];
+        const commands = [0x1111, 0x2222].map((address) =>
+            adapter
+                .sendZclFrameToEndpoint(`0x${address.toString(16).padStart(16, "0")}`, address, 1, frame, 1000, false, false)
+                .catch((error: Error) => {
+                    errors.push(error);
+                }),
+        );
+        await vi.advanceTimersByTimeAsync(1001);
+        expect(ezsp["queue"].count).toBe(2); // second device command and watchdog
+        const stopping = adapter.stop();
+        await vi.advanceTimersByTimeAsync(15000);
+        await stopping;
+        expect(reset).not.toHaveBeenCalled();
+        expect(logErrors).not.toHaveBeenCalled();
+        expect(ports).toHaveLength(1);
+        expect(port.unicasts).toEqual([{destination: 0x1111, retry: false}]);
+        expect(errors).toEqual([new MutexCancelledError(), new MutexCancelledError()]);
+        await Promise.all(commands);
+        expect(adapter["queue"].count()).toBe(0);
+        expect(adapter["waitress"]["waiters"].size).toBe(0);
+        expect(ezsp["failures"]).toBe(4);
+    });
+
+    it("cancels an active command when shutdown occurs during the UART retry delay", async () => {
+        const started = adapter.start();
+        await vi.advanceTimersByTimeAsync(3500);
+        await started;
+        const port = ports[0];
+        port.dropUnicast = true;
+        const frame = Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 1, "on", "genOnOff", {}, {});
+        const command = adapter.sendZclFrameToEndpoint("0x0000000000001111", 0x1111, 1, frame, 1000, true, false);
+        const rejection = expect(command).rejects.toBeInstanceOf(MutexCancelledError);
+        await vi.advanceTimersByTimeAsync(4000);
+        const logErrors = vi.spyOn(logger, "error");
+        const reset = vi.spyOn(adapter["driver"], "reset");
+        await adapter.stop();
+        await vi.advanceTimersByTimeAsync(5000);
+        await rejection;
+        expect(port.unicasts).toEqual([{destination: 0x1111, retry: false}]);
+        expect(reset).not.toHaveBeenCalled();
+        expect(logErrors).not.toHaveBeenCalled();
+        expect(adapter["queue"].count()).toBe(0);
+    });
+
     it("releases device slots after both UART ACKs time out and completes commands after reconnect", async () => {
         const started = adapter.start();
         const logErrors = vi.spyOn(logger, "error");
@@ -198,11 +279,11 @@ describe("EZSP recovery", () => {
         const frame = Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, 1, "on", "genOnOff", {}, {});
         const send = (address: number) =>
             adapter.sendZclFrameToEndpoint(`0x${address.toString(16).padStart(16, "0")}`, address, 1, frame, 1000, true, false);
-        const results: string[] = [];
+        const results: unknown[] = [];
         const interrupted = [0x1111, 0x2222, 0x3333].map((address) =>
             send(address).then(
                 () => results.push("resolved"),
-                (error: Error) => results.push(error.message),
+                (error: Error) => results.push(error),
             ),
         );
 
@@ -217,7 +298,7 @@ describe("EZSP recovery", () => {
         await vi.advanceTimersByTimeAsync(4000);
         expect(reset).toHaveBeenCalledTimes(1);
         expect(firstPort.isOpen).toBe(false);
-        expect(results).toEqual(Array(3).fill("sendZclFrameToEndpointInternal error"));
+        expect(results).toEqual(Array.from({length: 3}, () => new MutexCancelledError()));
         await Promise.all(interrupted);
         expect(adapter["queue"].count()).toBe(0);
 
