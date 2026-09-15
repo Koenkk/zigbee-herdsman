@@ -509,27 +509,53 @@ export class OtaSession {
         promise: Promise<TZclFrame<"genOta", "upgradeEndRequest"> | TFoundationZclFrame<"defaultRsp">>;
         cancel: () => void;
     }): AsyncGenerator<OtaDataRequest | OtaUpgradeEndRequest | TFoundationZclFrame<"defaultRsp">> {
-        while (true) {
-            const imageBlockRequest = this.waitForOtaCommand<"imageBlockRequest">(
-                this.endpoint.ID,
-                IMAGE_BLOCK_REQUEST_ID,
-                IMAGE_BLOCK_RESPONSE_ID,
-                this.dataSettings.requestTimeout,
-            );
-            const imagePageRequest = this.waitForOtaCommand<"imagePageRequest">(
-                this.endpoint.ID,
-                IMAGE_PAGE_REQUEST_ID,
-                IMAGE_BLOCK_RESPONSE_ID,
-                this.dataSettings.requestTimeout,
-            );
-            const dataRequest = Promise.race([imageBlockRequest.promise, imagePageRequest.promise]);
-            const request = await Promise.race([dataRequest, upgradeEndRequest.promise]);
+        // Waiters are armed before each `yield`: a device can request the next block before the
+        // response send resolves (e.g. both frames delivered in one chunk on network-serial
+        // adapters), which would otherwise be dropped and cost a device-side retry timeout per
+        // block. Passive catch: the promises can settle while the generator is suspended.
+        let imageBlockRequest = this.waitForOtaCommand<"imageBlockRequest">(
+            this.endpoint.ID,
+            IMAGE_BLOCK_REQUEST_ID,
+            IMAGE_BLOCK_RESPONSE_ID,
+            this.dataSettings.requestTimeout,
+        );
+        let imagePageRequest = this.waitForOtaCommand<"imagePageRequest">(
+            this.endpoint.ID,
+            IMAGE_PAGE_REQUEST_ID,
+            IMAGE_BLOCK_RESPONSE_ID,
+            this.dataSettings.requestTimeout,
+        );
+        void imageBlockRequest.promise.catch(() => {});
+        void imagePageRequest.promise.catch(() => {});
 
+        try {
+            while (true) {
+                const request = await Promise.race([imageBlockRequest.promise, imagePageRequest.promise, upgradeEndRequest.promise]);
+
+                imageBlockRequest.cancel();
+                imagePageRequest.cancel();
+                imageBlockRequest = this.waitForOtaCommand<"imageBlockRequest">(
+                    this.endpoint.ID,
+                    IMAGE_BLOCK_REQUEST_ID,
+                    IMAGE_BLOCK_RESPONSE_ID,
+                    this.dataSettings.requestTimeout,
+                );
+                imagePageRequest = this.waitForOtaCommand<"imagePageRequest">(
+                    this.endpoint.ID,
+                    IMAGE_PAGE_REQUEST_ID,
+                    IMAGE_BLOCK_RESPONSE_ID,
+                    this.dataSettings.requestTimeout,
+                );
+                void imageBlockRequest.promise.catch(() => {});
+                void imagePageRequest.promise.catch(() => {});
+
+                // if this is `UPGRADE_END_REQUEST_ID`, `run()` will return and thus terminate the generator (no endless loop possible)
+                yield request;
+            }
+        } finally {
             imageBlockRequest.cancel();
             imagePageRequest.cancel();
-
-            // if this is `UPGRADE_END_REQUEST_ID`, `run()` will return and thus terminate the generator (no endless loop possible)
-            yield request;
+            upgradeEndRequest.cancel();
         }
     }
 
