@@ -66,7 +66,13 @@ export class DeconzAdapter extends Adapter {
             }
         }
 
-        this.driver = new Driver(serialPortOptions, networkOptions, this.getStoredBackup(), firmwareLog);
+        this.driver = new Driver(
+            serialPortOptions,
+            networkOptions,
+            this.getStoredBackup(),
+            firmwareLog,
+            adapterOptions.additionalCoordinatorEndpoints ?? [],
+        );
 
         this.driver.on("rxFrame", (frame) => processFrame(frame));
         this.openRequestsQueue = [];

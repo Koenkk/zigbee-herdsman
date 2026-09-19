@@ -122,6 +122,33 @@ describe("Adapter", () => {
         expect(adapter).toBeInstanceOf(cls);
     });
 
+    it("rejects additional coordinator endpoints for adapters that do not support them", async () => {
+        await expect(
+            Adapter.create(
+                {
+                    panID: 0x1a62,
+                    channelList: [11],
+                    extendedPanID: [0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd],
+                    networkKey: [1, 3, 5, 7, 9, 11, 13, 15, 0, 2, 4, 6, 8, 10, 12, 13],
+                },
+                {path: "/dev/ttyUSB0", adapter: "zstack"},
+                "test.db.backup",
+                {
+                    disableLED: false,
+                    additionalCoordinatorEndpoints: [
+                        {
+                            profileId: 0xc51e,
+                            deviceId: 0x0000,
+                            deviceVersion: 0x01,
+                            inputClusters: [],
+                            outputClusters: [],
+                        },
+                    ],
+                },
+            ),
+        ).rejects.toThrow("Adapter 'zstack' does not support additional coordinator endpoints");
+    });
+
     it("finds all devices", async () => {
         vi.spyOn(SerialPort, "list").mockResolvedValueOnce([
             Object.assign({pnpId: "deconz conbee ii", serialNumber: "", locationId: ""}, DECONZ_CONBEE_II),
