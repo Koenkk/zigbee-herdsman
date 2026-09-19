@@ -10426,6 +10426,107 @@ describe("Controller", () => {
         }).rejects.toThrow(new Zcl.StatusError(Zcl.Status.UNSUPPORTED_CLUSTER, "manuSpecificInovelli"));
     });
 
+    it("sends one group command with an explicit custom cluster supported by one member", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 179, ieeeAddr: "0x179"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 178, ieeeAddr: "0x178"});
+
+        const device = controller.getDeviceByIeeeAddr("0x179")!;
+        const device2 = controller.getDeviceByIeeeAddr("0x178")!;
+
+        device.addCustomCluster("manuSpecificInovelli", {
+            name: "manuSpecificInovelli",
+            ID: 64561,
+            manufacturerCode: Zcl.ManufacturerCode.V_MARK_ENTERPRISES_INC,
+            attributes: {},
+            commands: {
+                individualLedEffect: {
+                    name: "individualLedEffect",
+                    ID: 3,
+                    parameters: [
+                        {name: "led", type: Zcl.DataType.UINT8},
+                        {name: "effect", type: Zcl.DataType.UINT8},
+                        {name: "color", type: Zcl.DataType.UINT8},
+                        {name: "level", type: Zcl.DataType.UINT8},
+                        {name: "duration", type: Zcl.DataType.UINT8},
+                    ],
+                },
+            },
+            commandsResponse: {
+                bogus: {name: "bogus", ID: 1, parameters: [{name: "xyz", type: Zcl.DataType.UINT8}]},
+            },
+        });
+
+        const group = controller.createGroup(33);
+        group.addMember(device.getEndpoint(1)!);
+        group.addMember(device2.getEndpoint(1)!);
+        expect(group.customClusters[0].manuSpecificInovelli).toBeUndefined();
+        const cluster = device.customClusters.manuSpecificInovelli;
+        const payload = {led: 3, effect: 8, color: 100, level: 200, duration: 15};
+        for (const reversed of [false, true]) {
+            if (reversed) {
+                group.removeMember(device.getEndpoint(1)!);
+                group.addMember(device.getEndpoint(1)!);
+            }
+            for (const direction of [Zcl.Direction.CLIENT_TO_SERVER, Zcl.Direction.SERVER_TO_CLIENT]) {
+                mocksendZclFrameToGroup.mockClear();
+                mocksendZclFrameToEndpoint.mockClear();
+                const clientToServer = direction === Zcl.Direction.CLIENT_TO_SERVER;
+                await group.command(cluster, clientToServer ? "individualLedEffect" : "bogus", clientToServer ? payload : {xyz: 12}, {
+                    direction,
+                    manufacturerCode: cluster.manufacturerCode,
+                    transactionSequenceNumber: 123,
+                });
+
+                expect(mocksendZclFrameToGroup).toHaveBeenCalledTimes(1);
+                expect(mocksendZclFrameToGroup.mock.calls[0][0]).toBe(33);
+                expect(mocksendZclFrameToGroup.mock.calls[0][1].cluster.ID).toBe(64561);
+                expect(mocksendZclFrameToGroup.mock.calls[0][1].toBuffer()).toStrictEqual(
+                    Buffer.from(clientToServer ? "152f127b03030864c80f" : "1d2f127b010c", "hex"),
+                );
+                expect(mocksendZclFrameToEndpoint).not.toHaveBeenCalled();
+            }
+        }
+        for (const invalidCluster of [Zcl.Clusters.genOnOff, {...cluster, manufacturerCode: undefined}]) {
+            await expect(group.command(invalidCluster, "individualLedEffect", payload)).rejects.toThrow(
+                "Explicit group commands require a matching manufacturer-specific definition",
+            );
+        }
+        await expect(group.command(cluster, "individualLedEffect", payload, {manufacturerCode: 0x100b})).rejects.toThrow(
+            "Explicit group commands require a matching manufacturer-specific definition",
+        );
+        for (const unsupportedCluster of [
+            {...cluster, manufacturerCode: 0x100b},
+            {...cluster, ID: 0xfc32},
+            {...cluster, name: "unknown"},
+        ]) {
+            await expect(group.command(unsupportedCluster, "individualLedEffect", payload)).rejects.toThrow(
+                "No group endpoint supports the explicit command cluster",
+            );
+        }
+        const unsupportedGroup = controller.createGroup(34);
+        await expect(unsupportedGroup.command(cluster, "individualLedEffect", payload)).rejects.toThrow(
+            "No group endpoint supports the explicit command cluster",
+        );
+        unsupportedGroup.addMember(device2.getEndpoint(1)!);
+        device2.addCustomCluster("manuSpecificInovelli", cluster);
+        await expect(unsupportedGroup.command(cluster, "individualLedEffect", payload)).rejects.toThrow(
+            "No group endpoint supports the explicit command cluster",
+        );
+        const endpoint = device.getEndpoint(1)!;
+        for (const direction of [Zcl.Direction.CLIENT_TO_SERVER, Zcl.Direction.SERVER_TO_CLIENT]) {
+            const property = direction === Zcl.Direction.CLIENT_TO_SERVER ? "inputClusters" : "outputClusters";
+            const clusters = endpoint[property];
+            endpoint[property] = [];
+            await expect(group.command(cluster, "individualLedEffect", payload, {direction})).rejects.toThrow(
+                "No group endpoint supports the explicit command cluster",
+            );
+            endpoint[property] = clusters;
+        }
+        expect(mocksendZclFrameToGroup).toHaveBeenCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint).not.toHaveBeenCalled();
+    });
+
     it("Updates a device genBasic properties", async () => {
         await controller.start();
         expect(databaseContents().includes("0x129")).toBeFalsy();

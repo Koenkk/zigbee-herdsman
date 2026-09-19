@@ -2,7 +2,7 @@ import assert from "node:assert";
 import {logger} from "../../utils/logger";
 import * as Zcl from "../../zspec/zcl";
 import type {TFoundation} from "../../zspec/zcl/definition/clusters-types";
-import type {CustomClusters} from "../../zspec/zcl/definition/tstype";
+import type {Cluster, CustomClusters} from "../../zspec/zcl/definition/tstype";
 import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
 import type {
     ClusterOrRawAttributeKeys,
@@ -367,14 +367,41 @@ export class Group extends ZigbeeEntity {
         }
     }
 
+    /**
+     * Send a cluster-specific command to the group.
+     * An explicit manufacturer-specific Cluster requires at least one member to advertise its ID in the requested direction
+     * and its device to have a custom cluster registered with the same name, ID and manufacturer code.
+     * Any manufacturer code override must match the definition. Other members need not support the cluster.
+     * Supply explicit type arguments for custom command payload checking when passing a Cluster object.
+     */
     public async command<Cl extends number | string, Co extends number | string, Custom extends TCustomCluster | undefined = undefined>(
-        clusterKey: Cl,
+        clusterKey: Cl | Cluster,
         commandKey: Co,
         payload: ClusterOrRawPayload<Cl, Co, Custom>,
         options?: Options,
     ): Promise<undefined> {
         const customClusters = this.#customClusters[options?.direction === Zcl.Direction.SERVER_TO_CLIENT ? 1 : 0 /* default to CLIENT_TO_SERVER */];
-        const cluster = Zcl.Utils.getCluster(clusterKey, options?.manufacturerCode, customClusters);
+        const explicit = clusterKey !== null && typeof clusterKey === "object";
+        const cluster = explicit ? clusterKey : Zcl.Utils.getCluster(clusterKey, options?.manufacturerCode, customClusters);
+        if (explicit) {
+            if (
+                cluster.ID < 0xfc00 ||
+                !Number.isInteger(cluster.manufacturerCode) ||
+                (options?.manufacturerCode !== undefined && options.manufacturerCode !== cluster.manufacturerCode)
+            ) {
+                throw new Error("Explicit group commands require a matching manufacturer-specific definition");
+            }
+            const direction = options?.direction === Zcl.Direction.SERVER_TO_CLIENT ? "outputClusters" : "inputClusters";
+            const supported = this.members.some((member) => {
+                const definition = member.getDevice().customClusters[cluster.name];
+                return (
+                    member[direction].includes(cluster.ID) &&
+                    definition?.ID === cluster.ID &&
+                    definition.manufacturerCode === cluster.manufacturerCode
+                );
+            });
+            if (!supported) throw new Error("No group endpoint supports the explicit command cluster");
+        }
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
         const command =
             optionsWithDefaults.direction === Zcl.Direction.CLIENT_TO_SERVER
