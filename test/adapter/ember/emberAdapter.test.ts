@@ -1468,6 +1468,31 @@ describe("Ember Adapter Layer", () => {
             expect(spyEmit).toHaveBeenCalledWith("zdoResponse", Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE, zdoResponse);
         });
 
+        it("Handles bad ZDO response", async () => {
+            const spyResolveZDO = vi.spyOn(
+                // @ts-expect-error private
+                adapter.oneWaitress,
+                "resolveZDO",
+            );
+            const spyEmit = vi.spyOn(adapter, "emit");
+            const sender = 1234;
+            const apsFrame: EmberApsFrame = {
+                profileId: Zdo.ZDO_PROFILE_ID,
+                clusterId: Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE,
+                sourceEndpoint: Zdo.ZDO_ENDPOINT,
+                destinationEndpoint: Zdo.ZDO_ENDPOINT,
+                options: 0,
+                groupId: 0,
+                sequence: 0,
+            };
+
+            mockEzspEmitter.emit("zdoResponse", apsFrame, sender, Buffer.from([]));
+            await flushPromises();
+
+            expect(spyResolveZDO).toHaveBeenCalledTimes(0);
+            expect(spyEmit).toHaveBeenCalledTimes(0);
+        });
+
         it("Emits device announce event on ZDO END_DEVICE_ANNOUNCE", async () => {
             const spyResolveZDO = vi.spyOn(
                 // @ts-expect-error private
