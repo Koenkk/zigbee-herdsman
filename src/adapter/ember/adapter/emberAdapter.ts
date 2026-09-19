@@ -513,19 +513,23 @@ export class EmberAdapter extends Adapter {
      * @param messageContents The content of the response.
      */
     private onZDOResponse(apsFrame: EmberApsFrame, sender: NodeId, messageContents: Buffer): void {
-        const result = Zdo.Buffalo.readResponse(this.hasZdoMessageOverhead, apsFrame.clusterId, messageContents);
+        try {
+            const result = Zdo.Buffalo.readResponse(this.hasZdoMessageOverhead, apsFrame.clusterId, messageContents);
 
-        if (apsFrame.clusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE) {
-            // special case to properly resolve a NETWORK_ADDRESS_RESPONSE following a NETWORK_ADDRESS_REQUEST (based on EUI64 from ZDO payload)
-            // NOTE: if response has invalid status (no EUI64 available), response waiter will eventually time out
-            if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE>(result)) {
-                this.oneWaitress.resolveZDO(result[1].eui64, apsFrame, result);
+            if (apsFrame.clusterId === Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE) {
+                // special case to properly resolve a NETWORK_ADDRESS_RESPONSE following a NETWORK_ADDRESS_REQUEST (based on EUI64 from ZDO payload)
+                // NOTE: if response has invalid status (no EUI64 available), response waiter will eventually time out
+                if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.NETWORK_ADDRESS_RESPONSE>(result)) {
+                    this.oneWaitress.resolveZDO(result[1].eui64, apsFrame, result);
+                }
+            } else {
+                this.oneWaitress.resolveZDO(sender, apsFrame, result);
             }
-        } else {
-            this.oneWaitress.resolveZDO(sender, apsFrame, result);
-        }
 
-        this.emit("zdoResponse", apsFrame.clusterId, result);
+            this.emit("zdoResponse", apsFrame.clusterId, result);
+        } catch (error) {
+            logger.error(`Unable to parse ZDO response: ${error}`, NS);
+        }
     }
 
     /**
