@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.9.5](https://github.com/Koenkk/zigbee-herdsman/compare/v10.9.4...v10.9.5) (2026-09-19)
+
+
+### Bug Fixes
+
+* Ember: prevent possible crash on bad ZDO frame ([#1882](https://github.com/Koenkk/zigbee-herdsman/issues/1882)) ([e7cda46](https://github.com/Koenkk/zigbee-herdsman/commit/e7cda4681b3e0add7780928360b2e8a1aac4d8ad))
+
 ## [10.9.4](https://github.com/Koenkk/zigbee-herdsman/compare/v10.9.3...v10.9.4) (2026-09-14)
 
 

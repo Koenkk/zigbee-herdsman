@@ -84,7 +84,7 @@
         "clean": "rimraf temp coverage dist tsconfig.tsbuildinfo",
         "prepack": "pnpm run clean && pnpm run build"
     },
-    "version": "10.9.4",
+    "version": "10.9.5",
     "engines": {
         "node": "^22.2.0 || ^24 || <=26.2"
     }
