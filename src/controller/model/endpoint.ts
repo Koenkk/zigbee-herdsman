@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import type {Events as AdapterEvents} from "../../adapter";
+import {MutexCancelledError} from "../../utils/async-mutex";
 import {logger} from "../../utils/logger";
 import * as ZSpec from "../../zspec";
 import {BroadcastAddress} from "../../zspec/enums";
@@ -442,6 +443,9 @@ export class Endpoint extends ZigbeeEntity {
             logger.debug(`${logPrefix}send request`, NS);
             return await request.send();
         } catch (error) {
+            if (error instanceof MutexCancelledError) {
+                throw error;
+            }
             // If we got a failed transaction, the device is likely sleeping.
             // Queue for transmission later.
             logger.debug(`${logPrefix}queue request (transaction failed) (${error})`, NS);
