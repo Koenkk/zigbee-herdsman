@@ -199,6 +199,15 @@ export const DEFAULT_STACK_CONFIG: Readonly<StackConfig> = {
 const ALLOW_APP_KEY_REQUESTS = false;
 /** @see EzspConfigId.TRUST_CENTER_ADDRESS_CACHE_SIZE */
 const TRUST_CENTER_ADDRESS_CACHE_SIZE = 2;
+/**
+ * Statuses from `ezspSetMulticastTableEntry` that mean the NCP has no room left,
+ * as opposed to a transient failure worth retrying.
+ *
+ * `INVALID_STATE` is the one seen in practice on a full table (EmberZNet 8.x);
+ * the other two are included because they carry the same meaning and the exact
+ * status varies with firmware version.
+ */
+const MULTICAST_TABLE_FULL_STATUSES: readonly SLStatus[] = [SLStatus.INVALID_STATE, SLStatus.FULL, SLStatus.ALLOCATION_FAILED];
 
 /**
  * NOTE: This from SDK is currently ignored here because of issues in below links:
@@ -247,6 +256,16 @@ export class EmberAdapter extends Adapter {
      */
     private networkCache: NetworkCache;
     private multicastTable: EmberMulticastId[];
+    /**
+     * Groups the NCP has refused to store because its multicast table is full.
+     *
+     * The table is a COMPILE-TIME fixed size in the NCP firmware (8 entries by
+     * default across the Silabs SDK) and cannot be resized by the host, so a
+     * refusal for that reason is permanent. Remembering it here is what stops
+     * the registration being re-attempted on every subsequent message to the
+     * same group.
+     */
+    private multicastTableFull: Set<EmberMulticastId>;
 
     constructor(
         networkOptions: TsType.NetworkOptions,
@@ -273,6 +292,7 @@ export class EmberAdapter extends Adapter {
         this.networkCache = initNetworkCache();
         this.manufacturerCode = DEFAULT_MANUFACTURER_CODE; // will be set in NCP in initEzsp
         this.multicastTable = [];
+        this.multicastTableFull = new Set();
 
         this.stackConfig = this.loadStackConfig();
         this.queue = new Queue(this.adapterOptions.concurrent || 16); // ORed to avoid 0 (not checked in settings/queue constructor)
@@ -468,7 +488,8 @@ export class EmberAdapter extends Adapter {
                     type === EmberOutgoingMessageType.MULTICAST &&
                     apsFrame.destinationEndpoint === 0xff &&
                     apsFrame.groupId < EMBER_MIN_BROADCAST_ADDRESS &&
-                    !this.multicastTable.includes(apsFrame.groupId)
+                    !this.multicastTable.includes(apsFrame.groupId) &&
+                    !this.multicastTableFull.has(apsFrame.groupId)
                 ) {
                     // workaround for devices using multicast for state update (coordinator passthrough)
                     const tableIdx = this.multicastTable.length;
@@ -480,11 +501,15 @@ export class EmberAdapter extends Adapter {
                     // set immediately to avoid potential race
                     this.multicastTable.push(multicastEntry.multicastId);
 
+                    let failedStatus: SLStatus | undefined;
+
                     try {
                         await this.queue.execute<void>(async () => {
                             const status = await this.ezsp.ezspSetMulticastTableEntry(tableIdx, multicastEntry);
 
                             if (status !== SLStatus.OK) {
+                                failedStatus = status;
+
                                 throw new Error(
                                     `Failed to register group '${multicastEntry.multicastId}' in multicast table with status=${SLStatus[status]}.`,
                                 );
@@ -495,7 +520,22 @@ export class EmberAdapter extends Adapter {
                     } catch (error) {
                         // remove to allow retry on next occurrence
                         this.multicastTable.splice(tableIdx, 1);
-                        logger.error((error as Error).message, NS);
+
+                        if (failedStatus !== undefined && MULTICAST_TABLE_FULL_STATUSES.includes(failedStatus)) {
+                            // A full table will not empty by itself, so retrying is pointless: without this
+                            // the group is re-registered on EVERY message sent to it, for the life of the
+                            // process. Warn once, with the group named, then leave it alone.
+                            this.multicastTableFull.add(multicastEntry.multicastId);
+
+                            logger.warning(
+                                `Group '${multicastEntry.multicastId}' does not fit in the NCP's multicast table (${this.multicastTable.length} entries in use, status=${SLStatus[failedStatus]}). ` +
+                                    "The table size is fixed in the NCP firmware and cannot be changed by the host. " +
+                                    "This group will not receive group-addressed traffic; reduce the number of groups, or flash firmware built with a larger multicast table.",
+                                NS,
+                            );
+                        } else {
+                            logger.error((error as Error).message, NS);
+                        }
                     }
                 }
 

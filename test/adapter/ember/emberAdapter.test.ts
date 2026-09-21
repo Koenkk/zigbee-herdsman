@@ -1427,6 +1427,72 @@ describe("Ember Adapter Layer", () => {
             ).toStrictEqual(tableIdx); // not increased, entry was removed
         });
 
+        it("Gives up registering a group once the multicast table is full", async () => {
+            // The NCP's multicast table is a fixed size baked into its firmware (8 by
+            // default), so a refusal for lack of space is permanent. Before this was
+            // handled, the entry was dropped from the local table on every failure and
+            // re-attempted on the NEXT message to the group -- forever. One estate saw
+            // 7747 of 8489 log lines come from a single group that did not fit.
+            mockEzspSetMulticastTableEntry.mockResolvedValue(SLStatus.INVALID_STATE);
+
+            // @ts-expect-error private
+            const tableIdx = adapter.multicastTable.length;
+            const apsFrame = {
+                profileId: ZSpec.HA_PROFILE_ID,
+                clusterId: Zcl.Clusters.genBasic.ID,
+                sourceEndpoint: 1,
+                destinationEndpoint: 0xff,
+                options: 0,
+                groupId: 123,
+                sequence: 0,
+            };
+
+            for (let i = 0; i < 5; i++) {
+                mockEzspEmitter.emit("messageSent", SLStatus.OK, EmberOutgoingMessageType.MULTICAST, 1234, apsFrame, 1);
+                await flushPromises();
+            }
+
+            // Tried once, then left alone -- not once per message.
+            expect(mockEzspSetMulticastTableEntry).toHaveBeenCalledTimes(1);
+            expect(
+                // @ts-expect-error private
+                adapter.multicastTable.length,
+            ).toStrictEqual(tableIdx);
+            // @ts-expect-error private
+            expect(adapter.multicastTableFull.has(123)).toBeTruthy();
+
+            // One actionable warning, naming the group -- not an error per message.
+            expect(loggerSpies.warning).toHaveBeenCalledTimes(1);
+            expect(loggerSpies.warning).toHaveBeenCalledWith(expect.stringContaining("Group '123' does not fit"), "zh:ember");
+
+            mockEzspSetMulticastTableEntry.mockResolvedValue(SLStatus.OK);
+        });
+
+        it("Still retries registering a group after a transient failure", async () => {
+            // Only a full table is permanent; anything else must keep the old behaviour.
+            mockEzspSetMulticastTableEntry.mockResolvedValue(SLStatus.FAIL);
+
+            const apsFrame = {
+                profileId: ZSpec.HA_PROFILE_ID,
+                clusterId: Zcl.Clusters.genBasic.ID,
+                sourceEndpoint: 1,
+                destinationEndpoint: 0xff,
+                options: 0,
+                groupId: 124,
+                sequence: 0,
+            };
+
+            for (let i = 0; i < 3; i++) {
+                mockEzspEmitter.emit("messageSent", SLStatus.OK, EmberOutgoingMessageType.MULTICAST, 1234, apsFrame, 1);
+                await flushPromises();
+            }
+
+            expect(mockEzspSetMulticastTableEntry).toHaveBeenCalledTimes(3);
+            expect(loggerSpies.error).toHaveBeenCalledTimes(3);
+
+            mockEzspSetMulticastTableEntry.mockResolvedValue(SLStatus.OK);
+        });
+
         it("Emits network address event on ZDO NETWORK_ADDRESS_RESPONSE", async () => {
             const spyResolveZDO = vi.spyOn(
                 // @ts-expect-error private
