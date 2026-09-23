@@ -4301,6 +4301,166 @@ describe("Controller", () => {
         expect(ep4.binds).toStrictEqual([{target: group, cluster: expect.objectContaining({ID: Zcl.Clusters.genAlarms.ID})}]);
     });
 
+    it("Device verifies bindings it already knows about", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 162, ieeeAddr: "0x00000000000162"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 161, ieeeAddr: "0x00000000000161"});
+        const group = controller.createGroup(0x1234);
+        const targetDevice = controller.getDeviceByIeeeAddr("0x00000000000162")!;
+        const device = controller.getDeviceByIeeeAddr("0x00000000000161")!;
+        const ep1 = device.endpoints.find((ep) => ep.ID === 1)!;
+        const ep4 = device.endpoints.find((ep) => ep.ID === 4)!;
+
+        ep1.addBinding(Zcl.Clusters.genBasic.ID, targetDevice.getEndpoint(2)!);
+        ep4.addBinding(Zcl.Clusters.genAlarms.ID, 0x1234);
+
+        mockAdapterSendZdo.mockImplementationOnce(() => [
+            Zdo.Status.SUCCESS,
+            {
+                bindingTableEntries: 2,
+                startIndex: 0,
+                entryList: [
+                    {
+                        sourceEui64: "0x00000000000161",
+                        sourceEndpoint: 1,
+                        clusterId: Zcl.Clusters.genBasic.ID,
+                        destAddrMode: 0x03,
+                        dest: "0x00000000000162",
+                        destEndpoint: 2,
+                    },
+                    {sourceEui64: "0x00000000000161", sourceEndpoint: 4, clusterId: Zcl.Clusters.genAlarms.ID, destAddrMode: 0x01, dest: 0x1234},
+                ],
+            },
+        ]);
+
+        const result = await device.verifyBindings();
+        const ep1Diff = result.find((diff) => diff.endpoint === ep1)!;
+        const ep4Diff = result.find((diff) => diff.endpoint === ep4)!;
+
+        expect(ep1Diff.bindings).toStrictEqual([
+            {target: targetDevice.getEndpoint(2), cluster: expect.objectContaining({ID: Zcl.Clusters.genBasic.ID})},
+        ]);
+        expect(ep1Diff.added).toStrictEqual([]);
+        expect(ep1Diff.removed).toStrictEqual([]);
+        expect(ep1Diff.unreportableClusters).toStrictEqual([]);
+
+        expect(ep4Diff.bindings).toStrictEqual([{target: group, cluster: expect.objectContaining({ID: Zcl.Clusters.genAlarms.ID})}]);
+        expect(ep4Diff.added).toStrictEqual([]);
+        expect(ep4Diff.removed).toStrictEqual([]);
+    });
+
+    it("Device verifies bindings it does not know about", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 162, ieeeAddr: "0x00000000000162"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 161, ieeeAddr: "0x00000000000161"});
+        const targetDevice = controller.getDeviceByIeeeAddr("0x00000000000162")!;
+        const device = controller.getDeviceByIeeeAddr("0x00000000000161")!;
+        const ep1 = device.endpoints.find((ep) => ep.ID === 1)!;
+
+        mockAdapterSendZdo.mockImplementationOnce(() => [
+            Zdo.Status.SUCCESS,
+            {
+                bindingTableEntries: 1,
+                startIndex: 0,
+                entryList: [
+                    {
+                        sourceEui64: "0x00000000000161",
+                        sourceEndpoint: 1,
+                        clusterId: Zcl.Clusters.genBasic.ID,
+                        destAddrMode: 0x03,
+                        dest: "0x00000000000162",
+                        destEndpoint: 2,
+                    },
+                ],
+            },
+        ]);
+
+        const result = await device.verifyBindings();
+        const ep1Diff = result.find((diff) => diff.endpoint === ep1)!;
+
+        expect(ep1Diff.added).toStrictEqual([
+            {target: targetDevice.getEndpoint(2), cluster: expect.objectContaining({ID: Zcl.Clusters.genBasic.ID})},
+        ]);
+        expect(ep1Diff.removed).toStrictEqual([]);
+    });
+
+    it("Device verifies bindings the device no longer holds", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 162, ieeeAddr: "0x00000000000162"});
+        await mockAdapterEvents.deviceJoined({networkAddress: 161, ieeeAddr: "0x00000000000161"});
+        const targetDevice = controller.getDeviceByIeeeAddr("0x00000000000162")!;
+        const device = controller.getDeviceByIeeeAddr("0x00000000000161")!;
+        const ep1 = device.endpoints.find((ep) => ep.ID === 1)!;
+
+        ep1.addBinding(Zcl.Clusters.genBasic.ID, targetDevice.getEndpoint(2)!);
+
+        mockAdapterSendZdo.mockImplementationOnce(() => [Zdo.Status.SUCCESS, {bindingTableEntries: 0, startIndex: 0, entryList: []}]);
+
+        const result = await device.verifyBindings();
+        const ep1Diff = result.find((diff) => diff.endpoint === ep1)!;
+
+        expect(ep1Diff.bindings).toStrictEqual([]);
+        expect(ep1Diff.added).toStrictEqual([]);
+        expect(ep1Diff.removed).toStrictEqual([
+            {target: targetDevice.getEndpoint(2), cluster: expect.objectContaining({ID: Zcl.Clusters.genBasic.ID})},
+        ]);
+    });
+
+    it("Device reports clusters that cannot report for lack of a binding to the coordinator", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 161, ieeeAddr: "0x00000000000161"});
+        const coordinator = Device.byType("Coordinator")[0];
+        const device = controller.getDeviceByIeeeAddr("0x00000000000161")!;
+        const ep1 = device.endpoints.find((ep) => ep.ID === 1)!;
+
+        // @ts-expect-error private
+        ep1._configuredReportings = [
+            {cluster: Zcl.Clusters.genOnOff.ID, attrId: Zcl.Clusters.genOnOff.attributes.onOff.ID, minRepIntval: 1, maxRepIntval: 10, repChange: 1},
+            {
+                cluster: Zcl.Clusters.genBasic.ID,
+                attrId: Zcl.Clusters.genBasic.attributes.zclVersion.ID,
+                minRepIntval: 1,
+                maxRepIntval: 10,
+                repChange: 1,
+            },
+        ];
+
+        mockAdapterSendZdo.mockImplementationOnce(() => [
+            Zdo.Status.SUCCESS,
+            {
+                bindingTableEntries: 2,
+                startIndex: 0,
+                entryList: [
+                    {
+                        sourceEui64: "0x00000000000161",
+                        sourceEndpoint: 1,
+                        clusterId: Zcl.Clusters.genBasic.ID,
+                        destAddrMode: 0x03,
+                        dest: coordinator.ieeeAddr,
+                        destEndpoint: 1,
+                    },
+                    // a group binding does not let the device report to the coordinator
+                    {sourceEui64: "0x00000000000161", sourceEndpoint: 1, clusterId: Zcl.Clusters.genOnOff.ID, destAddrMode: 0x01, dest: 0x1234},
+                ],
+            },
+        ]);
+
+        const result = await device.verifyBindings();
+        const ep1Diff = result.find((diff) => diff.endpoint === ep1)!;
+
+        expect(ep1Diff.unreportableClusters).toStrictEqual([expect.objectContaining({ID: Zcl.Clusters.genOnOff.ID})]);
+    });
+
+    it("Device throws when the binding table cannot be verified", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 161, ieeeAddr: "0x00000000000161"});
+        const device = controller.getDeviceByIeeeAddr("0x00000000000161")!;
+
+        mockAdapterSendZdo.mockImplementationOnce(() => [Zdo.Status.NOT_SUPPORTED, undefined]);
+
+        await expect(device.verifyBindings()).rejects.toThrow(`Status 'NOT_SUPPORTED'`);
+    });
+
     it("Device clears all bindings", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 161, ieeeAddr: "0x00000000000161"});
