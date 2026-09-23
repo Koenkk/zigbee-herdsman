@@ -7,6 +7,12 @@ import slip from "slip";
 import {Buffalo} from "../../../buffalo";
 import type {Backup} from "../../../models";
 import {logger} from "../../../utils/logger";
+import {
+    type AdditionalCoordinatorEndpoint,
+    assignCoordinatorEndpointIds,
+    type CoordinatorEndpoint,
+    validateCoordinatorEndpoints,
+} from "../../coordinatorEndpoints";
 import {SerialPort} from "../../serialPort";
 import type {NetworkOptions, SerialPortOptions} from "../../tstype";
 import {isTcpPath, parseTcpPath} from "../../utils";
@@ -79,6 +85,65 @@ interface CommandResult {
 
 type DriverEventData = number | CommandResult;
 
+const DECONZ_HA_ENDPOINT: CoordinatorEndpoint = {
+    name: "deconzHomeAutomation",
+    endpoint: 0x01,
+    profileId: 0x0104,
+    deviceId: 0x0005,
+    deviceVersion: 0x01,
+    inputClusters: [0x0000, 0x0006, 0x000a, 0x0019, 0x0501],
+    outputClusters: [0x0001, 0x0020, 0x0500, 0x0502],
+};
+
+const DECONZ_GREEN_POWER_ENDPOINT: CoordinatorEndpoint = {
+    name: "deconzGreenPower",
+    endpoint: 0xf2,
+    profileId: 0xa1e0,
+    deviceId: 0x0064,
+    deviceVersion: 0x01,
+    inputClusters: [],
+    outputClusters: [0x0021],
+};
+
+function deconzEndpointParameter(index: number, endpoint: CoordinatorEndpoint): Buffer {
+    const parameter = Buffer.alloc(9 + endpoint.inputClusters.length * 2 + endpoint.outputClusters.length * 2);
+    let offset = parameter.writeUInt8(index, 0);
+    offset = parameter.writeUInt8(endpoint.endpoint, offset);
+    offset = parameter.writeUInt16LE(endpoint.profileId, offset);
+    offset = parameter.writeUInt16LE(endpoint.deviceId, offset);
+    offset = parameter.writeUInt8(endpoint.deviceVersion, offset);
+    offset = parameter.writeUInt8(endpoint.inputClusters.length, offset);
+
+    for (const cluster of endpoint.inputClusters) {
+        offset = parameter.writeUInt16LE(cluster, offset);
+    }
+
+    offset = parameter.writeUInt8(endpoint.outputClusters.length, offset);
+
+    for (const cluster of endpoint.outputClusters) {
+        offset = parameter.writeUInt16LE(cluster, offset);
+    }
+
+    return parameter;
+}
+
+export function fixedDeconzEndpointParameters(additionalCoordinatorEndpoints: readonly AdditionalCoordinatorEndpoint[] = []): Buffer[] {
+    const adapterEndpoints = assignCoordinatorEndpointIds(additionalCoordinatorEndpoints, [
+        DECONZ_HA_ENDPOINT.endpoint,
+        DECONZ_GREEN_POWER_ENDPOINT.endpoint,
+    ]);
+
+    if (adapterEndpoints.length > 1) {
+        throw new Error("deCONZ only supports one additional coordinator endpoint because STK_ENDPOINT slot 2 is unsupported");
+    }
+
+    // deCONZ/ConBee only supports STK_ENDPOINT slots 0 and 1. Enabling an additional endpoint
+    // is therefore an explicit tradeoff: slot 1 is either Green Power or the requested endpoint.
+    const endpoints = [DECONZ_HA_ENDPOINT, adapterEndpoints[0] ?? DECONZ_GREEN_POWER_ENDPOINT];
+    validateCoordinatorEndpoints(endpoints);
+    return endpoints.map((endpoint, index) => deconzEndpointParameter(index, endpoint));
+}
+
 class Driver extends events.EventEmitter {
     private serialPort?: SerialPort;
     private serialPortOptions: SerialPortOptions;
@@ -121,13 +186,21 @@ class Driver extends events.EventEmitter {
     public paramEndpoint1: Buffer | undefined;
     public fixParamEndpoint0: Buffer;
     public fixParamEndpoint1: Buffer;
+    public fixParamEndpoints: Buffer[];
     public paramNwkUpdateId = 0;
     public paramChannelMask = 0;
     public paramProtocolVersion = 0;
     public paramFrameCounter = 0;
     public paramApsUseExtPanid = 0n;
+    public paramEndpoints: Array<Buffer | undefined>;
 
-    public constructor(serialPortOptions: SerialPortOptions, networkOptions: NetworkOptions, backup: Backup | undefined, firmwareLog: string[]) {
+    public constructor(
+        serialPortOptions: SerialPortOptions,
+        networkOptions: NetworkOptions,
+        backup: Backup | undefined,
+        firmwareLog: string[],
+        additionalCoordinatorEndpoints: readonly AdditionalCoordinatorEndpoint[] = [],
+    ) {
         super();
         this.seqNumber = 0;
         this.configChanged = 0;
@@ -139,49 +212,11 @@ class Driver extends events.EventEmitter {
         this.writer = new Writer();
         this.parser = new Parser();
 
-        this.fixParamEndpoint0 = Buffer.from([
-            0x00, // index
-            0x01, // endpoint,
-            0x04, // profileId
-            0x01,
-            0x05, // deviceId
-            0x00,
-            0x01, // deviceVersion
-            0x05, // in cluster count
-            0x00, // basic
-            0x00,
-            0x06, // on/off
-            0x00,
-            0x0a, // time
-            0x00,
-            0x19, // ota
-            0x00,
-            0x01, // ias ace
-            0x05,
-            0x04, // out cluster count
-            0x01, // power configuration
-            0x00,
-            0x20, // poll control
-            0x00,
-            0x00, // ias zone
-            0x05,
-            0x02, // ias wd
-            0x05,
-        ]);
-
-        this.fixParamEndpoint1 = Buffer.from([
-            0x01, // index
-            0xf2, // endpoint,
-            0xe0, // profileId
-            0xa1,
-            0x64, // deviceId
-            0x00,
-            0x01, // deviceVersion
-            0x00, // in cluster count
-            0x01, // out cluster count
-            0x21, // green power
-            0x00,
-        ]);
+        const fixedEndpointParameters = fixedDeconzEndpointParameters(additionalCoordinatorEndpoints);
+        this.fixParamEndpoints = fixedEndpointParameters;
+        this.fixParamEndpoint0 = fixedEndpointParameters[0];
+        this.fixParamEndpoint1 = fixedEndpointParameters[1];
+        this.paramEndpoints = [];
 
         this.tickTimer = setInterval(() => {
             this.tick();
@@ -420,14 +455,14 @@ class Driver extends events.EventEmitter {
             return false;
         }
 
-        if (!this.paramEndpoint0 || this.fixParamEndpoint0.compare(this.paramEndpoint0) !== 0) {
-            logger.debug("Endpoint[0] doesn't match configuration", NS);
-            return false;
-        }
+        for (let index = 0; index < this.fixParamEndpoints.length; index++) {
+            const expectedEndpoint = this.fixParamEndpoints[index];
+            const configuredEndpoint = this.paramEndpoints[index];
 
-        if (!this.paramEndpoint1 || this.fixParamEndpoint1.compare(this.paramEndpoint1) !== 0) {
-            logger.debug("Endpoint[1] doesn't match configuration", NS);
-            return false;
+            if (!configuredEndpoint || expectedEndpoint.compare(configuredEndpoint) !== 0) {
+                logger.debug(`Endpoint[${index}] doesn't match configuration`, NS);
+                return false;
+            }
         }
 
         if ((this.deviceStatus & DEV_STATUS_NET_STATE_MASK) !== NetworkState.Connected) {
@@ -586,14 +621,14 @@ class Driver extends events.EventEmitter {
         }
 
         // check current endpoint configuration
-        if (!this.paramEndpoint0 || this.fixParamEndpoint0.compare(this.paramEndpoint0) !== 0) {
-            this.paramEndpoint0 = this.fixParamEndpoint0;
-            await this.writeParameterRequest(ParamId.STK_ENDPOINT, this.paramEndpoint0);
-        }
+        for (let index = 0; index < this.fixParamEndpoints.length; index++) {
+            const expectedEndpoint = this.fixParamEndpoints[index];
+            const configuredEndpoint = this.paramEndpoints[index];
 
-        if (!this.paramEndpoint1 || this.fixParamEndpoint1.compare(this.paramEndpoint1) !== 0) {
-            this.paramEndpoint1 = this.fixParamEndpoint1;
-            await this.writeParameterRequest(ParamId.STK_ENDPOINT, this.paramEndpoint1);
+            if (!configuredEndpoint || expectedEndpoint.compare(configuredEndpoint) !== 0) {
+                this.paramEndpoints[index] = expectedEndpoint;
+                await this.writeParameterRequest(ParamId.STK_ENDPOINT, expectedEndpoint);
+            }
         }
 
         // now reconnect, this will also store configuration in nvram
@@ -621,12 +656,11 @@ class Driver extends events.EventEmitter {
                 this.readParameterRequest(ParamId.APS_CHANNEL_MASK),
                 this.readParameterRequest(ParamId.STK_PROTOCOL_VERSION),
                 this.readParameterRequest(ParamId.STK_FRAME_COUNTER),
-                this.readParameterRequest(ParamId.STK_ENDPOINT, Buffer.from([0])),
-                this.readParameterRequest(ParamId.STK_ENDPOINT, Buffer.from([1])),
+                ...this.fixParamEndpoints.map((_, index) => this.readParameterRequest(ParamId.STK_ENDPOINT, Buffer.from([index]))),
             ])
                 .then(
                     ([
-                        _watchdog,
+                        _,
                         fwVersion,
                         _deviceState,
                         mac,
@@ -639,8 +673,7 @@ class Driver extends events.EventEmitter {
                         channelMask,
                         protocolVersion,
                         frameCounter,
-                        ep0,
-                        ep1,
+                        ...endpointParameters
                     ]) => {
                         this.paramFirmwareVersion = fwVersion;
                         this.paramCurrentChannel = currentChannel as number;
@@ -655,13 +688,13 @@ class Driver extends events.EventEmitter {
                         if (frameCounter !== null) {
                             this.paramFrameCounter = frameCounter as number;
                         }
-                        if (ep0 !== null) {
-                            this.paramEndpoint0 = ep0 as Buffer;
+                        for (const [index, endpointParameter] of endpointParameters.entries()) {
+                            if (endpointParameter !== null) {
+                                this.paramEndpoints[index] = endpointParameter as Buffer;
+                            }
                         }
-
-                        if (ep1 !== null) {
-                            this.paramEndpoint1 = ep1 as Buffer;
-                        }
+                        this.paramEndpoint0 = this.paramEndpoints[0];
+                        this.paramEndpoint1 = this.paramEndpoints[1];
 
                         // console.log({fwVersion, mac, panid, apsUseExtPanid, currentChannel, nwkKey, nwkUpdateId, channelMask, protocolVersion, frameCounter});
 

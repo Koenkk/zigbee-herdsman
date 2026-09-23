@@ -30,6 +30,7 @@ export interface AdapterOptions {
     disableLED: boolean;
     transmitPower?: number;
     forceStartWithInconsistentAdapterConfiguration?: boolean;
+    additionalCoordinatorEndpoints?: import("./coordinatorEndpoints").AdditionalCoordinatorEndpoint[];
 }
 
 export interface CoordinatorVersion {
