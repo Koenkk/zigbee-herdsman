@@ -1,5 +1,4 @@
 import {MockBinding, type MockPortBinding} from "@serialport/binding-mock";
-import type {OpenOptions} from "@serialport/stream";
 import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
 import {EzspStatus} from "../../../src/adapter/ember/enums";
 import {EzspBuffalo} from "../../../src/adapter/ember/ezsp/buffalo";
@@ -19,6 +18,7 @@ import {CONFIG_TX_K, UartAsh} from "../../../src/adapter/ember/uart/ash";
 import {EZSP_HOST_RX_POOL_SIZE, TX_POOL_BUFFERS} from "../../../src/adapter/ember/uart/consts";
 import {EzspBuffer} from "../../../src/adapter/ember/uart/queues";
 import {lowByte} from "../../../src/adapter/ember/utils/math";
+import {AdapterTransport} from "../../../src/adapter/transport";
 import {wait} from "../../../src/utils/";
 import {ASH_ACK_FIRST_BYTES, adapterSONOFFDongleE, RECD_RSTACK_BYTES, SEND_ACK_FIRST_BYTES, SEND_RST_BYTES} from "./consts";
 
@@ -35,14 +35,16 @@ const mockSerialPortErrorEvent = vi.fn();
 
 const mocks = [mockSerialPortCloseEvent, mockSerialPortErrorEvent];
 
+const ADAPTER_PATH = "/dev/ttyACM0";
+
 describe("Ember UART ASH Protocol", () => {
-    const openOpts: OpenOptions<MockPortBinding> = {path: "/dev/ttyACM0", baudRate: 115200, binding: MockBinding};
+    let transport: AdapterTransport;
     /**
      * Mock binding provides:
      *
-     * uartAsh.serialPort.port.recording => Buffer of all data written if record==true
+     * (transport.serialPortInstance!.port as MockPortBinding).recording => Buffer of all data written if record==true
      *
-     * uartAsh.serialPort.port.lastWrite => Buffer of last write
+     * (transport.serialPortInstance!.port as MockPortBinding).lastWrite => Buffer of last write
      */
     let uartAsh: UartAsh;
     let buffalo: EzspBuffalo;
@@ -62,9 +64,11 @@ describe("Ember UART ASH Protocol", () => {
         }
 
         frameSequence = 0;
-        uartAsh = new UartAsh(openOpts);
+        transport = new AdapterTransport({path: ADAPTER_PATH, baudRate: 100, rtscts: true});
+        transport.serialPortBinding = MockBinding;
+        uartAsh = new UartAsh(transport);
         buffalo = new EzspBuffalo(Buffer.alloc(EZSP_MAX_FRAME_LENGTH));
-        MockBinding.createPort("/dev/ttyACM0", {/*echo: true,*/ record: true, /*readyData: emitRSTACK,*/ ...adapterSONOFFDongleE});
+        MockBinding.createPort(ADAPTER_PATH, {/*echo: true,*/ record: true, /*readyData: emitRSTACK,*/ ...adapterSONOFFDongleE});
 
         buffalo.setPosition(0);
     });
@@ -97,7 +101,7 @@ describe("Ember UART ASH Protocol", () => {
         expect(uartAsh.rxFree.link!.data.length).toStrictEqual(EZSP_MAX_FRAME_LENGTH);
 
         for (const c in uartAsh.counters) {
-            expect(uartAsh.counters[c]).toStrictEqual(0);
+            expect(uartAsh.counters[c as keyof typeof uartAsh.counters]).toStrictEqual(0);
         }
 
         // this is mostly Queues testing, but make sure it works in "real" context
@@ -131,43 +135,28 @@ describe("Ember UART ASH Protocol", () => {
     });
 
     it("Reaches CONNECTED state", async () => {
-        //@ts-expect-error private
-        const initPortSpy = vi.spyOn(uartAsh, "initPort");
         const resetNcpSpy = vi.spyOn(uartAsh, "resetNcp");
         const sendExecSpy = vi.spyOn(uartAsh, "sendExec");
-        //@ts-expect-error private
-        const onPortCloseSpy = vi.spyOn(uartAsh, "onPortClose");
-        //@ts-expect-error private
-        const onPortErrorSpy = vi.spyOn(uartAsh, "onPortError");
 
         const resetResult = await uartAsh.resetNcp();
 
-        //@ts-expect-error private
-        expect(uartAsh.serialPort.settings.binding).toBe(MockBinding); // just making sure mock was registered
+        expect(transport.serialPortBinding).toBe(MockBinding); // just making sure mock was registered
         expect(resetResult).toStrictEqual(EzspStatus.SUCCESS);
         expect(resetNcpSpy).toHaveBeenCalledTimes(1);
-        expect(initPortSpy).toHaveBeenCalledTimes(1);
         //@ts-expect-error private
         expect(uartAsh.flags).toStrictEqual(48); // RST|CAN
-        //@ts-expect-error private
-        expect(uartAsh.serialPort).toBeDefined();
-        //@ts-expect-error private
-        expect(uartAsh.writer).toBeDefined();
-        //@ts-expect-error private
-        expect(uartAsh.parser).toBeDefined();
-        expect(uartAsh.portOpen).toBeTruthy();
+        expect(transport.serialPortInstance).toBeDefined();
+        expect(transport.isOpen).toBeTruthy();
 
-        //@ts-expect-error private
-        vi.spyOn(uartAsh.serialPort, "asyncFlush").mockImplementationOnce(vi.fn());
-        //@ts-expect-error private
-        uartAsh.serialPort.port.emitData(Buffer.from(RECD_RSTACK_BYTES));
+        (transport.serialPortInstance!.port as MockPortBinding).emitData(Buffer.from(RECD_RSTACK_BYTES));
         const startResult = await uartAsh.start();
 
         expect(startResult).toStrictEqual(EzspStatus.SUCCESS);
         expect(sendExecSpy).toHaveBeenCalled();
         await new Promise(setImmediate); // flush
-        //@ts-expect-error private
-        expect(uartAsh.serialPort.port.recording).toStrictEqual(Buffer.from([...SEND_RST_BYTES, ...ASH_ACK_FIRST_BYTES]));
+        expect((transport.serialPortInstance!.port as MockPortBinding).recording).toStrictEqual(
+            Buffer.from([...SEND_RST_BYTES, ...ASH_ACK_FIRST_BYTES]),
+        );
         expect(uartAsh.connected).toBeTruthy();
         expect(uartAsh.counters.txAllFrames).toStrictEqual(2); // RST + ACK
         expect(uartAsh.counters.txAckFrames).toStrictEqual(1); // post-RSTACK ACK
@@ -175,14 +164,11 @@ describe("Ember UART ASH Protocol", () => {
 
         for (const key in uartAsh.counters) {
             if (key !== "txAllFrames" && key !== "rxAllFrames" && key !== "txAckFrames") {
-                expect(uartAsh.counters[key]).toStrictEqual(0);
+                expect(uartAsh.counters[key as keyof typeof uartAsh.counters]).toStrictEqual(0);
             }
         }
 
         await uartAsh.stop();
-
-        expect(onPortErrorSpy).toHaveBeenCalledTimes(0);
-        expect(onPortCloseSpy).toHaveBeenCalledTimes(1);
     });
 
     it.skip("Resets but failed to start b/c error in RSTACK frame returned by NCP", async () => {
@@ -200,10 +186,7 @@ describe("Ember UART ASH Protocol", () => {
         const badCrcRSTACK = Buffer.from(RECD_RSTACK_BYTES);
         badCrcRSTACK[badCrcRSTACK.length - 2] = 0; // throw CRC low
 
-        //@ts-expect-error private
-        vi.spyOn(uartAsh.serialPort, "asyncFlush").mockImplementationOnce(vi.fn());
-        //@ts-expect-error private
-        uartAsh.serialPort.port.emitData(badCrcRSTACK);
+        (transport.serialPortInstance!.port as MockPortBinding).emitData(badCrcRSTACK);
         const startResult = await uartAsh.start();
 
         await wait(10);
@@ -221,10 +204,7 @@ describe("Ember UART ASH Protocol", () => {
     describe("In CONNECTED state...", () => {
         beforeEach(async () => {
             const resetResult = await uartAsh.resetNcp();
-            //@ts-expect-error private
-            vi.spyOn(uartAsh.serialPort, "asyncFlush").mockImplementationOnce(vi.fn());
-            //@ts-expect-error private
-            uartAsh.serialPort.port.emitData(Buffer.from(RECD_RSTACK_BYTES));
+            (transport.serialPortInstance!.port as MockPortBinding).emitData(Buffer.from(RECD_RSTACK_BYTES));
             const startResult = await uartAsh.start();
 
             expect(resetResult).toStrictEqual(EzspStatus.SUCCESS);
@@ -256,8 +236,7 @@ describe("Ember UART ASH Protocol", () => {
             await wait(10);
 
             expect(uartAsh.counters.txDataFrames).toStrictEqual(1);
-            //@ts-expect-error private
-            expect(uartAsh.serialPort.port.recording).toStrictEqual(
+            expect((transport.serialPortInstance!.port as MockPortBinding).recording).toStrictEqual(
                 Buffer.concat([
                     Buffer.from("1ac038bc7e", "hex"), // RST
                     Buffer.from("8070787e", "hex"), // RSTACK ACK
@@ -284,8 +263,7 @@ describe("Ember UART ASH Protocol", () => {
 
             await wait(10);
 
-            //@ts-expect-error private
-            uartAsh.serialPort.port.emitData(Buffer.from(SEND_ACK_FIRST_BYTES)); // just an ACK, doesn't matter what it is
+            (transport.serialPortInstance!.port as MockPortBinding).emitData(Buffer.from(SEND_ACK_FIRST_BYTES)); // just an ACK, doesn't matter what it is
 
             await wait(10); // force wait new frame
 
@@ -314,6 +292,7 @@ describe("Ember UART ASH Protocol", () => {
             const sendBuf = buffalo.getWritten();
 
             for (let i = 0; i <= CONFIG_TX_K; i++) {
+                console.log(sendBuf);
                 uartAsh.send(sendBuf.length, sendBuf);
             }
 
@@ -322,8 +301,7 @@ describe("Ember UART ASH Protocol", () => {
             expect(uartAsh.counters.txDataFrames).toStrictEqual(3);
             expect(uartAsh.txQueue.length).toStrictEqual(1);
 
-            //@ts-expect-error private
-            expect(uartAsh.serialPort.port.recording).toStrictEqual(
+            expect((transport.serialPortInstance!.port as MockPortBinding).recording).toStrictEqual(
                 Buffer.concat([
                     Buffer.from("1ac038bc7e", "hex"), // RST
                     Buffer.from("8070787e", "hex"), // RSTACK ACK

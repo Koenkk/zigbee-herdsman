@@ -48,7 +48,7 @@ import type {
 } from "../../../src/adapter/ember/types";
 import {lowHighBytes} from "../../../src/adapter/ember/utils/math";
 import type {DeviceJoinedPayload, DeviceLeavePayload, ZclPayload} from "../../../src/adapter/events";
-import type {AdapterOptions, NetworkOptions, SerialPortOptions} from "../../../src/adapter/tstype";
+import type {AdapterOptions, NetworkOptions, TransportOptions} from "../../../src/adapter/tstype";
 import type {Backup} from "../../../src/models/backup";
 import type {UnifiedBackupStorage} from "../../../src/models/backup-storage-unified";
 import {logger} from "../../../src/utils/logger";
@@ -57,6 +57,7 @@ import type {Eui64, NodeId, PanId} from "../../../src/zspec/tstypes";
 import * as Zcl from "../../../src/zspec/zcl";
 import * as Zdo from "../../../src/zspec/zdo";
 import type * as ZdoTypes from "../../../src/zspec/zdo/definition/tstypes";
+import {flushPromises} from "../../testUtils";
 
 // https://github.com/jestjs/jest/issues/6028#issuecomment-567669082
 function defuseRejection<T>(promise: Promise<T>) {
@@ -73,11 +74,6 @@ function reverseApsFrame(apsFrame: EmberApsFrame): EmberApsFrame {
     return Object.assign({}, apsFrame, {sourceEndpoint: apsFrame.destinationEndpoint, destinationEndpoint: apsFrame.sourceEndpoint});
 }
 
-async function flushPromises(): Promise<void> {
-    const {setImmediate} = await vi.importActual<typeof import("node:timers")>("node:timers");
-    return new Promise(setImmediate);
-}
-
 const TEMP_PATH = path.resolve("temp");
 const STACK_CONFIG_PATH = path.join(TEMP_PATH, "stack_config.json");
 const DEFAULT_NETWORK_OPTIONS: Readonly<NetworkOptions> = {
@@ -87,7 +83,7 @@ const DEFAULT_NETWORK_OPTIONS: Readonly<NetworkOptions> = {
     networkKey: [72, 97, 39, 230, 92, 72, 101, 148, 64, 225, 250, 214, 195, 31, 105, 71],
     networkKeyDistribute: false,
 };
-const DEFAULT_SERIAL_PORT_OPTIONS: Readonly<SerialPortOptions> = {
+const DEFAULT_SERIAL_PORT_OPTIONS: Readonly<TransportOptions> = {
     baudRate: 115200,
     rtscts: false,
     path: "MOCK",
