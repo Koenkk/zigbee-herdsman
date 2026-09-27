@@ -161,7 +161,6 @@ export class ZStackAdapter extends Adapter {
         if (networkAddress === undefined) {
             await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.BroadcastAddress.DEFAULT, clusterId, zdoPayload, true);
         } else {
-            // NOTE: `sendZdo` takes care of adjusting the payload as appropriate based on `networkAddress === 0` or not
             const result = await this.sendZdo(ZSpec.BLANK_EUI64, networkAddress, clusterId, zdoPayload, false);
 
             /* v8 ignore start */
@@ -363,8 +362,7 @@ export class ZStackAdapter extends Adapter {
                 case Zdo.ClusterId.PERMIT_JOINING_REQUEST: {
                     const finalPayload = Buffer.alloc(payload.length + 3);
                     finalPayload.writeUInt8(ZSpec.BroadcastAddress[networkAddress] ? AddressMode.ADDR_BROADCAST : AddressMode.ADDR_16BIT, 0);
-                    // zstack uses AddressMode.ADDR_16BIT + ZSpec.BroadcastAddress.DEFAULT to signal "coordinator-only"
-                    finalPayload.writeUInt16LE(networkAddress === 0 ? ZSpec.BroadcastAddress.DEFAULT : networkAddress, 1);
+                    finalPayload.writeUInt16LE(networkAddress, 1);
                     finalPayload.set(payload, 3);
 
                     payload = finalPayload;
