@@ -362,7 +362,7 @@ export class ZStackAdapter extends Adapter {
                 case Zdo.ClusterId.PERMIT_JOINING_REQUEST: {
                     const finalPayload = Buffer.alloc(payload.length + 3);
                     finalPayload.writeUInt8(ZSpec.BroadcastAddress[networkAddress] ? AddressMode.ADDR_BROADCAST : AddressMode.ADDR_16BIT, 0);
-                    // Z-Stack broadcasts 0xfffc even with ADDR_16BIT, so preserve 0x0000 for coordinator-only joining.
+                    // TI treats broadcast destinations as broadcast even in 16-bit address mode, so preserve 0x0000 for coordinator-only joining.
                     // https://github.com/TexasInstruments/simplelink-lowpower-f2-sdk/blob/lpf2-8.30.01.01/source/ti/zstack/stack/zdo/zd_profile.c#L1413-L1441
                     finalPayload.writeUInt16LE(networkAddress, 1);
                     finalPayload.set(payload, 3);
