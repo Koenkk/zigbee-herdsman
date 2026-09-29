@@ -1,5 +1,13 @@
 # Changelog
 
+## [10.9.6](https://github.com/Koenkk/zigbee-herdsman/compare/v10.9.5...v10.9.6) (2026-09-29)
+
+
+### Bug Fixes
+
+* Z-Stack: fix permitting join through only coordinator allowing join via routers ([#1888](https://github.com/Koenkk/zigbee-herdsman/issues/1888)) ([a8ecb2f](https://github.com/Koenkk/zigbee-herdsman/commit/a8ecb2f60d737b518131318ffcf3275b7e9b4546))
+* ZBoss: refresh network info after formation ([#1891](https://github.com/Koenkk/zigbee-herdsman/issues/1891)) ([5e6f402](https://github.com/Koenkk/zigbee-herdsman/commit/5e6f402c630f0ce7ce3bc73e494aa3c67e085a98))
+
 ## [10.9.5](https://github.com/Koenkk/zigbee-herdsman/compare/v10.9.4...v10.9.5) (2026-09-19)
 
 
