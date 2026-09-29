@@ -2214,6 +2214,21 @@ describe("zstack-adapter", () => {
         expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.UTIL, "ledControl", {ledid: 3, mode: 1}, undefined, 500);
     });
 
+    it("Permit join coordinator only", async () => {
+        basicMocks();
+        await adapter.start();
+        mockZnpRequestZdo.mockClear();
+
+        await adapter.permitJoin(254, ZSpec.COORDINATOR_ADDRESS);
+
+        expect(mockZnpRequestZdo).toHaveBeenCalledTimes(1);
+        expect(mockZnpRequestZdo).toHaveBeenCalledWith(
+            Zdo.ClusterId.PERMIT_JOINING_REQUEST,
+            Buffer.from([AddressMode.ADDR_16BIT, 0x00, 0x00, 254, 1]),
+            expect.any(Number),
+        );
+    });
+
     it("Permit join specific networkAddress", async () => {
         basicMocks();
         await adapter.start();
