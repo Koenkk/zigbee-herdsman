@@ -148,6 +148,8 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         this.adapterDisconnected = false;
 
         abortSignal?.throwIfAborted();
+        // register early to always handle transport issues immediately after `start`
+        this.adapter.on("disconnected", this.onAdapterDisconnected.bind(this));
 
         // Check if we have to change the channel, only do this when adapter `resumed` because:
         // - `getNetworkParameters` might be return wrong info because it needs to propogate after backup restore
@@ -179,7 +181,6 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         this.adapter.on("deviceJoined", this.onDeviceJoined.bind(this));
         this.adapter.on("zclPayload", this.onZclPayload.bind(this));
         this.adapter.on("zdoResponse", this.onZdoResponse.bind(this));
-        this.adapter.on("disconnected", this.onAdapterDisconnected.bind(this));
         this.adapter.on("deviceLeave", this.onDeviceLeave.bind(this));
 
         if (startResult === "reset") {
