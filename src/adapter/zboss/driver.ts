@@ -108,6 +108,8 @@ export class ZBOSSDriver extends EventEmitter {
                 // reset
                 logger.info("Form network", NS);
                 await this.formNetwork(); // false
+                // `netInfo` was read before formation; refresh it so getNetworkParameters() reports the formed network
+                this.netInfo = await this.getNetworkInfo();
                 result = "reset";
             }
         } else {
