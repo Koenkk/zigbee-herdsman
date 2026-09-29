@@ -58,7 +58,7 @@ export class SerialDriver extends EventEmitter {
         });
     }
 
-    private async onTransportData(chunk: Buffer): Promise<void> {
+    private onTransportData(chunk: Buffer): void {
         if (chunk.includes(consts.CANCEL)) {
             this.parserTail.length = 0;
             chunk = chunk.subarray(chunk.lastIndexOf(consts.CANCEL) + 1);
@@ -75,11 +75,9 @@ export class SerialDriver extends EventEmitter {
             const encodedFrame = Buffer.concat([...this.parserTail, chunk.subarray(0, delimiterPosition + 1)]);
             this.parserTail.length = 0;
 
-            try {
-                await this.onParsed(NpiFrame.fromBuffer(Buffer.from([...this.unstuff(encodedFrame)])));
-            } catch (error) {
+            this.onFrame(NpiFrame.fromBuffer(Buffer.from([...this.unstuff(encodedFrame)]))).catch((error) => {
                 logger.debug(`<-- error ${error}`, NS);
-            }
+            });
 
             chunk = chunk.subarray(delimiterPosition + 1);
             delimiterPosition = chunk.indexOf(consts.FLAG);
@@ -144,7 +142,7 @@ export class SerialDriver extends EventEmitter {
         }
     }
 
-    private async onParsed(frame: NpiFrame): Promise<void> {
+    private async onFrame(frame: NpiFrame): Promise<void> {
         const rejectCondition = this.rejectCondition;
         try {
             frame.checkCRC();

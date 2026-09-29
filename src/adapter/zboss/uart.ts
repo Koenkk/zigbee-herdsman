@@ -29,6 +29,7 @@ export class ZBOSSUart extends EventEmitter {
         this.waitress = new Waitress<number, number>(this.waitressValidator, this.waitressTimeoutFormatter);
 
         this.transport.on("data", this.onTransportData.bind(this));
+        // NOTE: `Adapter` will also emit `disconnected` for this, but since no listener yet, only this logic gets executed
         this.transport.on("close", async () => {
             if (this.inReset) {
                 await wait(3000);
@@ -38,7 +39,7 @@ export class ZBOSSUart extends EventEmitter {
         });
     }
 
-    private async onTransportData(chunk: Buffer): Promise<void> {
+    private onTransportData(chunk: Buffer): void {
         let data = Buffer.concat([this.inputBuffer, chunk]);
         // SIGNATURE - start of package
         let position = data.indexOf(SIGNATURE);
@@ -55,7 +56,9 @@ export class ZBOSSUart extends EventEmitter {
                 break;
             }
 
-            await this.onFrame(data.subarray(position + 1, position + 1 + length));
+            this.onFrame(data.subarray(position + 1, position + 1 + length)).catch((error) => {
+                logger.debug(`<-- error ${(error as Error).stack}`, NS);
+            });
 
             data = data.subarray(position + 1 + length);
             position = data.indexOf(SIGNATURE);
