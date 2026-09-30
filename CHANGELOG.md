@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.10.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.9.6...v10.10.0) (2026-09-30)
+
+
+### Features
+
+* Ember: support manufacturer code stack config ([#1893](https://github.com/Koenkk/zigbee-herdsman/issues/1893)) ([105edf9](https://github.com/Koenkk/zigbee-herdsman/commit/105edf9301b3ee9a72e95a50ddf698453d3eb520))
+
 ## [10.9.6](https://github.com/Koenkk/zigbee-herdsman/compare/v10.9.5...v10.9.6) (2026-09-29)
 
 
