@@ -172,6 +172,8 @@ type StackConfig = {
     TRANSIENT_KEY_TIMEOUT_S: number;
     /**@see Ezsp.ezspSetRadioIeee802154CcaMode */
     CCA_MODE?: keyof typeof IEEE802154CcaMode;
+    /** Default manufacturer code reported by coordinator. */
+    DEFAULT_MANUFACTURER_CODE: number;
 };
 
 /**
@@ -194,6 +196,7 @@ export const DEFAULT_STACK_CONFIG: Readonly<StackConfig> = {
     END_DEVICE_POLL_TIMEOUT: 8, // zigpc: 8
     TRANSIENT_KEY_TIMEOUT_S: 300, // zigpc: 65535
     CCA_MODE: undefined, // not set by default
+    DEFAULT_MANUFACTURER_CODE: Zcl.ManufacturerCode.SILICON_LABORATORIES,
 };
 /** Default behavior is to disable app key requests */
 const ALLOW_APP_KEY_REQUESTS = false;
@@ -215,8 +218,6 @@ const DEFAULT_REQUEST_TIMEOUT = 15000; // msec
 const DEFAULT_NETWORK_REQUEST_TIMEOUT = 10000; // nothing on the network to bother requests, should be much faster than this
 /** Time between watchdog counters reading/clearing */
 const WATCHDOG_COUNTERS_FEED_INTERVAL = 3600000; // every hour...
-/** Default manufacturer code reported by coordinator. */
-const DEFAULT_MANUFACTURER_CODE = Zcl.ManufacturerCode.SILICON_LABORATORIES;
 
 /**
  * Relay calls between Z2M and EZSP-layer and handle any error that might occur via queue & waitress.
@@ -271,7 +272,7 @@ export class EmberAdapter extends Adapter {
         this.zdoRequestSequence = 0; // start at 1
         this.interpanLock = false;
         this.networkCache = initNetworkCache();
-        this.manufacturerCode = DEFAULT_MANUFACTURER_CODE; // will be set in NCP in initEzsp
+        this.manufacturerCode = DEFAULT_STACK_CONFIG.DEFAULT_MANUFACTURER_CODE; // will be overridden in initEzsp
         this.multicastTable = [];
 
         this.stackConfig = this.loadStackConfig();
@@ -350,6 +351,11 @@ export class EmberAdapter extends Adapter {
                 logger.error("[STACK CONFIG] Invalid TRANSIENT_KEY_TIMEOUT_S, using default.", NS);
             }
 
+            if (!inRange(config.DEFAULT_MANUFACTURER_CODE, 0, 65535)) {
+                config.DEFAULT_MANUFACTURER_CODE = DEFAULT_STACK_CONFIG.DEFAULT_MANUFACTURER_CODE;
+                logger.error("[STACK CONFIG] Invalid DEFAULT_MANUFACTURER_CODE, using default.", NS);
+            }
+
             config.CCA_MODE = config.CCA_MODE ?? undefined; // always default to undefined
 
             if (config.CCA_MODE && IEEE802154CcaMode[config.CCA_MODE] === undefined) {
@@ -395,12 +401,12 @@ export class EmberAdapter extends Adapter {
                 this.oneWaitress.resolveEvent(OneWaitressEvents.STACK_STATUS_NETWORK_CLOSED);
                 logger.info("[STACK STATUS] Network closed.", NS);
 
-                if (this.manufacturerCode !== DEFAULT_MANUFACTURER_CODE) {
+                if (this.manufacturerCode !== this.stackConfig.DEFAULT_MANUFACTURER_CODE) {
                     await this.queue.execute<void>(async () => {
                         logger.debug("[WORKAROUND] Reverting coordinator manufacturer code to default.", NS);
-                        await this.ezsp.ezspSetManufacturerCode(DEFAULT_MANUFACTURER_CODE);
+                        await this.ezsp.ezspSetManufacturerCode(this.stackConfig.DEFAULT_MANUFACTURER_CODE);
 
-                        this.manufacturerCode = DEFAULT_MANUFACTURER_CODE;
+                        this.manufacturerCode = this.stackConfig.DEFAULT_MANUFACTURER_CODE;
                     });
                 }
 
@@ -623,7 +629,8 @@ export class EmberAdapter extends Adapter {
                 };
 
                 // set workaround manuf code if necessary, or revert to default if previous joined device required workaround and new one does not
-                const joinManufCode = WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE[newNodeEui64.substring(0, 8)] ?? DEFAULT_MANUFACTURER_CODE;
+                const joinManufCode =
+                    WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE[newNodeEui64.substring(0, 8)] ?? this.stackConfig.DEFAULT_MANUFACTURER_CODE;
 
                 if (this.manufacturerCode !== joinManufCode) {
                     await this.queue.execute<void>(async () => {
@@ -688,7 +695,10 @@ export class EmberAdapter extends Adapter {
         // return message tag only in ezspMessageSentHandler()
         await this.emberSetEzspPolicy(EzspPolicyId.MESSAGE_CONTENTS_IN_CALLBACK_POLICY, EzspDecisionId.MESSAGE_TAG_ONLY_IN_CALLBACK);
         await this.emberSetEzspValue(EzspValueId.TRANSIENT_DEVICE_TIMEOUT, 2, lowHighBytes(this.stackConfig.TRANSIENT_DEVICE_TIMEOUT));
-        await this.ezsp.ezspSetManufacturerCode(this.manufacturerCode);
+        await this.ezsp.ezspSetManufacturerCode(this.stackConfig.DEFAULT_MANUFACTURER_CODE);
+
+        this.manufacturerCode = this.stackConfig.DEFAULT_MANUFACTURER_CODE;
+
         // network security init
         await this.emberSetEzspConfigValue(EzspConfigId.STACK_PROFILE, STACK_PROFILE_ZIGBEE_PRO);
         await this.emberSetEzspConfigValue(EzspConfigId.SECURITY_LEVEL, SECURITY_LEVEL_Z3);
