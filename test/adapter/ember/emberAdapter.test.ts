@@ -513,6 +513,7 @@ describe("Ember Adapter Layer", () => {
             END_DEVICE_POLL_TIMEOUT: 12,
             TRANSIENT_KEY_TIMEOUT_S: 500,
             CCA_MODE: "SIGNAL_AND_RSSI",
+            DEFAULT_MANUFACTURER_CODE: 0x1234,
         };
 
         writeFileSync(STACK_CONFIG_PATH, JSON.stringify(config, undefined, 2));
@@ -538,6 +539,7 @@ describe("Ember Adapter Layer", () => {
             END_DEVICE_POLL_TIMEOUT: 15,
             TRANSIENT_KEY_TIMEOUT_S: 65536,
             CCA_MODE: "abcd",
+            DEFAULT_MANUFACTURER_CODE: 65536,
         };
 
         writeFileSync(STACK_CONFIG_PATH, JSON.stringify(config, undefined, 2));
