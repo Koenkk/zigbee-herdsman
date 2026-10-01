@@ -82,7 +82,7 @@ export interface BindInternal {
     groupID?: number;
 }
 
-interface Bind {
+export interface Bind {
     cluster: ZclTypes.Cluster;
     target: Endpoint | Group;
 }
@@ -96,7 +96,7 @@ interface ConfiguredReportingInternal {
     manufacturerCode?: number | undefined;
 }
 
-interface ConfiguredReporting {
+export interface ConfiguredReporting {
     cluster: ZclTypes.Cluster;
     attribute: ZclTypes.Attribute;
     minimumReportInterval: number;
@@ -121,20 +121,23 @@ export class Endpoint extends ZigbeeEntity {
 
     // Getters/setters
     get binds(): Bind[] {
-        const binds: Bind[] = [];
+        return this.resolveBinds(this._binds);
+    }
 
-        for (const bind of this._binds) {
-            // XXX: properties assumed valid when associated to `type`
-            const target: Group | Endpoint | undefined =
-                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                bind.type === "endpoint" ? Device.byIeeeAddr(bind.deviceIeeeAddress!)?.getEndpoint(bind.endpointID!) : Group.byGroupID(bind.groupID!);
+    get unreportableClusters(): ZclTypes.Cluster[] {
+        const coordinator = Device.byType("Coordinator")[0];
+        const boundClusters = new Set(
+            this._binds.filter((bind) => bind.type === "endpoint" && bind.deviceIeeeAddress === coordinator?.ieeeAddr).map((bind) => bind.cluster),
+        );
+        const clusters: ZclTypes.Cluster[] = [];
 
-            if (target) {
-                binds.push({target, cluster: this.getCluster(bind.cluster)});
+        for (const entry of this._configuredReportings) {
+            if (!boundClusters.has(entry.cluster) && !clusters.some((cluster) => cluster.ID === entry.cluster)) {
+                clusters.push(this.getCluster(entry.cluster));
             }
         }
 
-        return binds;
+        return clusters;
     }
 
     get configuredReportings(): ConfiguredReporting[] {
@@ -377,10 +380,45 @@ export class Endpoint extends ZigbeeEntity {
         this.save();
     }
 
-    public saveBindings(binds: BindInternal[]): void {
+    /** Replace the bindings of this endpoint, returning what the change added and removed. */
+    public saveBindings(binds: BindInternal[]): {added: Bind[]; removed: Bind[]} {
+        const previous = this._binds;
+
         this._binds = binds;
 
         this.save();
+
+        return {
+            added: this.resolveBinds(binds.filter((bind) => !previous.some((entry) => Endpoint.isSameBind(entry, bind)))),
+            removed: this.resolveBinds(previous.filter((entry) => !binds.some((bind) => Endpoint.isSameBind(entry, bind)))),
+        };
+    }
+
+    private static isSameBind(left: BindInternal, right: BindInternal): boolean {
+        return (
+            left.cluster === right.cluster &&
+            left.type === right.type &&
+            (left.type === "group"
+                ? left.groupID === right.groupID
+                : left.deviceIeeeAddress === right.deviceIeeeAddress && left.endpointID === right.endpointID)
+        );
+    }
+
+    private resolveBinds(binds: BindInternal[]): Bind[] {
+        const resolved: Bind[] = [];
+
+        for (const bind of binds) {
+            // XXX: properties assumed valid when associated to `type`
+            const target: Group | Endpoint | undefined =
+                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
+                bind.type === "endpoint" ? Device.byIeeeAddr(bind.deviceIeeeAddress!)?.getEndpoint(bind.endpointID!) : Group.byGroupID(bind.groupID!);
+
+            if (target) {
+                resolved.push({target, cluster: this.getCluster(bind.cluster)});
+            }
+        }
+
+        return resolved;
     }
 
     public clearBindings(): void {
