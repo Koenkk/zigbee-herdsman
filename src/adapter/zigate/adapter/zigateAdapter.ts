@@ -1,7 +1,7 @@
 /* v8 ignore start */
 
 import type * as Models from "../../../models";
-import {Queue, Waitress, wait} from "../../../utils";
+import {BackupUtils, Queue, Waitress, wait} from "../../../utils";
 import {logger} from "../../../utils/logger";
 import * as ZSpec from "../../../zspec";
 import type {BroadcastAddress} from "../../../zspec/enums";
@@ -11,10 +11,12 @@ import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
 import Adapter, {type ClusterWaitressMatcher, type ZclWaitressPayload} from "../../adapter";
 import type * as Events from "../../events";
 import type * as TsType from "../../tstype";
+import {readBackup} from "../../utils";
 import type {RawAPSDataRequestPayload} from "../driver/commandType";
 import {AddressMode, DeviceType, ZiGateCommandCode, ZiGateMessageCode, ZPSNwkKeyState} from "../driver/constants";
 import type ZiGateObject from "../driver/ziGateObject";
 import Driver from "../driver/zigate";
+import {OcbBackup} from "./ocbBackup";
 import {patchZdoBuffaloBE} from "./patchZdoBuffaloBE";
 
 const NS = "zh:zigate";
@@ -26,6 +28,11 @@ export class ZiGateAdapter extends Adapter {
     private waitress: Waitress<ZclWaitressPayload, ClusterWaitressMatcher>;
     private closing: boolean;
     private queue: Queue;
+    /** Whether the coordinator firmware was built with GP_PROXY (Green Power) support. */
+    private hasGreenPowerSupport: boolean;
+    /** Whether the coordinator firmware supports the OCB (Open Coordinator Backup) experimental key export/restore. */
+    private hasOcbBackupSupport: boolean;
+    private ocbBackup: OcbBackup;
 
     public constructor(
         networkOptions: TsType.NetworkOptions,
@@ -40,11 +47,14 @@ export class ZiGateAdapter extends Adapter {
 
         this.joinPermitted = false;
         this.closing = false;
+        this.hasGreenPowerSupport = false;
+        this.hasOcbBackupSupport = false;
         const concurrent = this.adapterOptions?.concurrent ? this.adapterOptions.concurrent : 2;
         logger.debug(`Adapter concurrent: ${concurrent}`, NS);
         this.queue = new Queue(concurrent);
         // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
         this.driver = new Driver(serialPortOptions.path!, serialPortOptions);
+        this.ocbBackup = new OcbBackup(this.driver);
         this.waitress = new Waitress(Adapter.zclWaitressValidator, Adapter.clusterWaitressTimeoutFormatter);
 
         this.driver.on("received", this.dataListener.bind(this));
@@ -74,7 +84,32 @@ export class ZiGateAdapter extends Adapter {
             await this.driver.sendCommand(ZiGateCommandCode.SetDeviceType, {
                 deviceType: DeviceType.Coordinator,
             });
-            await this.initNetwork();
+
+            this.hasOcbBackupSupport = (await this.ocbBackup.detectCapability()).experimentalKeys;
+
+            let restored = false;
+            if (startResult === "reset") {
+                const storedBackup = this.getStoredBackup();
+
+                if (storedBackup) {
+                    if (this.hasOcbBackupSupport) {
+                        await this.restoreFromBackup(storedBackup);
+                        restored = true;
+                        startResult = "restored";
+                    } else {
+                        logger.warning(
+                            `Found a coordinator backup at '${this.backupPath}', but this firmware does not support OCB restore - forming a new network instead`,
+                            NS,
+                        );
+                    }
+                }
+            }
+
+            if (!restored) {
+                await this.initNetwork();
+            }
+
+            await this.detectGreenPowerSupport();
 
             await this.driver.sendCommand(ZiGateCommandCode.AddGroup, {
                 addressMode: AddressMode.Short,
@@ -175,13 +210,62 @@ export class ZiGateAdapter extends Adapter {
     /**
      * https://zigate.fr/documentation/deplacer-le-pdm-de-la-zigate/
      * pdm from host
+     *
+     * Backed by the OCB (Open Coordinator Backup) UART extension. Only firmware built with
+     * `OCB_KEY_EXPORT_RESTORE_EXPERIMENTAL=1` can actually export a network key, so that's the
+     * only case this reports as supported.
      */
     public async supportsBackup(): Promise<boolean> {
-        return await Promise.resolve(false);
+        return await Promise.resolve(this.hasOcbBackupSupport);
     }
 
-    public async backup(): Promise<Models.Backup> {
-        return await Promise.reject(new Error("This adapter does not support backup"));
+    public async backup(ieeeAddressesInDatabase: string[]): Promise<Models.Backup> {
+        if (!this.hasOcbBackupSupport) {
+            return await Promise.reject(new Error("This adapter does not support backup"));
+        }
+
+        return await this.ocbBackup.createBackup(ieeeAddressesInDatabase, this.networkOptions.networkKeyDistribute ?? false);
+    }
+
+    private getStoredBackup(): Models.Backup | undefined {
+        const data = readBackup(this.backupPath);
+
+        if (!data) {
+            return undefined;
+        }
+
+        if ("adapterType" in data) {
+            return BackupUtils.fromLegacyBackup(data);
+        }
+
+        if (data.metadata?.format === "zigpy/open-coordinator-backup" && data.metadata?.version) {
+            if (data.metadata?.version !== 1) {
+                throw new Error(`Unsupported open coordinator backup version (version=${data.metadata?.version})`);
+            }
+
+            return BackupUtils.fromUnifiedBackup(data);
+        }
+
+        throw new Error("Unknown backup format");
+    }
+
+    private async restoreFromBackup(backup: Models.Backup): Promise<void> {
+        logger.info("Coordinator is factory-new and a backup is available, restoring network via OCB", NS);
+        await this.ocbBackup.restoreBackup(backup);
+
+        // OCB COMMIT persists the restored network and reboots the coordinator.
+        // @todo tune this delay against real hardware.
+        await wait(3000);
+
+        const resetResponse = await this.driver.sendCommand(ZiGateCommandCode.Reset, {}, 5000);
+
+        if (resetResponse.code !== ZiGateMessageCode.RestartNonFactoryNew) {
+            throw new Error("Coordinator did not come back up as expected after OCB restore");
+        }
+
+        await this.driver.sendCommand(ZiGateCommandCode.RawMode, {enabled: 0x01});
+        await this.driver.sendCommand(ZiGateCommandCode.SetDeviceType, {deviceType: DeviceType.Coordinator});
+        logger.info("Coordinator successfully restored from backup", NS);
     }
 
     public async sendZdo(
@@ -331,7 +415,8 @@ export class ZiGateAdapter extends Adapter {
             targetShortAddress: networkAddress,
             sourceEndpoint: sourceEndpoint || ZSpec.HA_ENDPOINT,
             destinationEndpoint: endpoint,
-            profileID: profileId ?? ZSpec.HA_PROFILE_ID,
+            profileID:
+                profileId ?? (sourceEndpoint === ZSpec.GP_ENDPOINT && endpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID),
             clusterID: zclFrame.cluster.ID,
             securityMode: 0x02,
             radius: 30,
@@ -426,19 +511,22 @@ export class ZiGateAdapter extends Adapter {
         profileId?: number,
     ): Promise<void> {
         return await this.queue.execute<void>(async () => {
-            if (sourceEndpoint !== 0x01 /*&& sourceEndpoint !== 242*/) {
-                // @todo on zigate firmware without gp causes hang
-                logger.error(`source endpoint ${sourceEndpoint}, not supported`, NS);
+            if (sourceEndpoint !== ZSpec.HA_ENDPOINT && !(sourceEndpoint === ZSpec.GP_ENDPOINT && this.hasGreenPowerSupport)) {
+                // sending to endpoint 242 (Green Power) hangs firmware without GP_PROXY support
+                logger.warning(`source endpoint ${sourceEndpoint}, not supported`, NS);
                 return;
             }
 
             const data = zclFrame.toBuffer();
             const payload: RawAPSDataRequestPayload = {
-                addressMode: AddressMode.Short, //nwk
+                // firmware dispatches on addressMode (not on the address value), and `destination` is always
+                // one of the reserved broadcast addresses (0xFFFC/0xFFFD/0xFFFF) - addressing it as `Short`
+                // makes firmware attempt a unicast-with-ack "to" that address, which isn't a real device.
+                addressMode: AddressMode.Broadcast,
                 targetShortAddress: destination,
                 sourceEndpoint: sourceEndpoint,
                 destinationEndpoint: endpoint,
-                profileID: profileId ?? ZSpec.HA_PROFILE_ID,
+                profileID: profileId ?? (sourceEndpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID),
                 clusterID: zclFrame.cluster.ID,
                 securityMode: 0x02,
                 radius: 30,
@@ -447,7 +535,26 @@ export class ZiGateAdapter extends Adapter {
             };
             logger.debug(() => `sendZclFrameToAll ${JSON.stringify(payload)}`, NS);
 
-            await this.driver.sendCommand(ZiGateCommandCode.RawAPSDataRequest, payload, undefined, {}, true);
+            try {
+                await this.driver.sendCommand(ZiGateCommandCode.RawAPSDataRequest, payload, undefined, {}, true);
+            } catch (error) {
+                const isGreenPowerPairing =
+                    sourceEndpoint === ZSpec.GP_ENDPOINT &&
+                    payload.profileID === ZSpec.GP_PROFILE_ID &&
+                    payload.clusterID === Zcl.Clusters.greenPower.ID &&
+                    zclFrame.header.commandIdentifier === Zcl.Clusters.greenPower.commands.pairing.ID;
+
+                if (!isGreenPowerPairing) {
+                    throw error;
+                }
+
+                // This ZiGate GP proxy is receive-only.  It can deliver the
+                // GPDF to z2m, but its generic APS command path rejects the
+                // pairing notification.  Pairing is optional for this path:
+                // the common controller still creates the GPD and can handle
+                // subsequent notifications.
+                logger.debug(() => `GP pairing transmission is unavailable: ${error}`, NS);
+            }
             await wait(200);
         });
     }
@@ -510,6 +617,26 @@ export class ZiGateAdapter extends Adapter {
         }
     }
 
+    /**
+     * Determine whether the coordinator firmware was built with GP_PROXY (Green Power) support by checking
+     * whether it registered the Green Power endpoint (242) among its own active endpoints.
+     */
+    private async detectGreenPowerSupport(): Promise<void> {
+        try {
+            const clusterId = Zdo.ClusterId.ACTIVE_ENDPOINTS_REQUEST;
+            const zdoPayload = Zdo.Buffalo.buildRequest(this.hasZdoMessageOverhead, clusterId, ZSpec.COORDINATOR_ADDRESS);
+            const response = await this.sendZdo(ZSpec.BLANK_EUI64, ZSpec.COORDINATOR_ADDRESS, clusterId, zdoPayload, false);
+
+            if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE>(response)) {
+                this.hasGreenPowerSupport = response[1].endpointList.includes(ZSpec.GP_ENDPOINT);
+            }
+        } catch (error) {
+            logger.warning(`Failed to determine Green Power support: ${(error as Error).message}`, NS);
+        }
+
+        logger.info(`Coordinator Green Power (GP_PROXY) support: ${this.hasGreenPowerSupport}`, NS);
+    }
+
     public waitFor(
         networkAddress: number,
         endpoint: number,
@@ -565,6 +692,11 @@ export class ZiGateAdapter extends Adapter {
     }
 
     private dataListener(ziGateObject: ZiGateObject): void {
+        if (ziGateObject.code === ZiGateMessageCode.GreenPowerDataIndication) {
+            this.greenPowerDataListener(ziGateObject);
+            return;
+        }
+
         const payload: Events.ZclPayload = {
             address: <number>ziGateObject.payload.sourceAddress,
             clusterID: ziGateObject.payload.clusterID,
@@ -576,6 +708,83 @@ export class ZiGateAdapter extends Adapter {
             groupID: 0, // @todo
             wasBroadcast: false, // TODO
             destinationEndpoint: <number>ziGateObject.payload.destinationEndpoint,
+        };
+
+        if (payload.header !== undefined) {
+            this.waitress.resolve(payload as ZclWaitressPayload);
+        }
+
+        this.emit("zclPayload", payload);
+    }
+
+    /**
+     * Convert ZiGate's native GP indication to the canonical GP ZCL frame.
+     *
+     * The firmware reports the fields decoded by the GP proxy rather than
+     * pretending that a GPDF was an ordinary APS packet.  This is the same
+     * normalization used by the Ember and deCONZ adapters, and lets the
+     * common Green Power controller handle commissioning and commands.
+     */
+    private greenPowerDataListener(ziGateObject: ZiGateObject): void {
+        const indication = ziGateObject.payload;
+        const commandPayload = indication.payload as Buffer;
+
+        // The proxy status describes the coordinator's security processing.  It
+        // is not part of the GP ZCL payload and must not hide a valid raw GPDF
+        // from the common Green Power controller.  This is particularly useful
+        // for commissioning frames, where the GPD key is learned by z2m.
+        if (indication.status !== 0) {
+            logger.debug(() => `GP indication reports status=${indication.status}`, NS);
+        }
+
+        if (indication.applicationId !== 0) {
+            logger.debug(() => `Dropping GP indication with unsupported applicationId=${indication.applicationId}`, NS);
+            return;
+        }
+
+        if (indication.payloadLength !== commandPayload.length) {
+            logger.debug(
+                () => `Dropping malformed GP indication: declared payload ${indication.payloadLength}, received ${commandPayload.length}`,
+                NS,
+            );
+            return;
+        }
+
+        const isCommissioning = indication.commandId === 0xe0;
+        const options = isCommissioning
+            ? (indication.applicationId & 0x7) |
+              ((indication.rxAfterTx & 0x1) << 3) |
+              ((indication.securityLevel & 0x3) << 4) |
+              ((indication.securityKeyType & 0x7) << 6)
+            : (indication.applicationId & 0x7) |
+              ((indication.securityLevel & 0x3) << 6) |
+              ((indication.securityKeyType & 0x7) << 8) |
+              ((indication.rxAfterTx & 0x1) << 11);
+
+        const gpFrame = Buffer.alloc(15 + commandPayload.length);
+        gpFrame.writeUInt8(0x01, 0);
+        gpFrame.writeUInt8(indication.sequenceNumber, 1);
+        gpFrame.writeUInt8(
+            isCommissioning ? Zcl.Clusters.greenPower.commands.commissioningNotification.ID : Zcl.Clusters.greenPower.commands.notification.ID,
+            2,
+        );
+        gpFrame.writeUInt16LE(options, 3);
+        gpFrame.writeUInt32LE(indication.sourceID, 5);
+        gpFrame.writeUInt32LE(indication.frameCounter, 9);
+        gpFrame.writeUInt8(indication.commandId, 13);
+        gpFrame.writeUInt8(commandPayload.length, 14);
+        commandPayload.copy(gpFrame, 15);
+
+        const payload: Events.ZclPayload = {
+            header: Zcl.Header.fromBuffer(gpFrame),
+            data: gpFrame,
+            clusterID: Zcl.Clusters.greenPower.ID,
+            address: indication.sourceID & 0xffff,
+            endpoint: ZSpec.GP_ENDPOINT,
+            linkquality: indication.linkQuality,
+            groupID: ZSpec.GP_GROUP_ID,
+            wasBroadcast: true,
+            destinationEndpoint: ZSpec.GP_ENDPOINT,
         };
 
         if (payload.header !== undefined) {

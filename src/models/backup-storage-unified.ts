@@ -25,6 +25,11 @@ export interface UnifiedBackupStorage {
         ezsp?: {
             hashed_tclk?: string;
         };
+        zigate?: {
+            tc_link_key?: string;
+            tc_key_type?: number;
+            device_link_key_types?: Record<string, number>;
+        };
     };
     coordinator_ieee: string;
     pan_id: string;
