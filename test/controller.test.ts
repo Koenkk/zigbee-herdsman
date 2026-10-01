@@ -13,6 +13,7 @@ import {InterviewState} from "../src/controller/model/device";
 import type {TCustomCluster} from "../src/controller/tstype";
 import type * as Models from "../src/models";
 import * as Utils from "../src/utils";
+import {MutexCancelledError} from "../src/utils/async-mutex";
 import {setLogger} from "../src/utils/logger";
 import * as timeService from "../src/utils/timeService";
 import * as ZSpec from "../src/zspec";
@@ -8428,6 +8429,49 @@ describe("Controller", () => {
                 `ZCL command 0x129/1 genOnOff.report({"onOff":1}, {"timeout":10000,"disableResponse":false,"disableRecovery":false,"disableDefaultResponse":true,"direction":0,"reservedBits":0,"writeUndiv":false}) failed (timeout occurred)`,
             ),
         );
+    });
+
+    it.each([false, true])("Does not retain cancelled endpoint requests (already queued: %s)", async (queued) => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 174, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        device.pendingRequestTimeout = 10000;
+        const endpoint = device.getEndpoint(1)!;
+        const cancelled = new MutexCancelledError();
+        mocksendZclFrameToEndpoint.mockClear();
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce(cancelled);
+        const result = endpoint.write("genOnOff", {onTime: 1}, {disableResponse: true, sendPolicy: queued ? "bulk" : "keep-command"});
+        const rejection = expect(result).rejects.toBe(cancelled);
+        if (queued) {
+            expect(endpoint.hasPendingRequests()).toBe(true);
+            await endpoint.sendPendingRequests(true);
+        }
+        await rejection;
+        expect(endpoint.hasPendingRequests()).toBe(false);
+        await endpoint.sendPendingRequests(true);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+    });
+
+    it("Stops sending deferred requests after cancellation", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 174, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        device.pendingRequestTimeout = 10000;
+        const endpoint = device.getEndpoint(1)!;
+        mocksendZclFrameToEndpoint.mockClear();
+        const cancelled = new MutexCancelledError();
+        mocksendZclFrameToEndpoint.mockRejectedValueOnce(cancelled);
+        const first = endpoint.write("genOnOff", {onTime: 1}, {disableResponse: true, sendPolicy: "bulk"});
+        const rejection = expect(first).rejects.toBe(cancelled);
+        const second = endpoint.write("genOnOff", {onTime: 2}, {disableResponse: true, sendPolicy: "bulk"});
+        await endpoint.sendPendingRequests(true);
+        await rejection;
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        expect(endpoint.hasPendingRequests()).toBe(true);
+        await endpoint.sendPendingRequests(true);
+        await second;
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(2);
+        expect(endpoint.hasPendingRequests()).toBe(false);
     });
 
     it("Write to device with pendingRequestTimeout > 0", async () => {

@@ -397,12 +397,14 @@ export class EZSPAdapter extends Adapter {
         frame.groupId = 0;
 
         this.driver.setNode(networkAddress, new EmberEUI64(ieeeAddr));
-        const dataConfirmResult = await this.driver.request(networkAddress, frame, zclFrame.toBuffer());
-        if (!dataConfirmResult) {
-            if (response != null) {
-                response.cancel();
+        try {
+            const dataConfirmResult = await this.driver.request(networkAddress, frame, zclFrame.toBuffer());
+            if (!dataConfirmResult) {
+                throw new Error("sendZclFrameToEndpointInternal error");
             }
-            throw new Error("sendZclFrameToEndpointInternal error");
+        } catch (error) {
+            response?.cancel();
+            throw error;
         }
         if (response !== null) {
             try {

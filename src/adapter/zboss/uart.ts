@@ -3,7 +3,7 @@
 import EventEmitter from "node:events";
 import {Socket} from "node:net";
 import {Waitress, wait} from "../../utils";
-import {AsyncMutex} from "../../utils/async-mutex";
+import {AsyncMutex, MutexCancelledError} from "../../utils/async-mutex";
 import {logger} from "../../utils/logger";
 import {SerialPort} from "../serialPort";
 import type {SerialPortOptions} from "../tstype";
@@ -278,11 +278,11 @@ export class ZBOSSUart extends EventEmitter {
         }
 
         this.recvSeq = sequence;
-        // Send ACK
-        logger.debug(`--> ACK (${this.recvSeq})`, NS);
-        await this.sendACK(this.recvSeq);
-
         try {
+            // Send ACK
+            logger.debug(`--> ACK (${this.recvSeq})`, NS);
+            await this.sendACK(this.recvSeq);
+
             logger.debug(`<-- FRAME: ${body.toString("hex")}`, NS);
             const frame = readZBOSSFrame(body);
             if (frame) {
@@ -314,6 +314,9 @@ export class ZBOSSUart extends EventEmitter {
             logger.debug(`--> PACK: ${pack.toString("hex")}`, NS);
             await this.sendDATA(pack);
         } catch (error) {
+            if (error instanceof MutexCancelledError) {
+                throw error;
+            }
             logger.debug(`--> error ${(error as Error).stack}`, NS);
         }
     }

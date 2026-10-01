@@ -6,6 +6,7 @@ import equals from "fast-deep-equal/es6";
 
 import type {Backup} from "../../../models/backup";
 import {Waitress, wait} from "../../../utils";
+import {MutexCancelledError} from "../../../utils/async-mutex";
 import {logger} from "../../../utils/logger";
 import * as ZSpec from "../../../zspec";
 import {Clusters} from "../../../zspec/zcl/definition/cluster";
@@ -700,6 +701,9 @@ export class Driver extends EventEmitter {
                     break;
                 }
             } catch (e) {
+                if (e instanceof MutexCancelledError) {
+                    throw e;
+                }
                 logger.debug(`Request error ${e}`, NS);
                 break;
             }

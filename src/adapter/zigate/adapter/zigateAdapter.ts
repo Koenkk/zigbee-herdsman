@@ -2,6 +2,7 @@
 
 import type * as Models from "../../../models";
 import {Queue, Waitress, wait} from "../../../utils";
+import {MutexCancelledError} from "../../../utils/async-mutex";
 import {logger} from "../../../utils/logger";
 import * as ZSpec from "../../../zspec";
 import type {BroadcastAddress} from "../../../zspec/enums";
@@ -367,7 +368,11 @@ export class ZiGateAdapter extends Adapter {
 
         try {
             await this.driver.sendCommand(ZiGateCommandCode.RawAPSDataRequest, payload, undefined, {}, disableResponse);
-        } catch {
+        } catch (error) {
+            if (error instanceof MutexCancelledError) {
+                response?.cancel();
+                throw error;
+            }
             if (responseAttempt < 1 && !disableRecovery) {
                 // @todo discover route
                 return await this.sendZclFrameToEndpointInternal(

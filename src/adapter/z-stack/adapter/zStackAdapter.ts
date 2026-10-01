@@ -2,6 +2,7 @@ import assert from "node:assert";
 import debounce from "debounce";
 import type * as Models from "../../../models";
 import {Queue, Waitress, wait} from "../../../utils";
+import {MutexCancelledError} from "../../../utils/async-mutex";
 import {logger} from "../../../utils/logger";
 import * as ZSpec from "../../../zspec";
 import type {BroadcastAddress} from "../../../zspec/enums";
@@ -434,7 +435,7 @@ export class ZStackAdapter extends Adapter {
             try {
                 await this.znp.requestZdo(clusterId, payload, waiter?.ID);
             } catch (error) {
-                if (clusterId === Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST) {
+                if (clusterId === Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST && !(error instanceof MutexCancelledError)) {
                     // Discover route when node descriptor request fails
                     // https://github.com/Koenkk/zigbee2mqtt/issues/3276
                     logger.debug(`Discover route to '${networkAddress}' because node descriptor request failed`, NS);
