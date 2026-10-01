@@ -6,6 +6,7 @@ import * as Zcl from "../zspec/zcl";
 import type * as Zdo from "../zspec/zdo";
 import type * as ZdoTypes from "../zspec/zdo/definition/tstypes";
 import {discoverAdapter} from "./adapterDiscovery";
+import {validateAdditionalCoordinatorEndpoints} from "./coordinatorEndpoints";
 import type * as AdapterEvents from "./events";
 import type * as TsType from "./tstype";
 
@@ -71,6 +72,13 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
         }
         if (serialPortOptions.rtscts === undefined && discovered.rtscts !== undefined) {
             serialPortOptions.rtscts = discovered.rtscts;
+        }
+
+        const additionalCoordinatorEndpoints = adapterOptions.additionalCoordinatorEndpoints ?? [];
+        validateAdditionalCoordinatorEndpoints(additionalCoordinatorEndpoints);
+
+        if (additionalCoordinatorEndpoints.length > 0 && discovered.adapter !== "deconz" && discovered.adapter !== "ember") {
+            throw new Error(`Adapter '${discovered.adapter}' does not support additional coordinator endpoints`);
         }
 
         switch (discovered.adapter) {
