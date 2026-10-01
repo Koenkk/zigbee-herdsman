@@ -390,8 +390,29 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             // never permit more than uint8, and never permit 255 that is often equal to "forever"
             assert(time <= 254, "Cannot permit join for more than 254 seconds.");
 
-            await this.adapter.permitJoin(time, device?.networkAddress);
-            await this.#greenPower.permitJoin(time, device?.networkAddress);
+            try {
+                await this.adapter.permitJoin(time, device?.networkAddress);
+                await this.#greenPower.permitJoin(time, device?.networkAddress);
+            } catch (error) {
+                // The Zigbee and Green Power stages form one transaction: a partial failure
+                // (e.g. the local permit opened but a broadcast stage failed) must never leave
+                // the network open without the controller tracking it. Roll back everything
+                // opened so far with the same target semantics as the opening operation, then
+                // rethrow the original error. Cleanup errors are logged and never replace it.
+                try {
+                    await this.#greenPower.permitJoin(0, device?.networkAddress);
+                } catch (cleanupError) {
+                    logger.error(`Failed to close Green Power permit join after failed permit join: ${cleanupError}`, NS);
+                }
+
+                try {
+                    await this.adapter.permitJoin(0, device?.networkAddress);
+                } catch (cleanupError) {
+                    logger.error(`Failed to close adapter permit join after failed permit join: ${cleanupError}`, NS);
+                }
+
+                throw error;
+            }
 
             const timeMs = time * 1000;
             this.permitJoinEnd = Date.now() + timeMs;
