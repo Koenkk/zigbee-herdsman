@@ -1,6 +1,7 @@
 import events from "node:events";
 
 import type * as Models from "../models";
+import {instrumentSend, MetricType, metrics} from "../utils/metrics";
 import type {BroadcastAddress} from "../zspec/enums";
 import * as Zcl from "../zspec/zcl";
 import type * as Zdo from "../zspec/zdo";
@@ -171,21 +172,41 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
      * ZDO
      */
 
-    public abstract sendZdo(
+    public async sendZdo(
         ieeeAddress: string,
         networkAddress: number,
         clusterId: Zdo.ClusterId,
         payload: Buffer,
         disableResponse: true,
     ): Promise<void>;
-    public abstract sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
+    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
         ieeeAddress: string,
         networkAddress: number,
         clusterId: K,
         payload: Buffer,
         disableResponse: false,
     ): Promise<ZdoTypes.RequestToResponseMap[K]>;
-    public abstract sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
+    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: K,
+        payload: Buffer,
+        disableResponse: boolean,
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined>;
+    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
+        ieeeAddress: string,
+        networkAddress: number,
+        clusterId: K,
+        payload: Buffer,
+        disableResponse: boolean,
+    ): Promise<ZdoTypes.RequestToResponseMap[K] | undefined> {
+        return await instrumentSend(
+            () => this.sendZdoImpl(ieeeAddress, networkAddress, clusterId, payload, disableResponse),
+            (status, durationSeconds) =>
+                metrics.emit("metric", {type: MetricType.AdapterSendZdo, ieeeAddr: ieeeAddress, clusterId, status, durationSeconds}),
+        );
+    }
+    protected abstract sendZdoImpl<K extends keyof ZdoTypes.RequestToResponseMap>(
         ieeeAddress: string,
         networkAddress: number,
         clusterId: K,
@@ -199,7 +220,34 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
      * ZCL
      */
 
-    public abstract sendZclFrameToEndpoint(
+    public async sendZclFrameToEndpoint(
+        ieeeAddr: string,
+        networkAddress: number,
+        endpoint: number,
+        zclFrame: Zcl.Frame,
+        timeout: number,
+        disableResponse: boolean,
+        disableRecovery: boolean,
+        sourceEndpoint?: number,
+        profileId?: number,
+    ): Promise<AdapterEvents.ZclPayload | undefined> {
+        return await instrumentSend(
+            () =>
+                this.sendZclFrameToEndpointImpl(
+                    ieeeAddr,
+                    networkAddress,
+                    endpoint,
+                    zclFrame,
+                    timeout,
+                    disableResponse,
+                    disableRecovery,
+                    sourceEndpoint,
+                    profileId,
+                ),
+            (status, durationSeconds) => metrics.emit("metric", {type: MetricType.AdapterSendZclUnicast, ieeeAddr, status, durationSeconds}),
+        );
+    }
+    protected abstract sendZclFrameToEndpointImpl(
         ieeeAddr: string,
         networkAddress: number,
         endpoint: number,
@@ -211,9 +259,27 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
         profileId?: number,
     ): Promise<AdapterEvents.ZclPayload | undefined>;
 
-    public abstract sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void>;
+    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
+        return await instrumentSend(
+            () => this.sendZclFrameToGroupImpl(groupID, zclFrame, sourceEndpoint, profileId),
+            (status, durationSeconds) => metrics.emit("metric", {type: MetricType.AdapterSendZclGroup, groupId: groupID, status, durationSeconds}),
+        );
+    }
+    protected abstract sendZclFrameToGroupImpl(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void>;
 
-    public abstract sendZclFrameToAll(
+    public async sendZclFrameToAll(
+        endpoint: number,
+        zclFrame: Zcl.Frame,
+        sourceEndpoint: number,
+        destination: BroadcastAddress,
+        profileId?: number,
+    ): Promise<void> {
+        return await instrumentSend(
+            () => this.sendZclFrameToAllImpl(endpoint, zclFrame, sourceEndpoint, destination, profileId),
+            (status, durationSeconds) => metrics.emit("metric", {type: MetricType.AdapterSendZclBroadcast, status, durationSeconds}),
+        );
+    }
+    protected abstract sendZclFrameToAllImpl(
         endpoint: number,
         zclFrame: Zcl.Frame,
         sourceEndpoint: number,
