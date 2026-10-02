@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.11.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.10.0...v10.11.0) (2026-10-02)
+
+
+### Features
+
+* Accept explicit manufacturer-specific cluster definitions ([#1878](https://github.com/Koenkk/zigbee-herdsman/issues/1878)) ([0349531](https://github.com/Koenkk/zigbee-herdsman/commit/03495312e131c705a7cabc07fd3c403f2ddf7e42))
+
 ## [10.10.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.9.6...v10.10.0) (2026-09-30)
 
 
