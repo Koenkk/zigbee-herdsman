@@ -2,7 +2,7 @@ import assert from "node:assert";
 import {logger} from "../../utils/logger";
 import * as Zcl from "../../zspec/zcl";
 import type {TFoundation} from "../../zspec/zcl/definition/clusters-types";
-import type {CustomClusters} from "../../zspec/zcl/definition/tstype";
+import type {Cluster, CustomClusters} from "../../zspec/zcl/definition/tstype";
 import zclTransactionSequenceNumber from "../helpers/zclTransactionSequenceNumber";
 import type {
     ClusterOrRawAttributeKeys,
@@ -367,14 +367,18 @@ export class Group extends ZigbeeEntity {
         }
     }
 
+    /**
+     * Send a cluster-specific command to the group.
+     * Pass a Cluster object to use a custom cluster that not every member has registered; supply explicit type arguments for payload checking.
+     */
     public async command<Cl extends number | string, Co extends number | string, Custom extends TCustomCluster | undefined = undefined>(
-        clusterKey: Cl,
+        clusterKey: Cl | Cluster,
         commandKey: Co,
         payload: ClusterOrRawPayload<Cl, Co, Custom>,
         options?: Options,
     ): Promise<undefined> {
         const customClusters = this.#customClusters[options?.direction === Zcl.Direction.SERVER_TO_CLIENT ? 1 : 0 /* default to CLIENT_TO_SERVER */];
-        const cluster = Zcl.Utils.getCluster(clusterKey, options?.manufacturerCode, customClusters);
+        const cluster = typeof clusterKey === "object" ? clusterKey : Zcl.Utils.getCluster(clusterKey, options?.manufacturerCode, customClusters);
         const optionsWithDefaults = this.getOptionsWithDefaults(options, Zcl.Direction.CLIENT_TO_SERVER, cluster.manufacturerCode);
         const command =
             optionsWithDefaults.direction === Zcl.Direction.CLIENT_TO_SERVER
