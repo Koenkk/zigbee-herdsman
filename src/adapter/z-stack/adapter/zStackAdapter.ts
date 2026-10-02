@@ -11,7 +11,7 @@ import * as Zdo from "../../../zspec/zdo";
 import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
 import Adapter, {type ClusterWaitressMatcher, type ZclWaitressPayload} from "../../adapter";
 import type * as Events from "../../events";
-import type {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, SerialPortOptions, StartResult} from "../../tstype";
+import type {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, StartResult, TransportOptions} from "../../tstype";
 import * as Constants from "../constants";
 import {Constants as UnpiConstants} from "../unpi";
 import {Znp, type ZpiObject} from "../znp";
@@ -53,7 +53,6 @@ export class ZStackAdapter extends Adapter {
         maintrel: number;
         revision: string;
     };
-    private closing: boolean;
     // @ts-expect-error initialized in `start`
     private queue: Queue;
     private supportsLED?: boolean;
@@ -61,22 +60,19 @@ export class ZStackAdapter extends Adapter {
     private interpanEndpointRegistered: boolean;
     private waitress: Waitress<ZclWaitressPayload, ClusterWaitressMatcher>;
 
-    public constructor(networkOptions: NetworkOptions, serialPortOptions: SerialPortOptions, backupPath: string, adapterOptions: AdapterOptions) {
-        super(networkOptions, serialPortOptions, backupPath, adapterOptions);
+    public constructor(networkOptions: NetworkOptions, transportOptions: TransportOptions, backupPath: string, adapterOptions: AdapterOptions) {
+        super(networkOptions, transportOptions, backupPath, adapterOptions);
         this.hasZdoMessageOverhead = false;
         this.manufacturerID = Zcl.ManufacturerCode.TEXAS_INSTRUMENTS;
-        // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-        this.znp = new Znp(this.serialPortOptions.path!, this.serialPortOptions.baudRate!, this.serialPortOptions.rtscts!);
+        this.znp = new Znp(this.transport);
 
         this.transactionID = 0;
         this.deviceAnnounceRouteDiscoveryDebouncers = new Map();
         this.interpanLock = false;
         this.interpanEndpointRegistered = false;
-        this.closing = false;
         this.waitress = new Waitress(Adapter.zclWaitressValidator, Adapter.clusterWaitressTimeoutFormatter);
 
         this.znp.on("received", this.onZnpRecieved.bind(this));
-        this.znp.on("close", this.onZnpClose.bind(this));
     }
 
     /**
@@ -136,7 +132,6 @@ export class ZStackAdapter extends Adapter {
     }
 
     public async stop(): Promise<void> {
-        this.closing = true;
         await this.znp.close();
     }
 
@@ -813,12 +808,6 @@ export class ZStackAdapter extends Adapter {
     /**
      * Event handlers
      */
-    public onZnpClose(): void {
-        if (!this.closing) {
-            this.emit("disconnected");
-        }
-    }
-
     private onZnpRecieved(object: ZpiObject): void {
         if (object.type !== UnpiConstants.Type.AREQ) {
             return;
