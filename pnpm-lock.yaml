@@ -112,15 +112,6 @@ importers:
       '@date-fns/tz':
         specifier: ^1.5.0
         version: 1.5.0
-      '@serialport/bindings-cpp':
-        specifier: ^13.0.1
-        version: 13.0.1(supports-color@7.2.0)
-      '@serialport/parser-delimiter':
-        specifier: ^13.0.0
-        version: 13.0.0
-      '@serialport/stream':
-        specifier: ^13.0.0
-        version: 13.0.0(supports-color@7.2.0)
       bonjour-service:
         specifier: ^1.4.4
         version: 1.4.4
@@ -130,6 +121,9 @@ importers:
       fast-deep-equal:
         specifier: ^3.1.3
         version: 3.1.3
+      serialport-rs:
+        specifier: ^0.6.0
+        version: 0.6.0
       slip:
         specifier: ^1.0.2
         version: 1.0.2
@@ -140,9 +134,6 @@ importers:
       '@biomejs/biome':
         specifier: ^2.5.12
         version: 2.5.12
-      '@serialport/binding-mock':
-        specifier: ^10.2.2
-        version: 10.2.2(supports-color@7.2.0)
       '@types/debounce':
         specifier: ^1.2.4
         version: 1.2.4
@@ -578,30 +569,6 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@serialport/binding-mock@10.2.2':
-    resolution: {integrity: sha512-HAFzGhk9OuFMpuor7aT5G1ChPgn5qSsklTFOTUX72Rl6p0xwcSVsRtG/xaGp6bxpN7fI9D/S8THLBWbBgS6ldw==}
-    engines: {node: '>=12.0.0'}
-
-  '@serialport/bindings-cpp@13.0.1':
-    resolution: {integrity: sha512-j8nD5Om5MaQwzptncOiajIKj5RuMy7RiretZYmW4ZpaaLBc5XrapdojjL6AVwhpMWao8iSstlwEx/hpTIAp6mw==}
-    engines: {node: '>=18.0.0'}
-
-  '@serialport/bindings-interface@1.2.2':
-    resolution: {integrity: sha512-CJaUd5bLvtM9c5dmO9rPBHPXTa9R2UwpkJ0wdh9JCYcbrPWsKz+ErvR0hBLeo7NPeiFdjFO4sonRljiw4d2XiA==}
-    engines: {node: ^12.22 || ^14.13 || >=16}
-
-  '@serialport/parser-delimiter@13.0.0':
-    resolution: {integrity: sha512-Qqyb0FX1avs3XabQqNaZSivyVbl/yl0jywImp7ePvfZKLwx7jBZjvL+Hawt9wIG6tfq6zbFM24vzCCK7REMUig==}
-    engines: {node: '>=20.0.0'}
-
-  '@serialport/parser-readline@13.0.0':
-    resolution: {integrity: sha512-dov3zYoyf0dt1Sudd1q42VVYQ4WlliF0MYvAMA3MOyiU1IeG4hl0J6buBA2w4gl3DOCC05tGgLDN/3yIL81gsA==}
-    engines: {node: '>=20.0.0'}
-
-  '@serialport/stream@13.0.0':
-    resolution: {integrity: sha512-F7xLJKsjGo2WuEWMSEO1SimRcOA+WtWICsY13r0ahx8s2SecPQH06338g28OT7cW7uRXI7oEQAk62qh5gHJW3g==}
-    engines: {node: '>=20.0.0'}
-
   '@types/chai@5.2.3':
     resolution: {integrity: sha512-Mw558oeA9fFbv65/y4mHtXDs9bPnFMZAL/jxdPFUpOHHIXX91mcgEHbS5Lahr+pwZFR8A7GQleRWeI6cGFC2UA==}
 
@@ -842,15 +809,6 @@ packages:
     resolution: {integrity: sha512-64byRbF0/AirwbuHqB3/ZpMG9/nckDa6ZA0yd6UnaQNwbbemCOwvz2sL5sjXLHhZHADyiwLm0M5qMhltUUx+TA==}
     engines: {node: '>=20'}
 
-  debug@4.4.0:
-    resolution: {integrity: sha512-6WTZ/IxCY/T6BALoZHaE4ctp9xm+Z5kY/pzYaCHRFeyVhojxlrm+46y68HA6hr0TcwEssoxNiDEUJQjfPZ/RYA==}
-    engines: {node: '>=6.0'}
-    peerDependencies:
-      supports-color: '*'
-    peerDependenciesMeta:
-      supports-color:
-        optional: true
-
   debug@4.4.3:
     resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
     engines: {node: '>=6.0'}
@@ -1005,14 +963,6 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
-  node-addon-api@8.3.0:
-    resolution: {integrity: sha512-8VOpLHFrOQlAH+qA0ZzuGRlALRA6/LVh8QJldbrC4DY0hXoMP0l4Acq8TzFC018HztWiRqyCEj2aTWY2UvnJUg==}
-    engines: {node: ^18 || ^20 || >= 21}
-
-  node-gyp-build@4.8.4:
-    resolution: {integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==}
-    hasBin: true
-
   package-json-from-dist@1.0.1:
     resolution: {integrity: sha512-UEZIS3/by4OC8vL3P2dTXRETpebLI2NiI5vIrjaD/5UtrkFX/tNbwjTSRAGC/+7CAo2pIcBaRgWmcBBHcsaCIw==}
 
@@ -1060,6 +1010,10 @@ packages:
     resolution: {integrity: sha512-Y7/KDsb8LjooZpwaqGyulO6DQlksgCncchHGk+sZIY4SBvUocMBEFH5Ur1fI4dV+Jvl0w6cjvucaIi40puRioA==}
     engines: {node: '>=10'}
     hasBin: true
+
+  serialport-rs@0.6.0:
+    resolution: {integrity: sha512-rMnOR5ER3X3shebbTMlR+gyID6NmBtZMjyJ+3ZVIMkVVfZLldSvR9zTNwJg39DSVZ8nwKMU7Onqn3iAWxF9P8w==}
+    engines: {node: '>=20'}
 
   shebang-command@2.0.0:
     resolution: {integrity: sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA==}
@@ -1489,38 +1443,6 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.63.1':
     optional: true
 
-  '@serialport/binding-mock@10.2.2(supports-color@7.2.0)':
-    dependencies:
-      '@serialport/bindings-interface': 1.2.2
-      debug: 4.4.3(supports-color@7.2.0)
-    transitivePeerDependencies:
-      - supports-color
-
-  '@serialport/bindings-cpp@13.0.1(supports-color@7.2.0)':
-    dependencies:
-      '@serialport/bindings-interface': 1.2.2
-      '@serialport/parser-readline': 13.0.0
-      debug: 4.4.0(supports-color@7.2.0)
-      node-addon-api: 8.3.0
-      node-gyp-build: 4.8.4
-    transitivePeerDependencies:
-      - supports-color
-
-  '@serialport/bindings-interface@1.2.2': {}
-
-  '@serialport/parser-delimiter@13.0.0': {}
-
-  '@serialport/parser-readline@13.0.0':
-    dependencies:
-      '@serialport/parser-delimiter': 13.0.0
-
-  '@serialport/stream@13.0.0(supports-color@7.2.0)':
-    dependencies:
-      '@serialport/bindings-interface': 1.2.2
-      debug: 4.4.0(supports-color@7.2.0)
-    transitivePeerDependencies:
-      - supports-color
-
   '@types/chai@5.2.3':
     dependencies:
       '@types/deep-eql': 4.0.2
@@ -1718,12 +1640,6 @@ snapshots:
 
   debounce@3.0.0: {}
 
-  debug@4.4.0(supports-color@7.2.0):
-    dependencies:
-      ms: 2.1.3
-    optionalDependencies:
-      supports-color: 7.2.0
-
   debug@4.4.3(supports-color@7.2.0):
     dependencies:
       ms: 2.1.3
@@ -1886,10 +1802,6 @@ snapshots:
 
   nanoid@3.3.18: {}
 
-  node-addon-api@8.3.0: {}
-
-  node-gyp-build@4.8.4: {}
-
   package-json-from-dist@1.0.1: {}
 
   path-key@3.1.1: {}
@@ -1956,6 +1868,8 @@ snapshots:
       fsevents: 2.3.3
 
   semver@7.8.5: {}
+
+  serialport-rs@0.6.0: {}
 
   shebang-command@2.0.0:
     dependencies:

@@ -1,8 +1,8 @@
 import assert from "node:assert";
 import {platform} from "node:os";
-import {autoDetect as autoDetectSerialPorts, type PortInfo} from "@serialport/bindings-cpp";
 import {Bonjour} from "bonjour-service";
 import type {Service} from "bonjour-service/dist/lib/service";
+import {autoDetect as autoDetectSerialPorts, type PortInfo} from "serialport-rs";
 import {wait} from "../utils";
 import {logger} from "../utils/logger";
 import type {TsType} from ".";
@@ -19,8 +19,6 @@ const enum UsbFingerprintMatchScore {
 }
 
 /**
- * @see https://serialport.io/docs/api-bindings-cpp#list
- *
  * On Windows, there are occurrences where `manufacturer` is replaced by the OS driver. Example: `ITEAD` => `wch.cn`.
  *
  * In virtualized environments, the passthrough mechanism can affect the `path`.
@@ -702,7 +700,6 @@ export async function findAllDevices(): Promise<AllDevices> {
         for (const portInfo of portList) {
             // override matching on Windows, too many chances of mismatch due to lacking data
             const bestMatch = isWindows ? undefined : findUsbAdapterBestMatch(undefined, portInfo, isWindows);
-            // @ts-expect-error friendlyName Windows only
             const friendlyName = portInfo.friendlyName ?? portInfo.pnpId;
             const device: AllDevices[number] = {
                 name: `${friendlyName} (${portInfo.manufacturer})`,
