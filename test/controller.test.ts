@@ -22,9 +22,7 @@ import type {CustomClusters} from "../src/zspec/zcl/definition/tstype";
 import * as Zdo from "../src/zspec/zdo";
 import type {IEEEAddressResponse, NetworkAddressResponse} from "../src/zspec/zdo/definition/tstypes";
 import {DEFAULT_184_CHECKIN_INTERVAL, LQI_TABLE_ENTRY_DEFAULTS, MOCK_DEVICES, ROUTING_TABLE_ENTRY_DEFAULTS} from "./mockDevices";
-
-const globalSetImmediate = setImmediate;
-const flushPromises = () => new Promise(globalSetImmediate);
+import {flushPromises} from "./testUtils";
 
 const mockLogger = {
     debug: vi.fn((messageOrLambda) => {
@@ -458,7 +456,7 @@ const options = {
         panID: 0x1a63,
         channelList: [15],
     },
-    serialPort: {
+    transport: {
         baudRate: 115200,
         rtscts: true,
         path: "/dev/ttyUSB0",
@@ -2331,11 +2329,37 @@ describe("Controller", () => {
         await controller.start();
         databaseSaveSpy.mockClear();
         backupSpy.mockClear();
+        expect(mockAdapterStop).toHaveBeenCalledTimes(0);
         expect(controller.isStopping()).toBeFalsy();
         expect(controller.isAdapterDisconnected()).toBeFalsy();
 
         await mockAdapterEvents.disconnected();
         expect(events.adapterDisconnected.length).toBe(1);
+        expect(controller.isAdapterDisconnected()).toBeTruthy();
+
+        // mock z2m layer responding to disconnected event
+        await controller.stop();
+        expect(controller.isStopping()).toBeTruthy();
+        expect(mockAdapterStop).toHaveBeenCalledTimes(1); // once in event only (with catcho)
+        expect(mockAdapterPermitJoin).not.toHaveBeenCalled();
+        expect(backupSpy).not.toHaveBeenCalled();
+        expect(databaseSaveSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("handles disconnected event early after adapter.start", async () => {
+        // @ts-expect-error private
+        const databaseSaveSpy = vi.spyOn(controller, "databaseSave");
+        const backupSpy = vi.spyOn(controller, "backup");
+        vi.spyOn(controller, "getNetworkParameters").mockImplementationOnce(async () => {
+            await mockAdapterEvents.disconnected();
+
+            return controller.getNetworkParameters();
+        });
+        await controller.start();
+        databaseSaveSpy.mockClear();
+        backupSpy.mockClear();
+        expect(mockAdapterStop).toHaveBeenCalledTimes(1);
+        expect(controller.isStopping()).toBeFalsy();
         expect(controller.isAdapterDisconnected()).toBeTruthy();
 
         // mock z2m layer responding to disconnected event

@@ -1,15 +1,13 @@
 import assert from "node:assert";
-import events from "node:events";
-import {Socket} from "node:net";
+import {EventEmitter} from "node:events";
 import {Waitress, wait} from "../../../utils";
 import {AsyncMutex} from "../../../utils/async-mutex";
 import {logger} from "../../../utils/logger";
 import {ClusterId as ZdoClusterId} from "../../../zspec/zdo";
-import {SerialPort} from "../../serialPort";
-import {isTcpPath, parseTcpPath} from "../../utils";
+import type {AdapterTransport} from "../../transport";
 import * as Constants from "../constants";
-import {Frame as UnpiFrame, Parser as UnpiParser, Writer as UnpiWriter} from "../unpi";
-import {Subsystem, Type} from "../unpi/constants";
+import {Frame as UnpiFrame} from "../unpi";
+import {DataStart, MinMessageLength, PositionDataLength, SOF, Subsystem, Type} from "../unpi/constants";
 import Definition from "./definition";
 import type {ZpiObjectPayload} from "./tstype";
 import {isMtCmdSreqZdo} from "./utils";
@@ -37,133 +35,83 @@ interface WaitressMatcher {
     state?: number;
 }
 
-export class Znp extends events.EventEmitter {
-    private path: string;
-    private baudRate: number;
-    private rtscts: boolean;
+interface ZnpEventMap {
+    received: [obj: ZpiObject<"Response">];
+}
 
-    private serialPort?: SerialPort;
-    private socketPort?: Socket;
-    private unpiWriter: UnpiWriter;
-    private unpiParser: UnpiParser;
-    private initialized: boolean;
+export class Znp extends EventEmitter<ZnpEventMap> {
+    private readonly transport: AdapterTransport;
+    private inputBuffer = Buffer.alloc(0);
     private queue: AsyncMutex;
     private waitress: Waitress<ZpiObject, WaitressMatcher>;
 
-    public constructor(path: string, baudRate: number, rtscts: boolean) {
+    public constructor(transport: AdapterTransport) {
         super();
 
-        this.path = path;
-        this.baudRate = typeof baudRate === "number" ? baudRate : 115200;
-        this.rtscts = typeof rtscts === "boolean" ? rtscts : false;
-
-        this.initialized = false;
-
+        this.transport = transport;
         this.queue = new AsyncMutex();
         this.waitress = new Waitress<ZpiObject, WaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
-        this.unpiWriter = new UnpiWriter();
-        this.unpiParser = new UnpiParser();
+
+        this.transport.on("data", this.onTransportData.bind(this));
     }
 
-    private onUnpiParsed(frame: UnpiFrame): void {
-        try {
-            const object = ZpiObject.fromUnpiFrame(frame);
-            logger.debug(() => `<-- ${object.toString(object.subsystem !== Subsystem.ZDO)}`, NS);
-            this.waitress.resolve(object);
-            this.emit("received", object);
-        } catch (error) {
-            logger.error(`Error while parsing to ZpiObject '${error}'`, NS);
+    private onTransportData(chunk: Buffer): void {
+        this.inputBuffer = Buffer.concat([this.inputBuffer, chunk]);
+
+        if (this.inputBuffer.length > 0 && this.inputBuffer[0] !== SOF) {
+            // Buffer doesn't start with SOF, skip till SOF.
+            const start = this.inputBuffer.indexOf(SOF);
+
+            if (start > -1) {
+                this.inputBuffer = this.inputBuffer.subarray(start);
+            }
+        }
+
+        while (this.inputBuffer.length >= MinMessageLength && this.inputBuffer[0] === SOF) {
+            const dataLength = this.inputBuffer[PositionDataLength];
+            const fcsPosition = DataStart + dataLength;
+            const frameLength = fcsPosition + 1;
+
+            if (this.inputBuffer.length < frameLength) {
+                return;
+            }
+
+            this.onFrame(this.inputBuffer.subarray(0, frameLength), dataLength, fcsPosition);
+
+            this.inputBuffer = this.inputBuffer.subarray(frameLength);
+
+            if (this.inputBuffer.length > 0 && this.inputBuffer[0] !== SOF) {
+                // Buffer doesn't start with SOF, skip till SOF.
+                const start = this.inputBuffer.indexOf(SOF);
+
+                if (start > -1) {
+                    this.inputBuffer = this.inputBuffer.subarray(start);
+                }
+            }
         }
     }
 
-    public isInitialized(): boolean {
-        return this.initialized;
-    }
+    private onFrame(buffer: Buffer, dataLength: number, fcsPosition: number) {
+        try {
+            const frame = UnpiFrame.fromBuffer(dataLength, fcsPosition, buffer);
 
-    private onPortError(error: Error): void {
-        logger.error(`Port error: ${error}`, NS);
-    }
+            try {
+                const object = ZpiObject.fromUnpiFrame(frame);
 
-    private onPortClose(): void {
-        logger.info("Port closed", NS);
-        this.initialized = false;
-        this.emit("close");
+                logger.debug(() => `<-- ${object.toString(object.subsystem !== Subsystem.ZDO)}`, NS);
+                this.waitress.resolve(object);
+                this.emit("received", object);
+            } catch (error) {
+                logger.error(`Error while parsing to ZpiObject '${error}'`, NS);
+            }
+        } catch (error) {
+            logger.debug(() => `--> error ${error}`, NS);
+        }
     }
 
     public async open(): Promise<void> {
-        return isTcpPath(this.path) ? await this.openSocketPort() : await this.openSerialPort();
-    }
-
-    private async openSerialPort(): Promise<void> {
-        const options = {path: this.path, baudRate: this.baudRate, rtscts: this.rtscts, autoOpen: false};
-
-        logger.info(`Opening SerialPort with ${JSON.stringify(options)}`, NS);
-        this.serialPort = new SerialPort(options);
-
-        this.unpiWriter.pipe(this.serialPort);
-        this.serialPort.pipe(this.unpiParser);
-        this.unpiParser.on("parsed", this.onUnpiParsed.bind(this));
-
-        try {
-            await this.serialPort.asyncOpen();
-            logger.info("Serialport opened", NS);
-
-            this.serialPort.once("close", this.onPortClose.bind(this));
-            this.serialPort.once("error", this.onPortError.bind(this));
-
-            this.initialized = true;
-
-            await this.skipBootloader();
-        } catch (error) {
-            this.initialized = false;
-
-            if (this.serialPort.isOpen) {
-                this.serialPort.close();
-            }
-
-            throw error;
-        }
-    }
-
-    private async openSocketPort(): Promise<void> {
-        const info = parseTcpPath(this.path);
-        logger.info(`Opening TCP socket with ${info.host}:${info.port}`, NS);
-
-        this.socketPort = new Socket();
-
-        this.socketPort.setNoDelay(true);
-        this.socketPort.setKeepAlive(true, 15000);
-        this.unpiWriter.pipe(this.socketPort);
-        this.socketPort.pipe(this.unpiParser);
-        this.unpiParser.on("parsed", this.onUnpiParsed.bind(this));
-
-        return await new Promise((resolve, reject): void => {
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            this.socketPort!.on("connect", () => {
-                logger.info("Socket connected", NS);
-            });
-            const self = this;
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            this.socketPort!.on("ready", async () => {
-                logger.info("Socket ready", NS);
-                await self.skipBootloader();
-                self.initialized = true;
-                resolve();
-            });
-
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            this.socketPort!.once("close", this.onPortClose.bind(this));
-
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            this.socketPort!.on("error", (error) => {
-                logger.error(`Socket error ${error}`, NS);
-                reject(new Error("Error while opening socket"));
-                self.initialized = false;
-            });
-
-            // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-            this.socketPort!.connect(info.port, info.host);
-        });
+        await this.transport.open(true);
+        await this.skipBootloader();
     }
 
     private async skipBootloader(): Promise<void> {
@@ -175,18 +123,18 @@ export class Znp extends events.EventEmitter {
             // and give ZNP 1 second to start.
             try {
                 logger.info("Writing CC2530/CC2531 skip bootloader payload", NS);
-                this.unpiWriter.writeBuffer(Buffer.from([0xef]));
+                this.transport.write(Buffer.from([0xef]));
                 await wait(1000);
                 await this.request(Subsystem.SYS, "ping", {capabilities: 1}, undefined, 250 /* v8 ignore next */);
             } catch {
                 // Skip bootloader on some CC2652 devices (e.g. zzh-p)
                 logger.info("Skip bootloader for CC2652/CC1352", NS);
-                if (this.serialPort) {
-                    await this.serialPort.asyncSet({dtr: false, rts: false});
+                if (this.transport.isSerial) {
+                    await this.transport.set({dtr: false, rts: false});
                     await wait(150);
-                    await this.serialPort.asyncSet({dtr: false, rts: true});
+                    await this.transport.set({dtr: false, rts: true});
                     await wait(150);
-                    await this.serialPort.asyncSet({dtr: false, rts: false});
+                    await this.transport.set({dtr: false, rts: false});
                     await wait(150);
                 }
             }
@@ -196,25 +144,7 @@ export class Znp extends events.EventEmitter {
     public async close(): Promise<void> {
         logger.info("closing", NS);
         this.queue.clear();
-
-        if (this.initialized) {
-            this.initialized = false;
-
-            if (this.serialPort) {
-                try {
-                    await this.serialPort.asyncFlushAndClose();
-                } catch (error) {
-                    this.emit("close");
-
-                    throw error;
-                }
-            } else {
-                // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
-                this.socketPort!.destroy();
-            }
-        }
-
-        this.emit("close");
+        await this.transport.close();
     }
 
     public async requestWithReply(
@@ -240,7 +170,7 @@ export class Znp extends events.EventEmitter {
         timeout?: number,
         expectedStatuses: Constants.COMMON.ZnpCommandStatus[] = [ZnpCommandStatus.SUCCESS],
     ): Promise<ZpiObject | undefined> {
-        if (!this.initialized) {
+        if (!this.transport.isOpen) {
             throw new Error("Cannot request when znp has not been initialized yet");
         }
 
@@ -252,7 +182,7 @@ export class Znp extends events.EventEmitter {
             if (object.type === Type.SREQ) {
                 const t = object.command.name === "bdbStartCommissioning" || object.command.name === "startupFromApp" ? 40000 : timeouts.SREQ;
                 const waiter = this.waitress.waitFor({type: Type.SRSP, subsystem: object.subsystem, command: object.command.name}, timeout || t);
-                this.unpiWriter.writeFrame(object.unpiFrame);
+                this.transport.write(object.unpiFrame.toBuffer());
                 const result = await waiter.start().promise;
                 if (result?.payload.status !== undefined && !expectedStatuses.includes(result.payload.status)) {
                     if (typeof waiterID === "number") {
@@ -272,12 +202,12 @@ export class Znp extends events.EventEmitter {
             if (object.type === Type.AREQ && object.isResetCommand()) {
                 const waiter = this.waitress.waitFor({type: Type.AREQ, subsystem: Subsystem.SYS, command: "resetInd"}, timeout || timeouts.reset);
                 this.queue.clear();
-                this.unpiWriter.writeFrame(object.unpiFrame);
+                this.transport.write(object.unpiFrame.toBuffer());
                 return await waiter.start().promise;
             }
 
             if (object.type === Type.AREQ) {
-                this.unpiWriter.writeFrame(object.unpiFrame);
+                this.transport.write(object.unpiFrame.toBuffer());
                 /* v8 ignore start */
             } else {
                 throw new Error(`Unknown type '${object.type}'`);
@@ -294,7 +224,7 @@ export class Znp extends events.EventEmitter {
             const unpiFrame = new UnpiFrame(Type.SREQ, Subsystem.ZDO, cmd.ID, payload);
             const waiter = this.waitress.waitFor({type: Type.SRSP, subsystem: Subsystem.ZDO, command: cmd.name}, timeouts.SREQ);
 
-            this.unpiWriter.writeFrame(unpiFrame);
+            this.transport.write(unpiFrame.toBuffer());
 
             const result = await waiter.start().promise;
 
