@@ -1,5 +1,17 @@
 # Changelog
 
+## [11.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.10.0...v11.0.0) (2026-10-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* unified transport ([#1872](https://github.com/Koenkk/zigbee-herdsman/issues/1872))
+
+### Features
+
+* Accept explicit manufacturer-specific cluster definitions ([#1878](https://github.com/Koenkk/zigbee-herdsman/issues/1878)) ([0349531](https://github.com/Koenkk/zigbee-herdsman/commit/03495312e131c705a7cabc07fd3c403f2ddf7e42))
+* unified transport ([#1872](https://github.com/Koenkk/zigbee-herdsman/issues/1872)) ([7f12fe1](https://github.com/Koenkk/zigbee-herdsman/commit/7f12fe1119243b62f6f4ce88c62f2863e9972553))
+
 ## [10.10.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.9.6...v10.10.0) (2026-09-30)
 
 
