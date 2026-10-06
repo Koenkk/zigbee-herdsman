@@ -1,8 +1,9 @@
 import {GP_ENDPOINT, GP_PROFILE_ID, HA_PROFILE_ID} from "../../../zspec/consts";
 import {Clusters} from "../../../zspec/zcl/definition/cluster";
+import {type AdditionalCoordinatorEndpoint, assignCoordinatorEndpointIds} from "../../coordinatorEndpoints";
 import type {ClusterId, EmberMulticastId, ProfileId} from "../types";
 
-type FixedEndpointInfo = {
+export type FixedEndpointInfo = {
     /** Actual Zigbee endpoint number. uint8_t */
     endpoint: number;
     /** Profile ID of the device on this endpoint. */
@@ -84,3 +85,24 @@ export const FIXED_ENDPOINTS: readonly FixedEndpointInfo[] = [
         multicastIds: [0x0b84],
     },
 ];
+
+export function fixedEndpoints(additionalCoordinatorEndpoints: readonly AdditionalCoordinatorEndpoint[] = []): readonly FixedEndpointInfo[] {
+    const assignedEndpoints = assignCoordinatorEndpointIds(
+        additionalCoordinatorEndpoints,
+        FIXED_ENDPOINTS.map((endpoint) => endpoint.endpoint),
+    );
+
+    return [
+        ...FIXED_ENDPOINTS,
+        ...assignedEndpoints.map((endpoint) => ({
+            endpoint: endpoint.endpoint,
+            profileId: endpoint.profileId,
+            deviceId: endpoint.deviceId,
+            deviceVersion: endpoint.deviceVersion,
+            inClusterList: endpoint.inputClusters,
+            outClusterList: endpoint.outputClusters,
+            networkIndex: 0x00,
+            multicastIds: [],
+        })),
+    ];
+}
