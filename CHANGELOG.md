@@ -1,5 +1,13 @@
 # Changelog
 
+## [11.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v11.0.0...v11.0.1) (2026-10-07)
+
+
+### Bug Fixes
+
+* deconz transport connection ([#1900](https://github.com/Koenkk/zigbee-herdsman/issues/1900)) ([a8ffbbc](https://github.com/Koenkk/zigbee-herdsman/commit/a8ffbbc61c80a3c885c01e0b9f8dfb63ba2befb3))
+* Tuya: mcuOtaBlockDataRequest size is 1 byte ([#1898](https://github.com/Koenkk/zigbee-herdsman/issues/1898)) ([533af4a](https://github.com/Koenkk/zigbee-herdsman/commit/533af4a00b4b9c73fe7df78d345a0e272cef1921))
+
 ## [11.0.0](https://github.com/Koenkk/zigbee-herdsman/compare/v10.10.0...v11.0.0) (2026-10-06)
 
 
