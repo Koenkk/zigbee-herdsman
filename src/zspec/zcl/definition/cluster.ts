@@ -7340,7 +7340,7 @@ export const Clusters: Readonly<Record<ClusterName, Cluster>> = {
                     {name: "key_lo", type: DataType.UINT32, max: 0xffffffff},
                     {name: "version", type: DataType.UINT8, max: 0xff},
                     {name: "offset", type: DataType.UINT32, max: 0xffffffff},
-                    {name: "size", type: DataType.UINT32, max: 0xffffffff},
+                    {name: "size", type: DataType.UINT8, max: 0xff},
                 ],
             },
             /** End update. Replying to last mcuOtaBlockDataResponse */
