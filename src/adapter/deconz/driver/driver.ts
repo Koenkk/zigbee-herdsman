@@ -350,11 +350,16 @@ class Driver extends events.EventEmitter {
             // E.g. connect with baudrate XY, query firmware, on timeout try other baudrate.
             // Most units out there are ConBee2/3 which support 115200.
             // The 38400 default is outdated now and only works for a few units.
-            this.transport.open(true).catch((err) => {
-                logger.debug(`${err}`, NS);
-                this.driverStateStart = Date.now();
-                this.driverState = DriverState.WaitToReconnect;
-            });
+            this.transport.open(true).then(
+                () => {
+                    this.emitStateEvent(DriverEvent.Connected);
+                },
+                (err) => {
+                    logger.debug(`${err}`, NS);
+                    this.driverStateStart = Date.now();
+                    this.driverState = DriverState.WaitToReconnect;
+                },
+            );
         } else if (event === DriverEvent.Connected) {
             this.driverStateStart = Date.now();
             this.driverState = DriverState.ReadConfiguration;
