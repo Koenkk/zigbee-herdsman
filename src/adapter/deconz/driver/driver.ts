@@ -128,7 +128,7 @@ class Driver extends events.EventEmitter {
         this.firmwareLog = firmwareLog;
 
         this.decoder = new slip.Decoder({
-            onMessage: this.onParsed,
+            onMessage: this.onParsed.bind(this),
             onError: (_message, error) => logger.debug(`<-- error '${error}'`, NS),
             maxMessageSize: 1000000,
             bufferSize: 2048,
@@ -194,7 +194,6 @@ class Driver extends events.EventEmitter {
             this.tick();
         }, 100);
 
-        this.onParsed = this.onParsed.bind(this);
         this.frameParserEvent.on("deviceStateUpdated", (data: number) => {
             this.checkDeviceStatus(data);
         });
