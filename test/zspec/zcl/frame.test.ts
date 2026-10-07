@@ -973,6 +973,23 @@ describe("ZCL Frame", () => {
         });
     });
 
+    // https://github.com/Koenkk/zigbee-herdsman/issues/1889
+    it("Reads manuSpecificTuya mcuOtaBlockDataRequest with 1-byte size", () => {
+        // _TZE204_dtzziy1e on MCU 1.0.3 requesting image 1.0.5: seq, pid "dtzziy1e", version, offset 0, size 48 (16-byte payload)
+        const b = Buffer.from([0x09, 0x5e, 0x13, 0x00, 0x60, 0x64, 0x74, 0x7a, 0x7a, 0x69, 0x79, 0x31, 0x65, 0x45, 0x00, 0x00, 0x00, 0x00, 0x30]);
+        const frame = Zcl.Frame.fromBuffer(Zcl.Clusters.manuSpecificTuya.ID, Zcl.Header.fromBuffer(b), b, {});
+
+        expect(frame.command.name).toStrictEqual("mcuOtaBlockDataRequest");
+        expect(frame.payload).toStrictEqual({
+            seq: 0x6000,
+            key_hi: 0x7a7a7464,
+            key_lo: 0x65317969,
+            version: 0x45,
+            offset: 0,
+            size: 48,
+        });
+    });
+
     it("Keeps MINIMUM_REMAINING_BUFFER_BYTES parameters when present", () => {
         // moveToLevelWithOnOff with optionsMask/optionsOverride
         const payload = {level: 150, transtime: 0, optionsMask: 0, optionsOverride: 1};

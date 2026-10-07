@@ -6991,7 +6991,7 @@ export interface TClusters {
                 version: number;
                 /** type=UINT32 | max=4294967295 */
                 offset: number;
-                /** type=UINT32 | max=4294967295 */
+                /** type=UINT8 | max=255 */
                 size: number;
             };
             /** ID=0x15 */
