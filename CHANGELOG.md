@@ -1,5 +1,12 @@
 # Changelog
 
+## [11.0.2](https://github.com/Koenkk/zigbee-herdsman/compare/v11.0.1...v11.0.2) (2026-10-07)
+
+
+### Bug Fixes
+
+* deconz decoder context ([#1901](https://github.com/Koenkk/zigbee-herdsman/issues/1901)) ([1a4748e](https://github.com/Koenkk/zigbee-herdsman/commit/1a4748e987fea60c2ccfb836ce5b4e4f308d14da))
+
 ## [11.0.1](https://github.com/Koenkk/zigbee-herdsman/compare/v11.0.0...v11.0.1) (2026-10-07)
 
 
