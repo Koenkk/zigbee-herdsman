@@ -26,10 +26,21 @@ import type {
     OtaUpdateAvailableResult,
     ZigbeeOtaImageMeta,
 } from "../tstype";
-import Endpoint, {type BindInternal} from "./endpoint";
+import Endpoint, {type Bind, type BindInternal} from "./endpoint";
 import Entity from "./entity";
 
 const NS = "zh:controller:device";
+
+export interface EndpointBindingDiff {
+    endpoint: Endpoint;
+    bindings: Bind[];
+    /** Bindings the device holds that were not cached */
+    added: Bind[];
+    /** Cached bindings the device does not hold */
+    removed: Bind[];
+    /** Clusters with a configured reporting but no binding to the coordinator, the device cannot report those */
+    unreportableClusters: Cluster[];
+}
 
 const INTERVIEW_GENBASIC_ATTRIBUTES = [
     "modelId",
@@ -1356,6 +1367,33 @@ export class Device extends Entity<ControllerEventMap> {
     }
 
     public async bindingTable(): Promise<BindingTableEntry[]> {
+        const table = await this.readBindingTable();
+
+        for (const ep of this._endpoints) {
+            ep.saveBindings(this.bindsFromTable(table, ep));
+        }
+
+        return table;
+    }
+
+    /**
+     * Reconcile the cached bindings with the device's own binding table, reporting per endpoint what that changed.
+     * Support of the underlying request is optional, devices without a binding table will throw.
+     */
+    public async verifyBindings(): Promise<EndpointBindingDiff[]> {
+        const table = await this.readBindingTable();
+        const diffs: EndpointBindingDiff[] = [];
+
+        for (const ep of this._endpoints) {
+            const {added, removed} = ep.saveBindings(this.bindsFromTable(table, ep));
+
+            diffs.push({endpoint: ep, bindings: ep.binds, added, removed, unreportableClusters: ep.unreportableClusters});
+        }
+
+        return diffs;
+    }
+
+    private async readBindingTable(): Promise<BindingTableEntry[]> {
         const clusterId = Zdo.ClusterId.BINDING_TABLE_REQUEST;
         const table: BindingTableEntry[] = [];
         const request = async (startIndex: number): Promise<[tableEntries: number, entryCount: number]> => {
@@ -1383,30 +1421,30 @@ export class Device extends Entity<ControllerEventMap> {
             nextStartIndex += entryCount;
         }
 
-        for (const ep of this._endpoints) {
-            const newBinds: BindInternal[] = [];
+        return table;
+    }
 
-            for (const entry of table) {
-                if (entry.sourceEui64 !== this.ieeeAddr || entry.sourceEndpoint !== ep.ID) {
-                    continue;
-                }
+    private bindsFromTable(table: BindingTableEntry[], ep: Endpoint): BindInternal[] {
+        const binds: BindInternal[] = [];
 
-                if (entry.destAddrMode === 0x01) {
-                    newBinds.push({type: "group", cluster: entry.clusterId, groupID: entry.dest as number});
-                } else {
-                    newBinds.push({
-                        type: "endpoint",
-                        cluster: entry.clusterId,
-                        deviceIeeeAddress: entry.dest as Eui64,
-                        endpointID: entry.destEndpoint as number,
-                    });
-                }
+        for (const entry of table) {
+            if (entry.sourceEui64 !== this.ieeeAddr || entry.sourceEndpoint !== ep.ID) {
+                continue;
             }
 
-            ep.saveBindings(newBinds);
+            if (entry.destAddrMode === 0x01) {
+                binds.push({type: "group", cluster: entry.clusterId, groupID: entry.dest as number});
+            } else {
+                binds.push({
+                    type: "endpoint",
+                    cluster: entry.clusterId,
+                    deviceIeeeAddress: entry.dest as Eui64,
+                    endpointID: entry.destEndpoint as number,
+                });
+            }
         }
 
-        return table;
+        return binds;
     }
 
     /**
