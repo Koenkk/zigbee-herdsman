@@ -4,6 +4,7 @@ import assert from "node:assert";
 import type {Backup} from "../../../models";
 import {Queue, Waitress} from "../../../utils";
 import {logger} from "../../../utils/logger";
+import {MetricType, metrics} from "../../../utils/metrics";
 import * as ZSpec from "../../../zspec";
 import * as Zcl from "../../../zspec/zcl";
 import * as Zdo from "../../../zspec/zdo";
@@ -220,21 +221,7 @@ export class ZBOSSAdapter extends Adapter {
         }
     }
 
-    public async sendZdo(
-        ieeeAddress: string,
-        networkAddress: number,
-        clusterId: Zdo.ClusterId,
-        payload: Buffer,
-        disableResponse: true,
-    ): Promise<void>;
-    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
-        ieeeAddress: string,
-        networkAddress: number,
-        clusterId: K,
-        payload: Buffer,
-        disableResponse: false,
-    ): Promise<ZdoTypes.RequestToResponseMap[K]>;
-    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
+    protected async sendZdoImpl<K extends keyof ZdoTypes.RequestToResponseMap>(
         _ieeeAddress: string,
         networkAddress: number,
         clusterId: K,
@@ -284,7 +271,7 @@ export class ZBOSSAdapter extends Adapter {
         }, networkAddress);
     }
 
-    public async sendZclFrameToEndpoint(
+    protected async sendZclFrameToEndpointImpl(
         ieeeAddr: string,
         networkAddress: number,
         endpoint: number,
@@ -387,6 +374,7 @@ export class ZBOSSAdapter extends Adapter {
                 } catch (error) {
                     logger.debug(`Response timeout (${ieeeAddr}:${networkAddress},${responseAttempt})`, NS);
                     if (responseAttempt < 1 && !disableRecovery) {
+                        metrics.emit("metric", {type: MetricType.AdapterRetry, adapterType: "zboss", ieeeAddr, reason: "no_response"});
                         return await this.sendZclFrameToEndpointInternal(
                             ieeeAddr,
                             networkAddress,
@@ -419,7 +407,7 @@ export class ZBOSSAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
+    protected async sendZclFrameToGroupImpl(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
         await this.driver.grequest(
             groupID,
             profileId ?? (sourceEndpoint === ZSpec.GP_ENDPOINT ? ZSpec.GP_PROFILE_ID : ZSpec.HA_PROFILE_ID),
@@ -429,7 +417,7 @@ export class ZBOSSAdapter extends Adapter {
         );
     }
 
-    public async sendZclFrameToAll(
+    protected async sendZclFrameToAllImpl(
         endpoint: number,
         zclFrame: Zcl.Frame,
         sourceEndpoint: number,
