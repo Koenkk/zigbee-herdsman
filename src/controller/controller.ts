@@ -20,7 +20,7 @@ import GreenPower from "./greenPower";
 import {ZclFrameConverter} from "./helpers";
 import {checkInstallCode, parseInstallCode} from "./helpers/installCodes";
 import zclTransactionSequenceNumber from "./helpers/zclTransactionSequenceNumber";
-import {Device, Entity} from "./model";
+import {Device, type Endpoint, Entity} from "./model";
 import {InterviewState} from "./model/device";
 import Group from "./model/group";
 import Touchlink from "./touchlink";
@@ -1144,6 +1144,54 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
 
         if (frame) {
             await device.onZclData(payload, frame, endpoint, defaultResponse);
+        } else {
+            await this.defaultResponseToUnparsedFrame(payload, device, endpoint, defaultResponse);
+        }
+    }
+
+    /**
+     * The ZCL payload could not be parsed, but the adapter parsed the header and the sender asked for a Default Response.
+     * Some devices retransmit the same frame (same TSN) indefinitely until they get one,
+     * e.g. BSEED TS011F `_TZ3210_5ct6e7ye` reporting a malformed array on cluster 0xE000:
+     * https://github.com/Koenkk/zigbee2mqtt/issues/33174
+     */
+    private async defaultResponseToUnparsedFrame(
+        payload: AdapterEvents.ZclPayload,
+        device: Device,
+        endpoint: Endpoint,
+        defaultResponse: Zcl.Status | undefined,
+    ): Promise<void> {
+        const header = payload.header;
+        /* v8 ignore next */
+        const disableTuyaDefaultResponse = device.manufacturerName?.startsWith("_TZ") && process.env.DISABLE_TUYA_DEFAULT_RESPONSE;
+
+        if (
+            !header ||
+            payload.wasBroadcast ||
+            header.frameControl.disableDefaultResponse ||
+            (header.isGlobal && header.commandIdentifier === Zcl.Foundation.defaultRsp.ID) ||
+            device.skipDefaultResponse ||
+            disableTuyaDefaultResponse
+        ) {
+            return;
+        }
+
+        try {
+            await endpoint.defaultResponse(
+                header.commandIdentifier,
+                defaultResponse ?? Zcl.Status.SUCCESS,
+                payload.clusterID,
+                header.transactionSequenceNumber,
+                {
+                    direction:
+                        header.frameControl.direction === Zcl.Direction.CLIENT_TO_SERVER
+                            ? Zcl.Direction.SERVER_TO_CLIENT
+                            : Zcl.Direction.CLIENT_TO_SERVER,
+                    manufacturerCode: header.manufacturerCode,
+                },
+            );
+        } catch (error) {
+            logger.debug(`Default response to unparsed frame from ${device.ieeeAddr} failed (${error})`, NS);
         }
     }
 }
