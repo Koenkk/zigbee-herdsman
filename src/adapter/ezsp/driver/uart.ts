@@ -2,7 +2,7 @@
 
 import {EventEmitter} from "node:events";
 import {Waitress, wait} from "../../../utils";
-import {AsyncMutex} from "../../../utils/async-mutex";
+import {AsyncMutex, MutexCancelledError} from "../../../utils/async-mutex";
 import {logger} from "../../../utils/logger";
 import type {AdapterTransport} from "../../transport";
 import * as consts from "./consts";
@@ -362,12 +362,18 @@ export class SerialDriver extends EventEmitter {
                 await waiter.start().promise;
                 logger.debug(`-+- waiting (${nextSeq}) success`, NS);
             } catch (e1) {
+                if (!this.initialized) {
+                    throw new MutexCancelledError();
+                }
                 logger.error(`--> Error: ${e1}`, NS);
                 logger.error(`-!- break waiting (${nextSeq})`, NS);
                 logger.error(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString("hex")}`, NS);
 
                 try {
                     await wait(500);
+                    if (!this.initialized) {
+                        throw new MutexCancelledError();
+                    }
                     const waiter = this.waitFor(nextSeq);
                     logger.debug(`->> DATA (${seq},${ackSeq},1): ${data.toString("hex")}`, NS);
                     this.writeFrame((seq << 4) | (1 << 3) | ackSeq, randData);
@@ -375,6 +381,9 @@ export class SerialDriver extends EventEmitter {
                     await waiter.start().promise;
                     logger.debug(`-+- rewaiting (${nextSeq}) success`, NS);
                 } catch (e2) {
+                    if (!this.initialized || e2 instanceof MutexCancelledError) {
+                        throw new MutexCancelledError();
+                    }
                     logger.error(`--> Error: ${e2}`, NS);
                     logger.error(`-!- break rewaiting (${nextSeq})`, NS);
                     logger.error(`Can't resend DATA frame (${seq},${ackSeq},1): ${data.toString("hex")}`, NS);

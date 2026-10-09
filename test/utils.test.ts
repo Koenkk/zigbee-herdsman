@@ -260,15 +260,17 @@ describe("Utils", () => {
         void queue.run(async () => {
             await new Promise((resolve) => setTimeout(resolve, 1000));
         });
-        void queue.run(async () => {
+        const cancelled = queue.run(async () => {
             await new Promise((resolve) => setTimeout(resolve, 1000));
         });
 
         expect(queue.count).toStrictEqual(1);
 
+        const rejection = expect(cancelled).rejects.toThrow("Mutex cleared");
         queue.clear();
 
         expect(queue.count).toStrictEqual(0);
+        await rejection;
         await vi.runOnlyPendingTimersAsync(); // cleanup
 
         vi.useRealTimers();

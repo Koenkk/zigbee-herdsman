@@ -1,6 +1,12 @@
+export class MutexCancelledError extends Error {
+    constructor() {
+        super("Mutex cleared");
+    }
+}
+
 export class AsyncMutex {
     #locked = false;
-    readonly #queue: Array<() => void> = [];
+    readonly #queue: Array<{resolve: () => void; reject: (error: Error) => void}> = [];
 
     get count() {
         return this.#queue.length;
@@ -8,7 +14,7 @@ export class AsyncMutex {
 
     async run<T>(fn: () => Promise<T>): Promise<T> {
         if (this.#locked) {
-            await new Promise<void>((resolve) => this.#queue.push(resolve));
+            await new Promise<void>((resolve, reject) => this.#queue.push({resolve, reject}));
         }
 
         this.#locked = true;
@@ -16,16 +22,21 @@ export class AsyncMutex {
         try {
             return await fn();
         } finally {
-            this.#locked = false;
             const next = this.#queue.shift();
 
             if (next) {
-                next();
+                // Keep the lock reserved until the next acquisition resumes.
+                next.resolve();
+            } else {
+                this.#locked = false;
             }
         }
     }
 
-    clear() {
-        this.#queue.length = 0;
+    /** Reject pending acquisitions without interrupting the active operation. */
+    clear(): void {
+        for (const waiter of this.#queue.splice(0)) {
+            waiter.reject(new MutexCancelledError());
+        }
     }
 }
