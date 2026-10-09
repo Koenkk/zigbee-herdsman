@@ -449,7 +449,14 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             }
 
             try {
-                await this.permitJoin(0);
+                if (this.getPermitJoin()) {
+                    // a join window is open: close it on the whole network
+                    await this.permitJoin(0);
+                } else {
+                    // nothing to close on the routers: a network-wide Mgmt_Permit_Joining_req on every stop
+                    // is useless, and some routers react to it (e.g. Profalux shutter motors jog)
+                    await this.adapter.permitJoin(0, ZSpec.COORDINATOR_ADDRESS);
+                }
             } catch (error) {
                 logger.error(`Failed to disable join on stop: ${error}`, NS);
             }

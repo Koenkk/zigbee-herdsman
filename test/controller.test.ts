@@ -668,10 +668,23 @@ describe("Controller", () => {
         await controller.stop();
         expect(controller.isStopping()).toBeTruthy();
         expect(controller.isAdapterDisconnected()).toBeTruthy();
-        expect(mockAdapterPermitJoin).toHaveBeenCalledWith(0);
+        expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
+        expect(mockAdapterPermitJoin).toHaveBeenCalledWith(0, 0x0000);
+        expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(0);
         expect(JSON.parse(fs.readFileSync(options.backupPath).toString())).toStrictEqual(JSON.parse(JSON.stringify(dummyBackup)));
         expect(mockAdapterStop).toHaveBeenCalledTimes(1);
         expect(databaseSaveSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it("Controller stop with an open join window closes it on the whole network", async () => {
+        await controller.start();
+        await controller.permitJoin(254);
+        mockAdapterPermitJoin.mockClear();
+        mocksendZclFrameToAll.mockClear();
+        await controller.stop();
+        expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(1);
+        expect(mockAdapterPermitJoin).toHaveBeenCalledWith(0);
+        expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(1); // Green Power commissioning mode closed too
     });
 
     it("controller should backup at defined interval", async () => {
