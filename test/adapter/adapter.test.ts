@@ -1,6 +1,5 @@
-import {MockBinding} from "@serialport/binding-mock";
-import type {PortInfo} from "@serialport/bindings-cpp";
 import type {BrowserConfig, Service} from "bonjour-service";
+import {MockBinding, type PortInfo} from "serialport-rs";
 import type {MockInstance} from "vitest";
 import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
 import {Adapter, type TsType} from "../../src/adapter";
@@ -43,7 +42,8 @@ const {mockAutoDetect, mockList} = vi.hoisted(() => {
     return {mockAutoDetect: vi.fn(() => ({list: mockList})), mockList};
 });
 
-vi.mock("@serialport/bindings-cpp", () => ({
+vi.mock("serialport-rs", async (importOriginal) => ({
+    ...(await importOriginal()),
     autoDetect: mockAutoDetect,
 }));
 

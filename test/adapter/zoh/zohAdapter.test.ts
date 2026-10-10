@@ -1,7 +1,7 @@
 import {randomBytes} from "node:crypto";
 import {mkdirSync, rmSync, writeFileSync} from "node:fs";
 import {join} from "node:path";
-import {MockBinding, type MockPortBinding} from "@serialport/binding-mock";
+import {MockBinding, type MockPortBinding} from "serialport-rs";
 import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
 import {encodeSpinelFrame, SPINEL_HEADER_FLG_SPINEL} from "zigbee-on-host/dist/spinel/spinel";
 import {SpinelStatus} from "zigbee-on-host/dist/spinel/statuses";

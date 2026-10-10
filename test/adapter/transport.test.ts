@@ -1,4 +1,4 @@
-import {MockBinding} from "@serialport/binding-mock";
+import {MockBinding} from "serialport-rs";
 import {afterEach, beforeEach, describe, expect, test, vi} from "vitest";
 import {AdapterTransport} from "../../src/adapter/transport";
 

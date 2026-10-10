@@ -1,8 +1,7 @@
 import events from "node:events";
 import {Socket} from "node:net";
 import {platform} from "node:os";
-import {autoDetect, type SetOptions} from "@serialport/bindings-cpp";
-import {type ModemBitsCallback, type OpenOptions, SerialPortStream} from "@serialport/stream";
+import {autoDetect, type ModemBitsCallback, type OpenOptions, SerialPortStream, type SetOptions} from "serialport-rs";
 import {logger} from "../utils/logger";
 import type {TransportOptions} from "./tstype";
 import {isTcpPath, parseTcpPath} from "./utils";
@@ -23,9 +22,6 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
     readonly options: TransportOptions;
     /** Access to the lower level, arch-specific binding. Mainly for tests. */
     serialPortBinding: OpenOptions["binding"] | undefined;
-
-    // TODO: WORKAROUND https://github.com/serialport/node-serialport/issues/3148
-    private node26SerialWorkaround: NodeJS.Timeout | undefined;
 
     constructor(options: TransportOptions) {
         super();
@@ -97,10 +93,6 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
         try {
             if (serialPort) {
                 serialPort.removeAllListeners();
-                clearInterval(this.node26SerialWorkaround);
-
-                this.node26SerialWorkaround = undefined;
-
                 if (serialPort.isOpen) {
                     await new Promise<void>((resolve, reject): void => {
                         serialPort.close((err) => (err ? reject(err) : resolve()));
@@ -173,9 +165,7 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
         };
 
         if (platform() === "win32") {
-            // this controls `DTR` on "open", whereas on Unix, it's on "close"
-            // https://github.com/serialport/bindings-cpp/blob/19820c39fbbedc1b5f09d6508b5ef1268df3d455/src/serialport_win.cpp#L123-L127
-            // https://github.com/serialport/bindings-cpp/blob/19820c39fbbedc1b5f09d6508b5ef1268df3d455/src/serialport_unix.cpp#L254-L256
+            // Avoid resetting Windows coordinators through DTR during open.
             openOptions.hupcl = false;
         }
 
@@ -190,17 +180,6 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
         serialPort.once("close", (error) => this.onClose(serialPort, error));
         serialPort.on("error", (error) => logger.error(`Serial port error: ${error}`, NS));
 
-        // TODO: WORKAROUND https://github.com/serialport/node-serialport/issues/3148
-        /* v8 ignore start */
-        {
-            const [nodeMajor = 0, nodeMinor = 0] = process.versions.node.split(".").map(Number);
-
-            if (nodeMajor > 26 || (nodeMajor === 26 && nodeMinor > 3)) {
-                this.node26SerialWorkaround = setInterval(() => undefined, 16).unref();
-            }
-        }
-        /* v8 ignore stop */
-
         try {
             await new Promise<void>((resolve, reject): void => {
                 serialPort.open((err) => (err ? reject(err) : resolve()));
@@ -208,9 +187,6 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
 
             logger.info("Serial port opened", NS);
         } catch (error) {
-            clearInterval(this.node26SerialWorkaround);
-
-            this.node26SerialWorkaround = undefined;
             this.serialPort = undefined;
 
             serialPort.removeAllListeners();
@@ -270,9 +246,6 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
 
     private onClose(port: SerialPortStream | Socket, error?: boolean | Error): void {
         if (port === this.serialPort) {
-            clearInterval(this.node26SerialWorkaround);
-
-            this.node26SerialWorkaround = undefined;
             this.serialPort = undefined;
         } else if (port === this.socket) {
             this.socket = undefined;
