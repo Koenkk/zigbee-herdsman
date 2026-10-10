@@ -197,17 +197,40 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
         );
 
         // Set sink address based on communication mode
+        let sinkDevice: Device | undefined;
+
+        try {
+            const gpdIeeeAddr = payload.srcID !== undefined ? GreenPower.sourceIdToIeeeAddress(payload.srcID) : undefined;
+            const gpd = gpdIeeeAddr ? Device.byIeeeAddr(gpdIeeeAddr) : undefined;
+
+            if (gpd?.gpSinkDevice) {
+                sinkDevice = Device.byIeeeAddr(gpd.gpSinkDevice);
+            }
+        } catch {
+            // device lookup unavailable (e.g. database not initialized), fall back to coordinator
+        }
+
         switch (options.communicationMode) {
             case GPCommunicationMode.GroupcastToPrecommissionedGroupId:
             case GPCommunicationMode.GroupcastToDgroupId: {
-                payload.sinkGroupID = GP_GROUP_ID;
+                if (sinkDevice) {
+                    payload.sinkIEEEAddr = sinkDevice.ieeeAddr;
+                    payload.sinkNwkAddr = sinkDevice.networkAddress;
+                } else {
+                    payload.sinkGroupID = GP_GROUP_ID;
+                }
                 break;
             }
             /* v8 ignore next */
             case GPCommunicationMode.FullUnicast:
             case GPCommunicationMode.LightweightUnicast: {
-                payload.sinkIEEEAddr = await this.adapter.getCoordinatorIEEE();
-                payload.sinkNwkAddr = COORDINATOR_ADDRESS;
+                if (sinkDevice) {
+                    payload.sinkIEEEAddr = sinkDevice.ieeeAddr;
+                    payload.sinkNwkAddr = sinkDevice.networkAddress;
+                } else {
+                    payload.sinkIEEEAddr = await this.adapter.getCoordinatorIEEE();
+                    payload.sinkNwkAddr = COORDINATOR_ADDRESS;
+                }
                 break;
             }
         }
