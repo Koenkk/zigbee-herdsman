@@ -422,6 +422,21 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
         return this.permitJoinEnd;
     }
 
+    public setGreenPowerSinkDevice(gpdIeeeAddr: string, sinkIeeeAddr?: string): void {
+        const gpd = Device.byIeeeAddr(gpdIeeeAddr);
+        assert(gpd, `Green Power device '${gpdIeeeAddr}' does not exist`);
+
+        if (sinkIeeeAddr !== undefined) {
+            const sink = Device.byIeeeAddr(sinkIeeeAddr);
+            assert(sink, `Sink device '${sinkIeeeAddr}' does not exist`);
+            gpd.gpSinkDevice = sink.ieeeAddr;
+        } else {
+            gpd.gpSinkDevice = undefined;
+        }
+
+        gpd.save();
+    }
+
     public isStopping(): boolean {
         return this.stopping;
     }

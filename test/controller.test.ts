@@ -2240,6 +2240,66 @@ describe("Controller", () => {
         expect(deepClone(mocksendZclFrameToAll.mock.calls[1][1])).toStrictEqual(deepClone(commissionFrameDisable));
     });
 
+    it("sets and clears a green power sink device for a GPD", () => {
+        const gpd = Device.create(
+            "GreenPower",
+            "0x000b57fffe123456",
+            0x000b,
+            0x0000,
+            "GPD",
+            "Battery",
+            "GPD-Model",
+            InterviewState.Successful,
+            undefined,
+        );
+        const sink = Device.create(
+            "Router",
+            "0x00158d0001c4a800",
+            0x1234,
+            0x0000,
+            "Sink",
+            "Mains (single phase)",
+            "Sink-Model",
+            InterviewState.Successful,
+            undefined,
+        );
+
+        controller.setGreenPowerSinkDevice(gpd.ieeeAddr, sink.ieeeAddr);
+        expect(gpd.gpSinkDevice).toBe(sink.ieeeAddr);
+
+        controller.setGreenPowerSinkDevice(gpd.ieeeAddr, undefined);
+        expect(gpd.gpSinkDevice).toBeUndefined();
+    });
+
+    it("rejects setting a green power sink when the GPD or sink does not exist", () => {
+        Device.create(
+            "Router",
+            "0x00158d0002d4a901",
+            0x2345,
+            0x0000,
+            "Sink",
+            "Mains (single phase)",
+            "Sink-Model",
+            InterviewState.Successful,
+            undefined,
+        );
+        const gpd = Device.create(
+            "GreenPower",
+            "0x000b57fffe223457",
+            0x000c,
+            0x0000,
+            "GPD",
+            "Battery",
+            "GPD-Model",
+            InterviewState.Successful,
+            undefined,
+        );
+
+        expect(() => controller.setGreenPowerSinkDevice("0x000b57fffe333333", "0x00158d0002d4a901")).toThrowError("does not exist");
+        expect(() => controller.setGreenPowerSinkDevice(gpd.ieeeAddr, "0x000b57fffe444444")).toThrowError("does not exist");
+        expect(gpd.gpSinkDevice).toBeUndefined();
+    });
+
     it("Controller permit joining through specific device", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
