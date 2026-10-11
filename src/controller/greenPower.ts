@@ -197,33 +197,28 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
         );
 
         // Set sink address based on communication mode
-        let sinkDevice: Device | undefined;
-
-        try {
-            const gpdIeeeAddr = payload.srcID !== undefined ? GreenPower.sourceIdToIeeeAddress(payload.srcID) : undefined;
-            const gpd = gpdIeeeAddr ? Device.byIeeeAddr(gpdIeeeAddr) : undefined;
-
-            if (gpd?.gpSinkDevice) {
-                sinkDevice = Device.byIeeeAddr(gpd.gpSinkDevice);
-            }
-        } catch {
-            // device lookup unavailable (e.g. database not initialized), fall back to coordinator
-        }
-
         switch (options.communicationMode) {
             case GPCommunicationMode.GroupcastToPrecommissionedGroupId:
             case GPCommunicationMode.GroupcastToDgroupId: {
-                if (sinkDevice) {
-                    payload.sinkIEEEAddr = sinkDevice.ieeeAddr;
-                    payload.sinkNwkAddr = sinkDevice.networkAddress;
-                } else {
-                    payload.sinkGroupID = GP_GROUP_ID;
-                }
+                payload.sinkGroupID = GP_GROUP_ID;
                 break;
             }
             /* v8 ignore next */
             case GPCommunicationMode.FullUnicast:
             case GPCommunicationMode.LightweightUnicast: {
+                let sinkDevice: Device | undefined;
+
+                try {
+                    const gpdIeeeAddr = payload.srcID !== undefined ? GreenPower.sourceIdToIeeeAddress(payload.srcID) : undefined;
+                    const gpd = gpdIeeeAddr ? Device.byIeeeAddr(gpdIeeeAddr) : undefined;
+
+                    if (gpd?.gpSinkDevice) {
+                        sinkDevice = Device.byIeeeAddr(gpd.gpSinkDevice);
+                    }
+                } catch {
+                    // device lookup unavailable (e.g. database not initialized), fall back to coordinator
+                }
+
                 if (sinkDevice) {
                     payload.sinkIEEEAddr = sinkDevice.ieeeAddr;
                     payload.sinkNwkAddr = sinkDevice.networkAddress;
