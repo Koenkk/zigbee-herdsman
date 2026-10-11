@@ -206,25 +206,20 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
             /* v8 ignore next */
             case GPCommunicationMode.FullUnicast:
             case GPCommunicationMode.LightweightUnicast: {
-                let sinkDevice: Device | undefined;
+                payload.sinkIEEEAddr = await this.adapter.getCoordinatorIEEE();
+                payload.sinkNwkAddr = COORDINATOR_ADDRESS;
 
-                try {
-                    const gpdIeeeAddr = payload.srcID !== undefined ? GreenPower.sourceIdToIeeeAddress(payload.srcID) : undefined;
-                    const gpd = gpdIeeeAddr ? Device.byIeeeAddr(gpdIeeeAddr) : undefined;
+                // srcID is always present for commissioning notifications
+                /* v8 ignore next */
+                if (payload.srcID !== undefined) {
+                    const gpd = Device.byIeeeAddr(GreenPower.sourceIdToIeeeAddress(payload.srcID));
 
                     if (gpd?.gpSinkDevice) {
-                        sinkDevice = Device.byIeeeAddr(gpd.gpSinkDevice);
+                        const sink = Device.byIeeeAddr(gpd.gpSinkDevice);
+                        assert(sink, "Failed to find configured green power sink device");
+                        payload.sinkIEEEAddr = sink.ieeeAddr;
+                        payload.sinkNwkAddr = sink.networkAddress;
                     }
-                } catch {
-                    // device lookup unavailable (e.g. database not initialized), fall back to coordinator
-                }
-
-                if (sinkDevice) {
-                    payload.sinkIEEEAddr = sinkDevice.ieeeAddr;
-                    payload.sinkNwkAddr = sinkDevice.networkAddress;
-                } else {
-                    payload.sinkIEEEAddr = await this.adapter.getCoordinatorIEEE();
-                    payload.sinkNwkAddr = COORDINATOR_ADDRESS;
                 }
                 break;
             }

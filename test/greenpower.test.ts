@@ -2,6 +2,7 @@ import type {MockInstance} from "vitest";
 import {afterAll, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
 import type {ZclPayload} from "../src/adapter/events";
 import {GreenPower} from "../src/controller/greenPower";
+import {Device} from "../src/controller/model";
 import type {GreenPowerDeviceJoinedPayload} from "../src/controller/tstype";
 import {logger} from "../src/utils/logger";
 import {GP_ENDPOINT, GP_GROUP_ID} from "../src/zspec/consts";
@@ -1404,5 +1405,91 @@ describe("GreenPower", () => {
             expect(JSON.parse(JSON.stringify(retFrame))).toStrictEqual(JSON.parse(JSON.stringify(clonedFrame)));
             expect(retFrame.payload.commandFrame).toStrictEqual({});
         }
+    });
+
+    it("uses gpSinkDevice as sink in unicast pairing when set on GPD", async () => {
+        const sinkIeee = "0xaabbccddeeff0011";
+        const sinkNwk = 0x1234;
+        const gpdSourceId = 1496140231;
+
+        const byIeeeAddrSpy = vi.spyOn(Device, "byIeeeAddr").mockImplementation((ieee: string) => {
+            if (ieee === GreenPower.sourceIdToIeeeAddress(gpdSourceId)) return {gpSinkDevice: sinkIeee} as never;
+            if (ieee === sinkIeee) return {ieeeAddr: sinkIeee, networkAddress: sinkNwk} as never;
+            return undefined;
+        });
+        const byNetworkAddressSpy = vi
+            .spyOn(Device, "byNetworkAddress")
+            .mockReturnValue({ieeeAddr: "0x00158d0001c2a3b4", networkAddress: 0x4567} as never);
+
+        const addr = {applicationId: 0, sourceId: gpdSourceId, endpoint: 0};
+        const gpdCommandPayload = Buffer.from("0289f31adb70a88d71196ee50c03580537767de27ad5331309000037647a62697061304047503030303157", "hex");
+        const gpdHeader = makeHeader(
+            19,
+            Zcl.Clusters.greenPower.commands.commissioningNotification.ID,
+            addr.applicationId,
+            0,
+            0,
+            0,
+            addr.sourceId,
+            4294967295,
+            224,
+            gpdCommandPayload.length,
+        );
+        const buffer = Buffer.concat([gpdHeader, gpdCommandPayload]);
+        const payload = {...makePayload(addr.sourceId, buffer, 214), wasBroadcast: false};
+        const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
+
+        await gp.processCommand(payload, frame);
+
+        // sink lookup was performed and the pairing frame carries the configured sink
+        expect(byIeeeAddrSpy).toHaveBeenCalledWith(sinkIeee);
+        const sent = (gp as unknown as {adapter: {sendZclFrameToEndpoint: {mock: {calls: unknown[][]}}}}).adapter.sendZclFrameToEndpoint;
+        const sentFrame = sent.mock.calls[0][3] as {payload: {sinkIEEEAddr: string; sinkNwkAddr: number}};
+        expect(sentFrame.payload.sinkIEEEAddr).toBe(sinkIeee);
+        expect(sentFrame.payload.sinkNwkAddr).toBe(sinkNwk);
+        byIeeeAddrSpy.mockRestore();
+        byNetworkAddressSpy.mockRestore();
+    });
+
+    it("falls back to coordinator sink in unicast pairing when GPD has no gpSinkDevice", async () => {
+        const gpdSourceId = 1496140231;
+
+        const byIeeeAddrSpy = vi.spyOn(Device, "byIeeeAddr").mockImplementation((ieee: string) => {
+            if (ieee === GreenPower.sourceIdToIeeeAddress(gpdSourceId)) return {gpSinkDevice: undefined} as never;
+            return undefined;
+        });
+        const byNetworkAddressSpy = vi
+            .spyOn(Device, "byNetworkAddress")
+            .mockReturnValue({ieeeAddr: "0x00158d0001c2a3b4", networkAddress: 0x4567} as never);
+        const getCoordinatorIEEE = vi.fn().mockResolvedValue("0x00124b0024d1b045");
+        (gp as unknown as {adapter: {getCoordinatorIEEE: unknown}}).adapter.getCoordinatorIEEE = getCoordinatorIEEE;
+
+        const addr = {applicationId: 0, sourceId: gpdSourceId, endpoint: 0};
+        const gpdCommandPayload = Buffer.from("0289f31adb70a88d71196ee50c03580537767de27ad5331309000037647a62697061304047503030303157", "hex");
+        const gpdHeader = makeHeader(
+            19,
+            Zcl.Clusters.greenPower.commands.commissioningNotification.ID,
+            addr.applicationId,
+            0,
+            0,
+            0,
+            addr.sourceId,
+            4294967295,
+            224,
+            gpdCommandPayload.length,
+        );
+        const buffer = Buffer.concat([gpdHeader, gpdCommandPayload]);
+        const payload = {...makePayload(addr.sourceId, buffer, 214), wasBroadcast: false};
+        const frame = Zcl.Frame.fromBuffer(payload.clusterID, payload.header, payload.data, {});
+
+        await gp.processCommand(payload, frame);
+
+        // only the GPD lookup runs (no sink), coordinator IEEE is used
+        expect(byIeeeAddrSpy).toHaveBeenCalledTimes(1);
+        const sent = (gp as unknown as {adapter: {sendZclFrameToEndpoint: {mock: {calls: unknown[][]}}}}).adapter.sendZclFrameToEndpoint;
+        const sentFrame = sent.mock.calls[0][3] as {payload: {sinkIEEEAddr: string; sinkNwkAddr: number}};
+        expect(sentFrame.payload.sinkIEEEAddr).toBe("0x00124b0024d1b045");
+        byIeeeAddrSpy.mockRestore();
+        byNetworkAddressSpy.mockRestore();
     });
 });
