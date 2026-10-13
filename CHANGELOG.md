@@ -1,5 +1,12 @@
 # Changelog
 
+## [11.1.0](https://github.com/Koenkk/zigbee-herdsman/compare/v11.0.3...v11.1.0) (2026-10-13)
+
+
+### Features
+
+* Add application type and bacnet mappings ([#1912](https://github.com/Koenkk/zigbee-herdsman/issues/1912)) ([2c43c70](https://github.com/Koenkk/zigbee-herdsman/commit/2c43c704ee8b78961083794e5a4d48163e3c8e2d))
+
 ## [11.0.3](https://github.com/Koenkk/zigbee-herdsman/compare/v11.0.2...v11.0.3) (2026-10-08)
 
 
