@@ -242,7 +242,7 @@ describe("EZSP recovery", () => {
         expect(ezsp["failures"]).toBe(4);
     });
 
-    it("cancels an active command when shutdown occurs during the UART retry delay", async () => {
+    it.each([false, true])("cancels an active command during the UART retry delay (reopen: %s)", async (reopen) => {
         const started = adapter.start();
         await vi.advanceTimersByTimeAsync(3500);
         await started;
@@ -255,12 +255,22 @@ describe("EZSP recovery", () => {
         const logErrors = vi.spyOn(logger, "error");
         const reset = vi.spyOn(adapter["driver"], "reset");
         await adapter.stop();
+        const restarted = reopen ? adapter.start() : undefined;
         await vi.advanceTimersByTimeAsync(5000);
         await rejection;
         expect(port.unicasts).toEqual([{destination: 0x1111, retry: false}]);
         expect(reset).not.toHaveBeenCalled();
         expect(logErrors).not.toHaveBeenCalled();
         expect(adapter["queue"].count()).toBe(0);
+        if (reopen) {
+            await expect(restarted).resolves.toBe("resumed");
+            expect(ports).toHaveLength(2);
+            expect(ports[1].unicasts).toEqual([]);
+            const fresh = adapter.sendZclFrameToEndpoint("0x0000000000002222", 0x2222, 1, frame, 1000, true, false);
+            await vi.advanceTimersByTimeAsync(100);
+            await expect(fresh).resolves.toBeUndefined();
+            expect(ports[1].unicasts).toEqual([{destination: 0x2222, retry: false}]);
+        }
     });
 
     it("releases device slots after both UART ACKs time out and completes commands after reconnect", async () => {

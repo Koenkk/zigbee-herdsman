@@ -91,7 +91,6 @@ export class ZBOSSUart extends EventEmitter {
     }
 
     public async stop(): Promise<void> {
-        this.queue.clear();
         await this.transport.close();
         logger.info("UART stopped", NS);
     }
@@ -212,7 +211,7 @@ export class ZBOSSUart extends EventEmitter {
         const nextSeq = this.sendSeq;
         const ackSeq = this.recvSeq;
 
-        return await this.queue.run<void>(async (): Promise<void> => {
+        return await this.transport.execute<void>(this.queue, async (): Promise<void> => {
             try {
                 logger.debug(`--> DATA (${seq},${ackSeq},0): ${data.toString("hex")}`, NS);
                 if (!isACK) {

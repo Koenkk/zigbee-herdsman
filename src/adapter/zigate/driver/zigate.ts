@@ -93,7 +93,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
     ): Promise<ZiGateObject> {
         const waiters: Promise<ZiGateObject>[] = [];
         const waitersId: number[] = [];
-        return await this.queue.run(async () => {
+        return await this.transport.execute(this.queue, async () => {
             try {
                 logger.debug(
                     () => `Send command \x1b[32m>>>> ${ZiGateCommandCode[code]} 0x${zeroPad(code)} <<<<\x1b[0m \nPayload: ${JSON.stringify(payload)}`,
@@ -149,7 +149,7 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
     }
 
     public async requestZdo(clusterId: Zdo.ClusterId, payload: Buffer): Promise<boolean> {
-        return await this.queue.run(async () => {
+        return await this.transport.execute(this.queue, async () => {
             const commandCode = ZDO_REQ_CLUSTER_ID_TO_ZIGATE_COMMAND_ID[clusterId];
             assert(commandCode !== undefined, `ZDO cluster ID '${clusterId}' not supported.`);
             const ruleStatus: ZiGateResponseMatcher = [
@@ -181,8 +181,6 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
 
     public async close(): Promise<void> {
         logger.info("closing", NS);
-        this.queue.clear();
-
         await this.transport.close();
     }
 

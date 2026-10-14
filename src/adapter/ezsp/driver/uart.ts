@@ -308,7 +308,7 @@ export class SerialDriver extends EventEmitter {
         this.sendSeq = 0;
         this.recvSeq = 0;
 
-        return await this.queue.run<void>(async (): Promise<void> => {
+        return await this.transport.execute<void>(this.queue, async (): Promise<void> => {
             try {
                 logger.debug("--> Write reset", NS);
                 const waiter = this.waitFor(-1, 10000);
@@ -332,13 +332,8 @@ export class SerialDriver extends EventEmitter {
 
     public async close(): Promise<void> {
         logger.debug("Closing UART", NS);
-        this.queue.clear();
-
-        if (this.initialized) {
-            this.initialized = false;
-
-            await this.transport.close();
-        }
+        this.initialized = false;
+        await this.transport.close();
     }
 
     public isInitialized(): boolean {
@@ -351,7 +346,7 @@ export class SerialDriver extends EventEmitter {
         const nextSeq = this.sendSeq;
         const ackSeq = this.recvSeq;
 
-        return await this.queue.run<void>(async (): Promise<void> => {
+        return await this.transport.execute<void>(this.queue, async (signal): Promise<void> => {
             const randData = NpiFrame.makeRandomizedBuffer(data);
 
             try {
@@ -362,18 +357,14 @@ export class SerialDriver extends EventEmitter {
                 await waiter.start().promise;
                 logger.debug(`-+- waiting (${nextSeq}) success`, NS);
             } catch (e1) {
-                if (!this.initialized) {
-                    throw new MutexCancelledError();
-                }
+                signal.throwIfAborted();
                 logger.error(`--> Error: ${e1}`, NS);
                 logger.error(`-!- break waiting (${nextSeq})`, NS);
                 logger.error(`Can't send DATA frame (${seq},${ackSeq},0): ${data.toString("hex")}`, NS);
 
                 try {
                     await wait(500);
-                    if (!this.initialized) {
-                        throw new MutexCancelledError();
-                    }
+                    signal.throwIfAborted();
                     const waiter = this.waitFor(nextSeq);
                     logger.debug(`->> DATA (${seq},${ackSeq},1): ${data.toString("hex")}`, NS);
                     this.writeFrame((seq << 4) | (1 << 3) | ackSeq, randData);
@@ -381,8 +372,9 @@ export class SerialDriver extends EventEmitter {
                     await waiter.start().promise;
                     logger.debug(`-+- rewaiting (${nextSeq}) success`, NS);
                 } catch (e2) {
-                    if (!this.initialized || e2 instanceof MutexCancelledError) {
-                        throw new MutexCancelledError();
+                    signal.throwIfAborted();
+                    if (e2 instanceof MutexCancelledError) {
+                        throw e2;
                     }
                     logger.error(`--> Error: ${e2}`, NS);
                     logger.error(`-!- break rewaiting (${nextSeq})`, NS);

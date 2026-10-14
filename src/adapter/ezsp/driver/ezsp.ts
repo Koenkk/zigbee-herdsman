@@ -324,11 +324,12 @@ export class Ezsp extends EventEmitter {
     private queue: AsyncMutex;
     private watchdogTimer?: NodeJS.Timeout;
     private failures = 0;
-    private closing = false;
+    private readonly transport: AdapterTransport;
     private inResetingProcess = false;
 
     constructor(transport: AdapterTransport) {
         super();
+        this.transport = transport;
         this.queue = new AsyncMutex();
         this.waitress = new Waitress<EZSPFrame, EZSPWaitressMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
 
@@ -367,7 +368,6 @@ export class Ezsp extends EventEmitter {
         }
 
         this.inResetingProcess = false;
-        this.closing = false;
 
         this.serialDriver.on("reset", this.onSerialReset.bind(this));
 
@@ -381,7 +381,7 @@ export class Ezsp extends EventEmitter {
     }
 
     private onSerialReset(): void {
-        if (this.closing) {
+        if (this.transport.isStopped) {
             return;
         }
         logger.debug("onSerialReset()", NS);
@@ -392,9 +392,7 @@ export class Ezsp extends EventEmitter {
     public async close(): Promise<void> {
         logger.debug("Closing Ezsp", NS);
 
-        this.closing = true;
         clearTimeout(this.watchdogTimer);
-        this.queue.clear();
         await this.serialDriver.close();
     }
 
@@ -659,16 +657,9 @@ export class Ezsp extends EventEmitter {
     public async execCommand(name: string, params?: ParamsDesc): Promise<EZSPFrameData> {
         logger.debug(() => `==> ${name}: ${JSON.stringify(params)}`, NS);
 
-        if (this.closing) {
-            throw new MutexCancelledError();
-        }
-        if (!this.serialDriver.isInitialized()) {
-            throw new Error("Connection not initialized");
-        }
-
-        return await this.queue.run<EZSPFrameData>(async (): Promise<EZSPFrameData> => {
-            if (this.closing) {
-                throw new MutexCancelledError();
+        return await this.transport.execute<EZSPFrameData>(this.queue, async (signal): Promise<EZSPFrameData> => {
+            if (!this.serialDriver.isInitialized()) {
+                throw new Error("Connection not initialized");
             }
             const data = this.makeFrame(name, params, this.cmdSeq);
             const waiter = this.waitFor(name, this.cmdSeq);
@@ -682,8 +673,9 @@ export class Ezsp extends EventEmitter {
                 return response.payload;
             } catch (error) {
                 this.waitress.remove(waiter.ID);
-                if (this.closing || error instanceof MutexCancelledError) {
-                    throw new MutexCancelledError();
+                signal.throwIfAborted();
+                if (error instanceof MutexCancelledError) {
+                    throw error;
                 }
                 throw new Error(`Failure send ${name}:${JSON.stringify(data)}`);
             }
@@ -785,7 +777,7 @@ export class Ezsp extends EventEmitter {
     private async watchdogHandler(): Promise<void> {
         logger.debug(`Time to watchdog ... ${this.failures}`, NS);
 
-        if (this.closing || this.inResetingProcess) {
+        if (this.transport.isStopped || this.inResetingProcess) {
             logger.debug("The reset process is in progress...", NS);
             return;
         }
@@ -793,7 +785,7 @@ export class Ezsp extends EventEmitter {
         try {
             await this.execCommand("nop");
         } catch (error) {
-            if (this.closing || this.inResetingProcess || error instanceof MutexCancelledError) {
+            if (this.transport.isStopped || this.inResetingProcess || error instanceof MutexCancelledError) {
                 return;
             }
             logger.error(`Watchdog heartbeat timeout ${error}`, NS);

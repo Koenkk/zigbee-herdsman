@@ -143,7 +143,6 @@ export class Znp extends EventEmitter<ZnpEventMap> {
 
     public async close(): Promise<void> {
         logger.info("closing", NS);
-        this.queue.clear();
         await this.transport.close();
     }
 
@@ -176,7 +175,7 @@ export class Znp extends EventEmitter<ZnpEventMap> {
 
         const object = ZpiObject.createRequest(subsystem, command, payload);
 
-        const pending = this.queue.run<ZpiObject | undefined>(async () => {
+        const pending = this.transport.execute<ZpiObject | undefined>(this.queue, async () => {
             logger.debug(() => `--> ${object}`, NS);
 
             if (object.type === Type.SREQ) {
@@ -223,7 +222,7 @@ export class Znp extends EventEmitter<ZnpEventMap> {
     }
 
     public requestZdo(clusterId: ZdoClusterId, payload: Buffer, waiterID?: number): Promise<void> {
-        const pending = this.queue.run(async () => {
+        const pending = this.transport.execute(this.queue, async () => {
             const cmd = Definition[Subsystem.ZDO].find((c) => isMtCmdSreqZdo(c) && c.zdoClusterId === clusterId);
             assert(cmd, `Command for ZDO cluster ID '${clusterId}' not supported.`);
 
