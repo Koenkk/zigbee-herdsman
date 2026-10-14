@@ -281,7 +281,10 @@ export class EmberAdapter extends Adapter {
         this.queue = new Queue(this.adapterOptions.concurrent || 16); // ORed to avoid 0 (not checked in settings/queue constructor)
         this.oneWaitress = new EmberOneWaitress();
 
-        this.ezsp = new Ezsp(this.transport);
+        this.ezsp = new Ezsp(
+            this.transport,
+            (adapterOptions.additionalCoordinatorEndpoints ?? []).map((endpoint) => endpoint.profileId),
+        );
 
         this.ezsp.on("zdoResponse", this.onZDOResponse.bind(this));
         this.ezsp.on("incomingMessage", this.onIncomingMessage.bind(this));
