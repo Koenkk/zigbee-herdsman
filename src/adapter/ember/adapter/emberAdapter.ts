@@ -71,7 +71,7 @@ import type {
 } from "../types";
 import {initNetworkCache, initSecurityManagerContext} from "../utils/initters";
 import {lowHighBytes} from "../utils/math";
-import {FIXED_ENDPOINTS} from "./endpoints";
+import {type FixedEndpointInfo, fixedEndpoints} from "./endpoints";
 import {EmberOneWaitress, OneWaitressEvents} from "./oneWaitress";
 
 const NS = "zh:ember";
@@ -248,6 +248,7 @@ export class EmberAdapter extends Adapter {
      */
     private networkCache: NetworkCache;
     private multicastTable: EmberMulticastId[];
+    private fixedEndpoints: readonly FixedEndpointInfo[];
 
     constructor(
         networkOptions: TsType.NetworkOptions,
@@ -274,6 +275,7 @@ export class EmberAdapter extends Adapter {
         this.networkCache = initNetworkCache();
         this.manufacturerCode = DEFAULT_STACK_CONFIG.DEFAULT_MANUFACTURER_CODE; // will be overridden in initEzsp
         this.multicastTable = [];
+        this.fixedEndpoints = fixedEndpoints(adapterOptions.additionalCoordinatorEndpoints ?? []);
 
         this.stackConfig = this.loadStackConfig();
         this.queue = new Queue(this.adapterOptions.concurrent || 16); // ORed to avoid 0 (not checked in settings/queue constructor)
@@ -480,8 +482,8 @@ export class EmberAdapter extends Adapter {
                     const tableIdx = this.multicastTable.length;
                     const multicastEntry: EmberMulticastTableEntry = {
                         multicastId: apsFrame.groupId,
-                        endpoint: FIXED_ENDPOINTS[0].endpoint,
-                        networkIndex: FIXED_ENDPOINTS[0].networkIndex,
+                        endpoint: this.fixedEndpoints[0].endpoint,
+                        networkIndex: this.fixedEndpoints[0].networkIndex,
                     };
                     // set immediately to avoid potential race
                     this.multicastTable.push(multicastEntry.multicastId);
@@ -580,7 +582,7 @@ export class EmberAdapter extends Adapter {
      * @param messageContents
      */
     private onTouchlinkMessage(_sourcePanId: PanId, sourceAddress: Eui64, groupId: number, lastHopLqi: number, messageContents: Buffer): void {
-        const endpoint = FIXED_ENDPOINTS[0].endpoint;
+        const endpoint = this.fixedEndpoints[0].endpoint;
         const payload: ZclPayload = {
             clusterID: Zcl.Clusters.touchlink.ID,
             data: messageContents,
@@ -788,7 +790,7 @@ export class EmberAdapter extends Adapter {
      * Register fixed endpoints and set any related multicast entries that need to be.
      */
     private async registerFixedEndpoints(): Promise<void> {
-        for (const ep of FIXED_ENDPOINTS) {
+        for (const ep of this.fixedEndpoints) {
             const [epStatus] = await this.ezsp.ezspGetEndpointFlags(ep.endpoint);
 
             // endpoint not already registered
@@ -1735,7 +1737,7 @@ export class EmberAdapter extends Adapter {
         defaultRspCommandId: number | undefined,
         timeout: number,
     ): {promise: Promise<ZclPayload>; cancel: () => void} {
-        const sourceEndpointInfo = FIXED_ENDPOINTS[0];
+        const sourceEndpointInfo = this.fixedEndpoints[0];
         const waiter = this.oneWaitress.waitFor<ZclPayload>(
             {
                 target: networkAddress,
@@ -1966,9 +1968,10 @@ export class EmberAdapter extends Adapter {
 
         const apsFrame: EmberApsFrame = {
             profileId:
-                profileId ?? ((sourceEndpoint && FIXED_ENDPOINTS.find((epi) => epi.endpoint === sourceEndpoint)) || FIXED_ENDPOINTS[0]).profileId,
+                profileId ??
+                ((sourceEndpoint && this.fixedEndpoints.find((epi) => epi.endpoint === sourceEndpoint)) || this.fixedEndpoints[0]).profileId,
             clusterId: zclFrame.cluster.ID,
-            sourceEndpoint: sourceEndpoint || FIXED_ENDPOINTS[0].endpoint,
+            sourceEndpoint: sourceEndpoint || this.fixedEndpoints[0].endpoint,
             destinationEndpoint: endpoint,
             options: DEFAULT_APS_OPTIONS,
             groupId: 0,
@@ -2070,9 +2073,10 @@ export class EmberAdapter extends Adapter {
     public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
         const apsFrame: EmberApsFrame = {
             profileId:
-                profileId ?? ((sourceEndpoint && FIXED_ENDPOINTS.find((epi) => epi.endpoint === sourceEndpoint)) || FIXED_ENDPOINTS[0]).profileId,
+                profileId ??
+                ((sourceEndpoint && this.fixedEndpoints.find((epi) => epi.endpoint === sourceEndpoint)) || this.fixedEndpoints[0]).profileId,
             clusterId: zclFrame.cluster.ID,
-            sourceEndpoint: sourceEndpoint || FIXED_ENDPOINTS[0].endpoint,
+            sourceEndpoint: sourceEndpoint || this.fixedEndpoints[0].endpoint,
             destinationEndpoint: 0xff,
             options: DEFAULT_APS_OPTIONS,
             groupId: groupID,
@@ -2112,7 +2116,8 @@ export class EmberAdapter extends Adapter {
     ): Promise<void> {
         const apsFrame: EmberApsFrame = {
             profileId:
-                profileId ?? ((sourceEndpoint && FIXED_ENDPOINTS.find((epi) => epi.endpoint === sourceEndpoint)) || FIXED_ENDPOINTS[0]).profileId,
+                profileId ??
+                ((sourceEndpoint && this.fixedEndpoints.find((epi) => epi.endpoint === sourceEndpoint)) || this.fixedEndpoints[0]).profileId,
             clusterId: zclFrame.cluster.ID,
             sourceEndpoint,
             destinationEndpoint: endpoint,
@@ -2206,7 +2211,7 @@ export class EmberAdapter extends Adapter {
             throw new Error(`Command '${command.name}' has no response, cannot wait for response.`);
         }
 
-        const endpoint = FIXED_ENDPOINTS[0].endpoint;
+        const endpoint = this.fixedEndpoints[0].endpoint;
         // just for waitress
         const apsFrame: EmberApsFrame = {
             profileId: ZSpec.TOUCHLINK_PROFILE_ID,
