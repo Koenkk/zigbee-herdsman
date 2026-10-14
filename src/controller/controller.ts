@@ -393,7 +393,36 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
 
             await this.adapter.permitJoin(time, device?.networkAddress);
             await this.#greenPower.permitJoin(time, device?.networkAddress);
+        } else {
+            logger.debug("Disable joining", NS);
 
+            await this.#greenPower.permitJoin(0);
+            await this.adapter.permitJoin(0);
+        }
+
+        this.openPermitJoinWindow(time);
+    }
+
+    /**
+     * Open a Green Power commissioning window where `device` acts as the GPP and is used as
+     * the sink for the joining GPD, instead of the coordinator.
+     */
+    public async permitJoinToSink(time: number, device: Device): Promise<void> {
+        clearTimeout(this.permitJoinTimer);
+        this.permitJoinTimer = undefined;
+        this.permitJoinEnd = undefined;
+
+        assert(time > 0, "Cannot permit join with time <= 0");
+        assert(time <= 254, "Cannot permit join for more than 254 seconds.");
+
+        // Green Power only: direct the GPD to this router as its sink
+        await this.#greenPower.pairToSink(time, device.networkAddress);
+
+        this.openPermitJoinWindow(time);
+    }
+
+    private openPermitJoinWindow(time: number): void {
+        if (time > 0) {
             const timeMs = time * 1000;
             this.permitJoinEnd = Date.now() + timeMs;
             this.permitJoinTimer = setTimeout((): void => {
@@ -405,11 +434,6 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
 
             this.emit("permitJoinChanged", {permitted: true, time});
         } else {
-            logger.debug("Disable joining", NS);
-
-            await this.#greenPower.permitJoin(0);
-            await this.adapter.permitJoin(0);
-
             this.emit("permitJoinChanged", {permitted: false});
         }
     }
