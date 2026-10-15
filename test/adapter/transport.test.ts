@@ -1,6 +1,7 @@
 import {MockBinding} from "@serialport/binding-mock";
 import {afterEach, beforeEach, describe, expect, test, vi} from "vitest";
 import {AdapterTransport} from "../../src/adapter/transport";
+import {AsyncMutex, MutexCancelledError} from "../../src/utils/async-mutex";
 
 type Listener = (...args: unknown[]) => void;
 
@@ -120,6 +121,133 @@ vi.mock("node:os", async (importOriginal) => {
 });
 
 describe("Adapter transport", () => {
+    describe.each(["serial", "tcp"])("%s command cancellation", (kind) => {
+        let transport: AdapterTransport;
+
+        beforeEach(async () => {
+            const path = kind === "serial" ? "/dev/ttyMOCK" : "tcp://127.0.0.1:1234";
+            MockBinding.createPort(path, {record: false});
+            transport = new AdapterTransport({path});
+            transport.serialPortBinding = MockBinding;
+            await transport.open();
+        });
+
+        afterEach(async () => {
+            await transport.close();
+            MockBinding.reset();
+        });
+
+        test("cancels every registered queue and rejects new work after close", async () => {
+            const queues = [new AsyncMutex(), new AsyncMutex()];
+            const releases: Array<() => void> = [];
+            const signals: AbortSignal[] = [];
+            const operations = queues.map((queue) =>
+                transport.execute(queue, (signal) => {
+                    signals.push(signal);
+                    return new Promise<void>((resolve) => releases.push(resolve));
+                }),
+            );
+            const activeErrors = operations.map((p) => expect(p).rejects.toBeInstanceOf(MutexCancelledError));
+            const queuedCallback = vi.fn();
+            const pending = queues.map((queue) => expect(transport.execute(queue, queuedCallback)).rejects.toBeInstanceOf(MutexCancelledError));
+
+            await transport.close();
+            await Promise.all(pending);
+            expect(signals.every((signal) => signal.aborted)).toBe(true);
+            expect(transport.isStopped).toBe(true);
+            expect(queuedCallback).not.toHaveBeenCalled();
+            await expect(transport.execute(queues[0], queuedCallback)).rejects.toBeInstanceOf(MutexCancelledError);
+            for (const release of releases) release();
+            await Promise.all(activeErrors);
+            // biome-ignore lint/complexity/useLiteralKeys: Verify registration cleanup.
+            expect(transport["session"].queues.size).toBe(0);
+        });
+
+        test("reopening does not revive work from the old connection", async () => {
+            const queue = new AsyncMutex();
+            let release!: () => void;
+            let oldSignal!: AbortSignal;
+            const active = transport.execute(queue, (signal) => {
+                oldSignal = signal;
+                return new Promise<void>((resolve) => {
+                    release = resolve;
+                });
+            });
+            const rejected = expect(active).rejects.toBeInstanceOf(MutexCancelledError);
+            await transport.close();
+            await transport.open();
+            expect(transport.isStopped).toBe(false);
+            const fresh = vi.fn((signal: AbortSignal) => {
+                expect(signal).not.toBe(oldSignal);
+                expect(signal.aborted).toBe(false);
+                return Promise.resolve("new connection");
+            });
+            const next = transport.execute(queue, fresh);
+            expect(fresh).not.toHaveBeenCalled();
+            release();
+            await rejected;
+            await expect(next).resolves.toBe("new connection");
+            expect(oldSignal.aborted).toBe(true);
+            // biome-ignore lint/complexity/useLiteralKeys: Verify old-session cleanup cannot remove new-session registrations.
+            expect(transport["session"].queues.size).toBe(0);
+        });
+
+        test("cancels on unexpected disconnect before notifying protocol handlers", async () => {
+            const queue = new AsyncMutex();
+            let release!: () => void;
+            let signal!: AbortSignal;
+            const active = transport.execute(queue, (current) => {
+                signal = current;
+                return new Promise<void>((resolve) => {
+                    release = resolve;
+                });
+            });
+            const rejected = expect(active).rejects.toBeInstanceOf(MutexCancelledError);
+            const pending = expect(transport.execute(queue, vi.fn())).rejects.toBeInstanceOf(MutexCancelledError);
+            const closed = vi.fn(() => expect(signal.aborted).toBe(true));
+            transport.on("close", closed);
+            const port = transport.serialPortInstance ?? transport.socketInstance!;
+            port.emit("close", new Error("disconnected"));
+            expect(closed).toHaveBeenCalledOnce();
+            expect(transport.isStopped).toBe(false);
+            await pending;
+            release();
+            await rejected;
+        });
+
+        test("does not start a command handed the mutex immediately before close", async () => {
+            const queue = new AsyncMutex();
+            let release!: () => void;
+            const holder = queue.run(
+                () =>
+                    new Promise<void>((resolve) => {
+                        release = resolve;
+                    }),
+            );
+            const callback = vi.fn();
+            const rejected = expect(transport.execute(queue, callback)).rejects.toBeInstanceOf(MutexCancelledError);
+            let closing!: Promise<void>;
+            release();
+            queueMicrotask(() => {
+                expect(queue.count).toBe(0);
+                closing = transport.close();
+            });
+            await holder;
+            await rejected;
+            await closing;
+            expect(callback).not.toHaveBeenCalled();
+        });
+
+        test("does not swallow protocol failures or retain completed queues", async () => {
+            const queue = new AsyncMutex();
+            const error = new Error("protocol failure");
+            await expect(transport.execute(queue, () => Promise.reject(error))).rejects.toBe(error);
+            await expect(transport.execute(queue, () => Promise.resolve(42))).resolves.toBe(42);
+            // biome-ignore lint/complexity/useLiteralKeys: Verify registration cleanup on both outcomes.
+            expect(transport["session"].queues.size).toBe(0);
+        });
+    });
+
     describe("serial port", () => {
         const ADAPTER_PATH = "/dev/ttyACM0";
         let transport: AdapterTransport;
@@ -160,6 +288,69 @@ describe("Adapter transport", () => {
             expect(transport.isClosing).toStrictEqual(false);
             expect(transport.rtscts).toStrictEqual(true);
             expect(transport.serialPortInstance).toStrictEqual(undefined);
+        });
+
+        test("rejects overlapping opens", async () => {
+            const opening = transport.open();
+            await expect(transport.open()).rejects.toThrow("Transport transition already in progress");
+            await opening;
+            await transport.close();
+        });
+
+        test("cancels requests before waiting for physical close", async () => {
+            await transport.open();
+            const port = transport.serialPortInstance!;
+            const close = port.close.bind(port);
+            let finishClose!: () => void;
+            vi.spyOn(port, "close").mockImplementationOnce((callback) => {
+                finishClose = () => close(callback);
+            });
+            const queue = new AsyncMutex();
+            let release!: () => void;
+            const active = transport.execute(
+                queue,
+                () =>
+                    new Promise<void>((resolve) => {
+                        release = resolve;
+                    }),
+            );
+            const rejected = expect(active).rejects.toBeInstanceOf(MutexCancelledError);
+            const callback = vi.fn();
+            const pending = expect(transport.execute(queue, callback)).rejects.toBeInstanceOf(MutexCancelledError);
+            const closing = transport.close();
+            await pending;
+            expect(transport.isClosing).toBe(true);
+            expect(port.isOpen).toBe(true);
+            expect(callback).not.toHaveBeenCalled();
+            await expect(transport.open()).rejects.toThrow("Transport transition already in progress");
+            release();
+            await rejected;
+            finishClose();
+            await closing;
+            await transport.open();
+            await expect(transport.execute(queue, () => Promise.resolve(42))).resolves.toBe(42);
+            await transport.close();
+        });
+
+        test("a new connection cancels work registered before opening", async () => {
+            const queue = new AsyncMutex();
+            let release!: () => void;
+            const active = transport.execute(
+                queue,
+                () =>
+                    new Promise<void>((resolve) => {
+                        release = resolve;
+                    }),
+            );
+            const rejected = expect(active).rejects.toBeInstanceOf(MutexCancelledError);
+            const callback = vi.fn();
+            const pending = expect(transport.execute(queue, callback)).rejects.toBeInstanceOf(MutexCancelledError);
+            await transport.open();
+            await pending;
+            release();
+            await rejected;
+            expect(callback).not.toHaveBeenCalled();
+            await transport.close();
         });
 
         test("opens with no flow", async () => {

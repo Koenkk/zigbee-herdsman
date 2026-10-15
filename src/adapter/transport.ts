@@ -3,6 +3,7 @@ import {Socket} from "node:net";
 import {platform} from "node:os";
 import {autoDetect, type SetOptions} from "@serialport/bindings-cpp";
 import {type ModemBitsCallback, type OpenOptions, SerialPortStream} from "@serialport/stream";
+import {type AsyncMutex, MutexCancelledError} from "../utils/async-mutex";
 import {logger} from "../utils/logger";
 import type {TransportOptions} from "./tstype";
 import {isTcpPath, parseTcpPath} from "./utils";
@@ -20,6 +21,7 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
     private socket?: Socket;
     private opening = false;
     private closing = false;
+    private session = {controller: new AbortController(), queues: new Map<AsyncMutex, number>(), stopped: false};
     readonly options: TransportOptions;
     /** Access to the lower level, arch-specific binding. Mainly for tests. */
     serialPortBinding: OpenOptions["binding"] | undefined;
@@ -45,6 +47,44 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
         return this.closing;
     }
 
+    get isStopped(): boolean {
+        return this.session.stopped;
+    }
+
+    public async execute<T>(queue: AsyncMutex, operation: (signal: AbortSignal) => Promise<T>): Promise<T> {
+        const session = this.session;
+        const signal = session.controller.signal;
+        signal.throwIfAborted();
+        session.queues.set(queue, (session.queues.get(queue) ?? 0) + 1);
+        try {
+            return await queue
+                .run(async () => {
+                    signal.throwIfAborted();
+                    const result = await operation(signal);
+                    signal.throwIfAborted();
+                    return result;
+                })
+                .catch((error: unknown) => {
+                    signal.throwIfAborted();
+                    throw error;
+                });
+        } finally {
+            const remaining = (session.queues.get(queue) as number) - 1;
+            if (remaining === 0) {
+                session.queues.delete(queue);
+            } else {
+                session.queues.set(queue, remaining);
+            }
+        }
+    }
+
+    private cancelRequests(): void {
+        this.session.controller.abort(new MutexCancelledError());
+        for (const queue of this.session.queues.keys()) {
+            queue.clear();
+        }
+    }
+
     get isSerial(): boolean {
         return this.serialPort !== undefined;
     }
@@ -62,6 +102,9 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
     }
 
     public async open(serialNoFlowCtrl = false): Promise<void> {
+        if (this.closing || this.opening) {
+            throw new Error("Transport transition already in progress");
+        }
         if (this.isOpen) {
             await this.close();
         }
@@ -71,6 +114,8 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
         }
 
         this.opening = true;
+        this.cancelRequests();
+        this.session = {controller: new AbortController(), queues: new Map(), stopped: false};
 
         try {
             if (isTcpPath(this.options.path)) {
@@ -78,12 +123,17 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
             } else {
                 await this.openSerial(this.options.path, serialNoFlowCtrl);
             }
+        } catch (error) {
+            this.cancelRequests();
+            throw error;
         } finally {
             this.opening = false;
         }
     }
 
     public async close(): Promise<void> {
+        this.session.stopped = true;
+        this.cancelRequests();
         if (this.closing || (!this.serialPort && !this.socket)) {
             return;
         }
@@ -283,6 +333,7 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
         }
         /* v8 ignore stop */
 
+        this.cancelRequests();
         this.emit("close", error);
     }
 }

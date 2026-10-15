@@ -2,7 +2,7 @@
 
 import EventEmitter from "node:events";
 import {Waitress, wait} from "../../utils";
-import {AsyncMutex} from "../../utils/async-mutex";
+import {AsyncMutex, MutexCancelledError} from "../../utils/async-mutex";
 import {logger} from "../../utils/logger";
 import type {AdapterTransport} from "../transport";
 import {SIGNATURE, ZBOSS_FLAG_FIRST_FRAGMENT, ZBOSS_FLAG_LAST_FRAGMENT, ZBOSS_NCP_API_HL} from "./consts";
@@ -91,7 +91,6 @@ export class ZBOSSUart extends EventEmitter {
     }
 
     public async stop(): Promise<void> {
-        this.queue.clear();
         await this.transport.close();
         logger.info("UART stopped", NS);
     }
@@ -160,11 +159,11 @@ export class ZBOSSUart extends EventEmitter {
         }
 
         this.recvSeq = sequence;
-        // Send ACK
-        logger.debug(`--> ACK (${this.recvSeq})`, NS);
-        await this.sendACK(this.recvSeq);
-
         try {
+            // Send ACK
+            logger.debug(`--> ACK (${this.recvSeq})`, NS);
+            await this.sendACK(this.recvSeq);
+
             logger.debug(`<-- FRAME: ${body.toString("hex")}`, NS);
             const frame = readZBOSSFrame(body);
             if (frame) {
@@ -196,6 +195,9 @@ export class ZBOSSUart extends EventEmitter {
             logger.debug(`--> PACK: ${pack.toString("hex")}`, NS);
             await this.sendDATA(pack);
         } catch (error) {
+            if (error instanceof MutexCancelledError) {
+                throw error;
+            }
             logger.debug(`--> error ${(error as Error).stack}`, NS);
         }
     }
@@ -209,7 +211,7 @@ export class ZBOSSUart extends EventEmitter {
         const nextSeq = this.sendSeq;
         const ackSeq = this.recvSeq;
 
-        return await this.queue.run<void>(async (): Promise<void> => {
+        return await this.transport.execute<void>(this.queue, async (): Promise<void> => {
             try {
                 logger.debug(`--> DATA (${seq},${ackSeq},0): ${data.toString("hex")}`, NS);
                 if (!isACK) {
