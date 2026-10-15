@@ -51,6 +51,18 @@ export const Endpoints = [
         appnuminclusters: 1,
         appinclusterlist: [Clusters.genOta.ID],
     },
+    // Miele Con@ctivity 2.0 gateway discovery and telemetry.
+    {
+        ...EndpointDefaults,
+        endpoint: 14,
+        appprofid: ZSpec.CUSTOM_MIELE_PROFILE_ID,
+        appdeviceid: 0x0000,
+        appdevver: 1,
+        appnuminclusters: 3,
+        appinclusterlist: [0x0003, 0xfd05, 0xfd01],
+        appnumoutclusters: 9,
+        appoutclusterlist: [0x0003, 0xfd00, 0xfd01, 0x000a, 0x001b, 0x0402, 0x0a00, 0x0b02, 0xfd02],
+    },
     // Insta/Jung/Gira: OTA fallback EP (since it's buggy in firmware 10023202 when it tries to find a matching EP for
     // OTA - it queries for ZLL profile, but then contacts with HA profile)
     {...EndpointDefaults, endpoint: 47, appprofid: 0x0104},

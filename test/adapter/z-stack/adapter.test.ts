@@ -1590,6 +1590,7 @@ describe("zstack-adapter", () => {
         mockZnpRequestWith(commissioned3AlignedRequestMock);
         const result = await adapter.start();
         expect(result).toBe("resumed");
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.AF, "register", expect.objectContaining({endpoint: 14, appprofid: 0xc51e}));
     });
 
     it("should restore unified backup with 3.0.x adapter and create backup - empty", async () => {

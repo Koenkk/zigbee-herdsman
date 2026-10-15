@@ -1,4 +1,4 @@
-import {GP_ENDPOINT, GP_PROFILE_ID, HA_PROFILE_ID} from "../../../zspec/consts";
+import {CUSTOM_MIELE_PROFILE_ID, GP_ENDPOINT, GP_PROFILE_ID, HA_PROFILE_ID} from "../../../zspec/consts";
 import {Clusters} from "../../../zspec/zcl/definition/cluster";
 import type {ClusterId, EmberMulticastId, ProfileId} from "../types";
 
@@ -82,5 +82,16 @@ export const FIXED_ENDPOINTS: readonly FixedEndpointInfo[] = [
         ],
         networkIndex: 0x00,
         multicastIds: [0x0b84],
+    },
+    {
+        // Miele@home / Con@ctivity 2.0 gateway
+        endpoint: 2,
+        profileId: CUSTOM_MIELE_PROFILE_ID,
+        deviceId: 0x0000,
+        deviceVersion: 1,
+        inClusterList: [0x0003, 0xfd05, 0xfd01],
+        outClusterList: [0x0003, 0xfd00, 0xfd01, 0x000a, 0x001b, 0x0402, 0x0a00, 0x0b02, 0xfd02],
+        networkIndex: 0x00,
+        multicastIds: [],
     },
 ];
