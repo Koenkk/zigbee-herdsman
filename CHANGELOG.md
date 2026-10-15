@@ -1,5 +1,12 @@
 # Changelog
 
+## [11.1.1](https://github.com/Koenkk/zigbee-herdsman/compare/v11.1.0...v11.1.1) (2026-10-15)
+
+
+### Bug Fixes
+
+* **ignore:** bump @types/node from 26.6.4 to 26.6.5 in the minor-patch group ([#1915](https://github.com/Koenkk/zigbee-herdsman/issues/1915)) ([e399aec](https://github.com/Koenkk/zigbee-herdsman/commit/e399aec41602622de6bfe56e5f465fec9c13fdbd))
+
 ## [11.1.0](https://github.com/Koenkk/zigbee-herdsman/compare/v11.0.3...v11.1.0) (2026-10-13)
 
 
