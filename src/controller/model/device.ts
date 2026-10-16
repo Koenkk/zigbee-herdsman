@@ -76,6 +76,7 @@ export class Device extends Entity<ControllerEventMap> {
     private _pendingRequestTimeout: number;
     private _customClusters: CustomClusters = {};
     private _gpSecurityKey?: number[];
+    private _gpSinkDevice?: string;
     #scheduledOta: OtaSource | undefined;
     #otaInProgress = false;
     #otaAbortController: AbortController | undefined;
@@ -226,6 +227,12 @@ export class Device extends Entity<ControllerEventMap> {
     get gpSecurityKey(): number[] | undefined {
         return this._gpSecurityKey;
     }
+    get gpSinkDevice(): string | undefined {
+        return this._gpSinkDevice;
+    }
+    set gpSinkDevice(ieeeAddr: string | undefined) {
+        this._gpSinkDevice = ieeeAddr;
+    }
     get genBasic(): TPartialClusterAttributes<"genBasic"> {
         return this.#genBasic;
     }
@@ -267,6 +274,7 @@ export class Device extends Entity<ControllerEventMap> {
         checkinInterval: number | undefined,
         pendingRequestTimeout: number,
         gpSecurityKey: number[] | undefined,
+        gpSinkDevice: string | undefined,
         scheduledOta: OtaSource | undefined,
     ) {
         super();
@@ -292,6 +300,7 @@ export class Device extends Entity<ControllerEventMap> {
         this._checkinInterval = checkinInterval;
         this._pendingRequestTimeout = pendingRequestTimeout;
         this._gpSecurityKey = gpSecurityKey;
+        this._gpSinkDevice = gpSinkDevice;
         this.#scheduledOta = scheduledOta;
     }
 
@@ -649,6 +658,7 @@ export class Device extends Entity<ControllerEventMap> {
             entry.checkinInterval,
             pendingRequestTimeout,
             entry.gpSecurityKey,
+            entry.gpSinkDevice,
             entry.scheduledOta,
         );
     }
@@ -685,6 +695,7 @@ export class Device extends Entity<ControllerEventMap> {
             lastSeen: this.lastSeen,
             checkinInterval: this.checkinInterval,
             gpSecurityKey: this.gpSecurityKey,
+            gpSinkDevice: this.gpSinkDevice,
             scheduledOta: this.scheduledOta,
         };
     }
@@ -820,6 +831,7 @@ export class Device extends Entity<ControllerEventMap> {
             undefined,
             0,
             gpSecurityKey,
+            undefined,
             undefined,
         );
 

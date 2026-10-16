@@ -111,6 +111,7 @@ const COMMISSIONING_NOTIFICATION_COMMAND_ID = Zcl.Clusters.greenPower.commands.c
 
 export class GreenPower extends EventEmitter<GreenPowerEventMap> {
     private adapter: Adapter;
+    private pairingSink: number | undefined;
 
     public constructor(adapter: Adapter) {
         super();
@@ -206,8 +207,30 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
             /* v8 ignore next */
             case GPCommunicationMode.FullUnicast:
             case GPCommunicationMode.LightweightUnicast: {
-                payload.sinkIEEEAddr = await this.adapter.getCoordinatorIEEE();
-                payload.sinkNwkAddr = COORDINATOR_ADDRESS;
+                let sink: Device | undefined;
+
+                // srcID is always present for commissioning notifications
+                /* v8 ignore next */
+                if (payload.srcID !== undefined) {
+                    const gpd = Device.byIeeeAddr(GreenPower.sourceIdToIeeeAddress(payload.srcID));
+
+                    if (gpd?.gpSinkDevice) {
+                        sink = Device.byIeeeAddr(gpd.gpSinkDevice);
+                    }
+                }
+
+                // fall back to the sink the pairing was directed to (see pairToSink)
+                if (!sink && this.pairingSink !== undefined) {
+                    sink = Device.byNetworkAddress(this.pairingSink);
+                }
+
+                if (sink) {
+                    payload.sinkIEEEAddr = sink.ieeeAddr;
+                    payload.sinkNwkAddr = sink.networkAddress;
+                } else {
+                    payload.sinkIEEEAddr = await this.adapter.getCoordinatorIEEE();
+                    payload.sinkNwkAddr = COORDINATOR_ADDRESS;
+                }
                 break;
             }
         }
@@ -581,6 +604,23 @@ export class GreenPower extends EventEmitter<GreenPowerEventMap> {
     }
 
     public async permitJoin(time: number, networkAddress?: number): Promise<void> {
+        this.pairingSink = undefined;
+        await this.sendCommissioningMode(time, networkAddress);
+    }
+
+    /**
+     * Open a Green Power commissioning window where `sinkNetworkAddress` acts as the GPP
+     * and is also used as the sink in the pairing response (see 14-0563-19 A.3.3.5.2).
+     */
+    public async pairToSink(time: number, sinkNetworkAddress: number): Promise<void> {
+        const sink = Device.byNetworkAddress(sinkNetworkAddress);
+        assert(sink, `Failed to find sink device 0x${sinkNetworkAddress.toString(16)} to pair Green Power to`);
+
+        this.pairingSink = sinkNetworkAddress;
+        await this.sendCommissioningMode(time, sinkNetworkAddress);
+    }
+
+    private async sendCommissioningMode(time: number, networkAddress?: number): Promise<void> {
         const payload = {
             options: GreenPower.encodeCommissioningModeOptions({
                 action: time > 0 ? 1 : 0,
