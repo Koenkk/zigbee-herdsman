@@ -368,7 +368,7 @@ export class Device extends Entity<ControllerEventMap> {
 
     public async onZclData(
         dataPayload: AdapterEvents.ZclPayload,
-        frame: Zcl.Frame,
+        frame: Zcl.Frame | undefined,
         endpoint: Endpoint,
         defaultResponse: Zcl.Status | undefined,
     ): Promise<void> {
@@ -379,6 +379,23 @@ export class Device extends Entity<ControllerEventMap> {
 
         if (this.type === "GreenPower") {
             // nothing below applies
+            return;
+        }
+
+        if (!frame) {
+            // The payload could not be parsed, but the sender may still expect a default response. Some devices retransmit the
+            // same frame indefinitely until they get one, e.g. BSEED TS011F `_TZ3210_5ct6e7ye` reporting a malformed array on
+            // cluster 0xE000: https://github.com/Koenkk/zigbee2mqtt/issues/33174
+            const header = dataPayload.header;
+
+            if (
+                header &&
+                !dataPayload.wasBroadcast &&
+                !(header.isGlobal && header.commandIdentifier === Zcl.Foundation.defaultRsp.ID) // per spec
+            ) {
+                await this.sendDefaultResponse(endpoint, dataPayload.clusterID, header, defaultResponse ?? Zcl.Status.SUCCESS);
+            }
+
             return;
         }
 
@@ -550,7 +567,16 @@ export class Device extends Entity<ControllerEventMap> {
             }
         }
 
-        // Send a default response if necessary.
+        if (sendDefaultResponse) {
+            await this.sendDefaultResponse(endpoint, cluster.ID, header, defaultResponseStatus);
+        }
+    }
+
+    /**
+     * Send a default response to a received frame, unless the sender disabled it (and status is SUCCESS),
+     * default responses are skipped for this device, or the frame was already answered.
+     */
+    private async sendDefaultResponse(endpoint: Endpoint, clusterID: number, header: Zcl.Header, status: Zcl.Status): Promise<void> {
         /* v8 ignore next */
         const disableTuyaDefaultResponse = this.manufacturerName?.startsWith("_TZ") && process.env.DISABLE_TUYA_DEFAULT_RESPONSE;
         // Sometimes messages are received twice, prevent responding twice
@@ -558,8 +584,7 @@ export class Device extends Entity<ControllerEventMap> {
 
         if (
             !this._skipDefaultResponse &&
-            sendDefaultResponse &&
-            (!header.frameControl.disableDefaultResponse || defaultResponseStatus !== Zcl.Status.SUCCESS) &&
+            (!header.frameControl.disableDefaultResponse || status !== Zcl.Status.SUCCESS) &&
             !alreadyResponded &&
             !disableTuyaDefaultResponse
         ) {
@@ -570,7 +595,7 @@ export class Device extends Entity<ControllerEventMap> {
                         ? Zcl.Direction.SERVER_TO_CLIENT
                         : Zcl.Direction.CLIENT_TO_SERVER;
 
-                await endpoint.defaultResponse(command.ID, defaultResponseStatus, cluster.ID, header.transactionSequenceNumber, {
+                await endpoint.defaultResponse(header.commandIdentifier, status, clusterID, header.transactionSequenceNumber, {
                     direction,
                 });
             } catch (error) {
