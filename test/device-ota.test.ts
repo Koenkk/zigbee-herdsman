@@ -2,8 +2,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import {performance} from "node:perf_hooks";
-import {afterEach, beforeEach, describe, expect, it, vi} from "vitest";
+import {afterEach, beforeEach, describe, expect, it, type MockInstance, vi} from "vitest";
 import type {Adapter} from "../src/adapter";
+import type {ZclPayload} from "../src/adapter/events";
 import Database from "../src/controller/database";
 import * as otaHelpers from "../src/controller/helpers/ota";
 import {Device, Entity} from "../src/controller/model";
@@ -45,8 +46,10 @@ type OtaDeviceBehavior = {
      * - with this block2 has this applied to offset: block1=[offset=0, dataSize=50], block2=[offset=(dataSize-misalignedOffset), dataSize=50], block3=[offset=(dataSize*2-misalignedOffset), dataSize=50]
      */
     misalignedOffset?: number;
-    /** Mimic failing given block response (mimic device sending new image block/page request for same offset OR failure to abort) */
+    /** Mimic failing given block response (mimic device sending new image block/page request for same offset) */
     failBlockResponse?: number;
+    /** Mimic failure to receive the coordinator's abort response */
+    failAbortResponse?: boolean;
     /** Mimic the device sending or not of `upgradeEndRequest` (at end of block/page requests, or as specified by other behaviors) */
     sendUpgradeEnd?: boolean;
     /** Mimic the device sending that specific status in `upgradeEndRequest` */
@@ -80,28 +83,72 @@ const createOtaDeviceWaitFor = (
     let nextOffset = 0;
     let blocksServed = 0;
     let blockTsn = 2;
-    let upgradeEndResolver: ((frame: Zcl.Frame) => void) | undefined;
-    let upgradeEndTimer: NodeJS.Timeout | undefined;
     let upgradeEndSent = false;
-    let repeatLastBlock = false;
-    let previousBlock: {offset: number; size: number} | undefined;
+    let failedBlockResponse = false;
+    let triggerDefaultResponse = settings.triggerDefaultResponse;
+    let lastDataRequest:
+        | {
+              commandId: typeof IMAGE_BLOCK_REQUEST_ID | typeof IMAGE_PAGE_REQUEST_ID;
+              payload: TClusterCommandPayload<"genOta", "imageBlockRequest" | "imagePageRequest">;
+              tsn: number;
+          }
+        | undefined;
+    type Waiter = {
+        commandId: number;
+        defaultRspCommandId: number | undefined;
+        resolve: (payload: ZclPayload) => void;
+        reject: (error: Error) => void;
+        timer: NodeJS.Timeout | undefined;
+        active: boolean;
+    };
+    const waiters: Waiter[] = [];
 
-    const pendingPromise = (): ReturnType<Adapter["waitFor"]>["promise"] => new Promise<never>(() => {}) as never;
     const makeFrame = (
         commandId: number,
         payload: TClusterCommandPayload<"genOta", "imageBlockRequest" | "imagePageRequest" | "upgradeEndRequest" | "queryNextImageRequest">,
         tsn: number,
     ) => Zcl.Frame.create(Zcl.FrameType.SPECIFIC, Zcl.Direction.CLIENT_TO_SERVER, true, undefined, tsn, commandId, OTA_CLUSTER_ID, payload, {});
 
-    const maybeScheduleUpgradeEnd = () => {
-        if (!settings.sendUpgradeEnd || upgradeEndSent || !upgradeEndResolver) {
+    const makePayload = (frame: Zcl.Frame, endpointId: number, networkAddress: number): ZclPayload => ({
+        clusterID: OTA_CLUSTER_ID,
+        header: frame.header,
+        data: frame.toBuffer(),
+        endpoint: endpointId,
+        linkquality: 0,
+        address: networkAddress,
+        groupID: 0,
+        wasBroadcast: false,
+        destinationEndpoint: endpointId,
+    });
+
+    const deliver = (commandId: number, frame: Zcl.Frame, endpointId: number, networkAddress: number, isDefaultResponse = false) => {
+        const waiterIndex = waiters.findIndex(
+            (waiter) => waiter.active && (isDefaultResponse ? waiter.defaultRspCommandId === commandId : waiter.commandId === commandId),
+        );
+
+        if (waiterIndex === -1) {
+            return;
+        }
+
+        const [waiter] = waiters.splice(waiterIndex, 1);
+        waiter.active = false;
+
+        if (waiter.timer) {
+            clearTimeout(waiter.timer);
+        }
+
+        waiter.resolve(makePayload(frame, endpointId, networkAddress));
+    };
+
+    const sendUpgradeEnd = (endpointId: number, networkAddress: number) => {
+        if (!settings.sendUpgradeEnd || upgradeEndSent) {
             return;
         }
 
         upgradeEndSent = true;
-
-        queueMicrotask(() => {
-            const frame = makeFrame(
+        deliver(
+            UPGRADE_END_REQUEST_ID,
+            makeFrame(
                 UPGRADE_END_REQUEST_ID,
                 {
                     status: settings.upgradeEndStatus ?? Zcl.Status.SUCCESS,
@@ -110,281 +157,219 @@ const createOtaDeviceWaitFor = (
                     fileVersion: image.header.fileVersion,
                 },
                 250,
-            );
-
-            upgradeEndResolver?.(frame);
-        });
+            ),
+            endpointId,
+            networkAddress,
+        );
     };
 
-    if (settings.failBlockResponse !== undefined) {
-        endpoint.commandResponse = vi.fn((_clusterKey, commandKey, _payload, _options, _transactionSequenceNumber) => {
-            if (commandKey === "imageBlockResponse") {
-                if (blocksServed === settings.failBlockResponse) {
-                    repeatLastBlock = true;
-                    return Promise.reject(new Error("block-fail"));
-                }
+    const sendDataRequest = (request: NonNullable<typeof lastDataRequest>, endpointId: number, networkAddress: number) => {
+        deliver(request.commandId, makeFrame(request.commandId, request.payload, request.tsn), endpointId, networkAddress);
+    };
 
-                return Promise.resolve();
-            }
-
-            return Promise.resolve();
-        });
-    }
-
-    const handleBlockRequest = (endpointId: number, transactionSequenceNumber: number | undefined, networkAddress: number) => {
-        if (repeatLastBlock && previousBlock) {
-            repeatLastBlock = false;
-            // revert offset to previous block
-            ({offset: nextOffset} = previousBlock);
+    const sendNextDataRequest = (endpointId: number, networkAddress: number) => {
+        if (settings.stopAfterBlocks !== undefined && blocksServed >= settings.stopAfterBlocks) {
+            return;
         }
 
-        if (blocksServed === 1 && settings.triggerDefaultResponse) {
+        if (nextOffset >= image.header.totalImageSize) {
+            sendUpgradeEnd(endpointId, networkAddress);
+
+            return;
+        }
+
+        const tsn = blockTsn;
+        blockTsn = (blockTsn + 1) & 0xff;
+
+        if (settings.usePageRequests) {
+            const pageSize = Math.min(settings.pageSize ?? settings.baseSize * 16, image.header.totalImageSize - nextOffset);
+            const payload: TClusterCommandPayload<"genOta", "imagePageRequest"> = {
+                fieldControl: 0,
+                manufacturerCode: image.header.manufacturerCode,
+                imageType: image.header.imageType,
+                fileVersion: image.header.fileVersion,
+                fileOffset: nextOffset,
+                maximumDataSize: settings.baseSize,
+                pageSize,
+                responseSpacing: 0,
+            };
+            nextOffset += pageSize;
+            blocksServed += 1;
+            lastDataRequest = {commandId: IMAGE_PAGE_REQUEST_ID, payload, tsn};
+        } else {
+            let fileOffset = nextOffset;
+
+            if (settings.shuffleOffsets) {
+                if (blocksServed === 1) {
+                    fileOffset = settings.baseSize * 2;
+                } else if (blocksServed === 2) {
+                    fileOffset = settings.baseSize;
+                }
+            } else if (settings.misalignedOffset && blocksServed === 1) {
+                fileOffset = settings.baseSize + settings.misalignedOffset;
+            }
+
+            const payload: TClusterCommandPayload<"genOta", "imageBlockRequest"> = {
+                fieldControl: 0,
+                manufacturerCode: image.header.manufacturerCode,
+                imageType: image.header.imageType,
+                fileVersion: image.header.fileVersion,
+                fileOffset,
+                maximumDataSize: settings.useNonValueDataSize ? Number.NaN : settings.baseSize,
+            };
+            nextOffset = Math.max(nextOffset, fileOffset + settings.baseSize);
+            blocksServed += 1;
+            lastDataRequest = {commandId: IMAGE_BLOCK_REQUEST_ID, payload, tsn};
+        }
+
+        sendDataRequest(lastDataRequest, endpointId, networkAddress);
+
+        if (blocksServed === 2 && settings.abort) {
+            device.abortOta();
+        }
+    };
+
+    const handleImageBlockResponse = (
+        payload: {dataSize?: number; fileOffset?: number; status?: Zcl.Status},
+        endpointId: number,
+        networkAddress: number,
+    ): Promise<void> => {
+        if (payload.status === Zcl.Status.ABORT) {
+            return settings.failAbortResponse ? Promise.reject(new Error("abort-response-fail")) : Promise.resolve();
+        }
+
+        if (settings.failBlockResponse === blocksServed && !failedBlockResponse) {
+            failedBlockResponse = true;
+
+            if (lastDataRequest) {
+                sendDataRequest(lastDataRequest, endpointId, networkAddress);
+            }
+
+            return Promise.reject(new Error("block-fail"));
+        }
+
+        if (triggerDefaultResponse !== undefined && blocksServed === 1 && lastDataRequest) {
+            const status = triggerDefaultResponse;
+            triggerDefaultResponse = undefined;
             const frame = Zcl.Frame.create(
                 Zcl.FrameType.GLOBAL,
                 Zcl.Direction.CLIENT_TO_SERVER,
                 true,
                 undefined,
-                transactionSequenceNumber ?? blockTsn,
+                lastDataRequest.tsn,
                 "defaultRsp",
                 "genOta",
-                {cmdId: IMAGE_BLOCK_RESPONSE_ID, statusCode: settings.triggerDefaultResponse},
+                {cmdId: IMAGE_BLOCK_RESPONSE_ID, statusCode: status},
                 {},
             );
-            repeatLastBlock = true;
-            settings.triggerDefaultResponse = undefined;
 
-            return {
-                promise: Promise.resolve({
-                    clusterID: OTA_CLUSTER_ID,
-                    header: frame.header,
-                    data: frame.toBuffer(),
-                    endpoint: endpointId,
-                    linkquality: 0,
-                    address: networkAddress,
-                    groupID: 0,
-                    wasBroadcast: false,
-                    destinationEndpoint: endpointId,
-                }),
-                cancel: () => {},
-            };
+            deliver(IMAGE_BLOCK_RESPONSE_ID, frame, endpointId, networkAddress, true);
+            setTimeout(() => {
+                if (lastDataRequest) {
+                    sendDataRequest(lastDataRequest, endpointId, networkAddress);
+                }
+            }, 0);
+
+            return Promise.resolve();
         }
 
-        if (settings.stopAfterBlocks !== undefined && blocksServed >= settings.stopAfterBlocks) {
-            return {
-                promise: Promise.reject(new Error("device stopped requesting blocks")),
-                cancel: () => {},
-            };
-        }
+        if (lastDataRequest?.commandId === IMAGE_PAGE_REQUEST_ID) {
+            const pagePayload = lastDataRequest.payload as TClusterCommandPayload<"genOta", "imagePageRequest">;
+            const pageEnd = pagePayload.fileOffset + pagePayload.pageSize;
+            const blockEnd = (payload.fileOffset ?? 0) + (payload.dataSize ?? 0);
 
-        let fileOffset = nextOffset;
-
-        if (settings.shuffleOffsets) {
-            if (blocksServed === 1) {
-                fileOffset = settings.baseSize * 2;
-            } else if (blocksServed === 2) {
-                fileOffset = settings.baseSize;
-            }
-        } else if (settings.misalignedOffset) {
-            if (blocksServed === 1) {
-                fileOffset = settings.baseSize + settings.misalignedOffset;
+            if (blockEnd < pageEnd) {
+                return Promise.resolve();
             }
         }
-
-        const remaining = image.header.totalImageSize - fileOffset;
-
-        if (remaining <= 0) {
-            maybeScheduleUpgradeEnd();
-
-            return {
-                promise: Promise.reject(new Error("all blocks sent")),
-                cancel: () => {},
-            };
-        }
-
-        const payload: TClusterCommandPayload<"genOta", "imageBlockRequest"> = {
-            fieldControl: 0,
-            manufacturerCode: image.header.manufacturerCode,
-            imageType: image.header.imageType,
-            fileVersion: image.header.fileVersion,
-            fileOffset,
-            maximumDataSize: settings.useNonValueDataSize ? Number.NaN : settings.baseSize,
-        };
-
-        blocksServed += 1;
-        const nextTsn = transactionSequenceNumber ?? blockTsn;
-        blockTsn = (blockTsn + 1) & 0xff;
-        const frame = makeFrame(IMAGE_BLOCK_REQUEST_ID, payload, nextTsn);
-        nextOffset = Math.max(nextOffset, fileOffset + settings.baseSize);
-        previousBlock = {offset: fileOffset, size: settings.baseSize};
 
         if (settings.upgradeEndAfterBlocks !== undefined && blocksServed >= settings.upgradeEndAfterBlocks) {
-            maybeScheduleUpgradeEnd();
-        } else if (nextOffset >= image.header.totalImageSize && settings.sendUpgradeEnd) {
-            maybeScheduleUpgradeEnd();
+            sendUpgradeEnd(endpointId, networkAddress);
+        } else {
+            sendNextDataRequest(endpointId, networkAddress);
         }
 
-        if (blocksServed === 2 && settings.abort) {
-            device.abortOta();
-        }
-
-        return {
-            promise: Promise.resolve({
-                clusterID: OTA_CLUSTER_ID,
-                header: frame.header,
-                data: frame.toBuffer(),
-                endpoint: endpointId,
-                linkquality: 0,
-                address: networkAddress,
-                groupID: 0,
-                wasBroadcast: false,
-                destinationEndpoint: endpointId,
-            }),
-            cancel: () => {},
-        };
+        return Promise.resolve();
     };
 
-    const handlePageRequest = (endpointId: number, transactionSequenceNumber: number | undefined, networkAddress: number) => {
-        const remaining = image.header.totalImageSize - nextOffset;
+    const commandResponse = endpoint.commandResponse as unknown as ReturnType<typeof vi.fn>;
 
-        if (remaining <= 0) {
-            maybeScheduleUpgradeEnd();
+    commandResponse.mockImplementation((_clusterKey, commandKey, payload) => {
+        if (commandKey === "imageNotify") {
+            const frame = makeFrame(QUERY_NEXT_IMAGE_REQUEST_ID, current, 1);
 
-            return {
-                promise: pendingPromise(),
-                cancel: () => {},
-            };
+            deliver(QUERY_NEXT_IMAGE_REQUEST_ID, frame, endpoint.ID, device.networkAddress);
+        } else if (commandKey === "queryNextImageResponse" && payload.status === Zcl.Status.SUCCESS) {
+            setTimeout(() => sendNextDataRequest(endpoint.ID, device.networkAddress), 0);
+        } else if (commandKey === "imageBlockResponse") {
+            return handleImageBlockResponse(payload, endpoint.ID, device.networkAddress);
         }
 
-        const pageSize = Math.min(settings.pageSize ?? settings.baseSize * 16, remaining);
-        const payload: TClusterCommandPayload<"genOta", "imagePageRequest"> = {
-            fieldControl: 0,
-            manufacturerCode: image.header.manufacturerCode,
-            imageType: image.header.imageType,
-            fileVersion: image.header.fileVersion,
-            fileOffset: nextOffset,
-            maximumDataSize: settings.baseSize,
-            pageSize,
-            responseSpacing: 0,
-        };
-
-        const nextTsn = transactionSequenceNumber ?? blockTsn;
-        blockTsn = (blockTsn + 1) & 0xff;
-        const frame = makeFrame(IMAGE_PAGE_REQUEST_ID, payload, nextTsn);
-        nextOffset = Math.max(nextOffset, payload.fileOffset + pageSize);
-        previousBlock = {offset: payload.fileOffset, size: pageSize};
-
-        if (nextOffset >= image.header.totalImageSize) {
-            maybeScheduleUpgradeEnd();
-        }
-
-        return {
-            promise: Promise.resolve({
-                clusterID: OTA_CLUSTER_ID,
-                header: frame.header,
-                data: frame.toBuffer(),
-                endpoint: endpointId,
-                linkquality: 0,
-                address: networkAddress,
-                groupID: 0,
-                wasBroadcast: false,
-                destinationEndpoint: endpointId,
-            }),
-            cancel: () => {},
-        };
-    };
+        return Promise.resolve();
+    });
 
     const waitFor: Adapter["waitFor"] = (
-        networkAddress,
-        endpointId,
+        _networkAddress,
+        _endpointId,
         _frameType,
         _direction,
-        transactionSequenceNumber,
+        _transactionSequenceNumber,
         clusterID,
         commandId,
+        defaultRspCommandId,
         timeout,
     ) => {
-        const fail = (message: string) => ({
-            promise: Promise.reject(new Error(message)),
-            cancel: () => {},
+        let resolvePromise: (payload: ZclPayload) => void;
+        let rejectPromise: (error: Error) => void;
+        const promise = new Promise<ZclPayload>((resolve, reject) => {
+            resolvePromise = resolve;
+            rejectPromise = reject;
         });
 
         if (clusterID !== OTA_CLUSTER_ID) {
-            return fail("unexpected cluster");
+            return {promise: Promise.reject(new Error("unexpected cluster")), cancel: () => {}};
         }
 
-        if (commandId === QUERY_NEXT_IMAGE_REQUEST_ID) {
-            const frame = makeFrame(commandId, current, transactionSequenceNumber ?? 1);
+        const waiter: Waiter = {
+            commandId,
+            defaultRspCommandId,
+            resolve: resolvePromise!,
+            reject: rejectPromise!,
+            timer: undefined,
+            active: true,
+        };
+        const cancel = () => {
+            if (!waiter.active) {
+                return;
+            }
 
-            return {
-                promise: Promise.resolve({
-                    clusterID,
-                    header: frame.header,
-                    data: frame.toBuffer(),
-                    endpoint: endpointId,
-                    linkquality: 0,
-                    address: networkAddress!,
-                    groupID: 0,
-                    wasBroadcast: false,
-                    destinationEndpoint: endpointId,
-                }),
-                cancel: () => {},
-            };
-        }
+            waiter.active = false;
 
-        if (commandId === UPGRADE_END_REQUEST_ID) {
-            const promise = new Promise<Zcl.Frame>((resolve, reject) => {
-                upgradeEndResolver = resolve;
+            if (waiter.timer) {
+                clearTimeout(waiter.timer);
+            }
 
-                if (timeout && timeout > 0) {
-                    upgradeEndTimer = setTimeout(() => reject(new Error("timeout")), timeout);
+            const waiterIndex = waiters.indexOf(waiter);
+
+            if (waiterIndex !== -1) {
+                waiters.splice(waiterIndex, 1);
+            }
+        };
+
+        if (timeout > 0) {
+            waiter.timer = setTimeout(() => {
+                if (!waiter.active) {
+                    return;
                 }
-            });
 
-            return {
-                promise: promise.then((frame) => ({
-                    clusterID,
-                    header: frame.header,
-                    data: frame.toBuffer(),
-                    endpoint: endpointId,
-                    linkquality: 0,
-                    address: networkAddress!,
-                    groupID: 0,
-                    wasBroadcast: false,
-                    destinationEndpoint: endpointId,
-                })),
-                cancel: () => {
-                    if (upgradeEndTimer) {
-                        clearTimeout(upgradeEndTimer);
-                        upgradeEndTimer = undefined;
-                    }
-                    upgradeEndResolver = undefined;
-                },
-            };
+                cancel();
+                waiter.reject(new Error("timeout"));
+            }, timeout);
         }
 
-        if (commandId === IMAGE_PAGE_REQUEST_ID) {
-            if (!settings.usePageRequests) {
-                return {
-                    promise: pendingPromise(),
-                    cancel: () => {},
-                };
-            }
+        waiters.push(waiter);
 
-            return handlePageRequest(endpointId, transactionSequenceNumber, networkAddress!);
-        }
-
-        if (commandId === IMAGE_BLOCK_REQUEST_ID) {
-            if (settings.usePageRequests) {
-                return {
-                    promise: pendingPromise(),
-                    cancel: () => {},
-                };
-            }
-
-            return handleBlockRequest(endpointId, transactionSequenceNumber, networkAddress!);
-        }
-
-        return fail("unsupported commandId");
+        return {promise, cancel};
     };
 
     return waitFor;
@@ -1083,7 +1068,7 @@ describe("Device OTA", () => {
     });
 
     describe("Updates", () => {
-        let debugSpy: ReturnType<typeof vi.spyOn> | undefined;
+        let debugSpy: MockInstance<typeof logger.debug> | undefined;
 
         beforeEach(() => {
             debugSpy = vi.spyOn(logger, "debug").mockImplementation(() => {});
@@ -1236,8 +1221,7 @@ describe("Device OTA", () => {
             expect(device.otaInProgress).toStrictEqual(false);
         });
 
-        it("fails to abort an in-progress update", async () => {
-            // this is same as success for ZH, only the device may not have aborted itself
+        it("continues aborting when the abort response fails", async () => {
             const fileName = OTA_FILES[0];
             const [image] = await loadImage(fileName);
             firmwareBuffer = image.raw;
@@ -1254,13 +1238,16 @@ describe("Device OTA", () => {
                 source: {},
                 requestPayload,
                 dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
-                behavior: {baseSize, sendUpgradeEnd: true, abort: true, failBlockResponse: 2},
+                behavior: {baseSize, sendUpgradeEnd: true, abort: true, failAbortResponse: true},
             });
 
             await expect(run()).rejects.toThrow(/OTA.*was aborted/);
             const calls = getResponses(endpoint, "imageBlockResponse");
             expect(getResponses(endpoint, "imageBlockResponse").length).toStrictEqual(2);
             expect(calls[1][2]).toStrictEqual({status: Zcl.Status.ABORT});
+            expect(debugSpy?.mock.calls.map(([message]) => (typeof message === "string" ? message : message()))).toContain(
+                "Abort image block response failed for 0x1: abort-response-fail",
+            );
             expect(device.otaInProgress).toStrictEqual(false);
         });
 
@@ -1962,7 +1949,7 @@ describe("Device OTA", () => {
                 fileVersion: image.header.fileVersion - 1,
             };
             const baseSize = 40;
-            const dataSettings: OtaDataSettings = {requestTimeout: 10, responseDelay: 250, baseSize};
+            const dataSettings: OtaDataSettings = {requestTimeout: 1000, responseDelay: 250, baseSize};
             // Mock time to ensure progress is reported at regular intervals
             let currentTime = 0;
             const timeDelays = [
@@ -2336,10 +2323,10 @@ describe("Device OTA", () => {
 
             expect(device.otaInProgress).toStrictEqual(true);
 
-            const p2 = run();
+            const p2 = expect(run()).rejects.toThrow("OTA already in progress for 0x1");
             const [from, to] = await p1;
 
-            await expect(p2).rejects.toThrow("OTA already in progress for 0x1");
+            await p2;
             expect(from.fileVersion).toStrictEqual(requestPayload.fileVersion);
             expect(to?.fileVersion).toStrictEqual(image.header.fileVersion);
             expect(device.otaInProgress).toStrictEqual(false);
@@ -2481,12 +2468,15 @@ describe("Device OTA", () => {
                 dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
                 behavior: {baseSize, sendUpgradeEnd: true},
             });
-            endpoint.commandResponse = vi.fn((_cluster, command) => {
+            const commandResponse = endpoint.commandResponse as unknown as ReturnType<typeof vi.fn>;
+            const commandResponseImplementation = commandResponse.getMockImplementation();
+
+            commandResponse.mockImplementation((cluster, command, ...args) => {
                 if (command === "imageNotify") {
                     return Promise.reject(new Error("image-notify-fail"));
                 }
 
-                return Promise.resolve();
+                return commandResponseImplementation?.(cluster, command, ...args);
             });
 
             await expect(run()).rejects.toThrow("Device didn't respond to OTA request");
@@ -2504,12 +2494,15 @@ describe("Device OTA", () => {
                 dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
                 behavior: {baseSize, sendUpgradeEnd: true},
             });
-            endpoint.commandResponse = vi.fn((_cluster, command) => {
+            const commandResponse = endpoint.commandResponse as unknown as ReturnType<typeof vi.fn>;
+            const commandResponseImplementation = commandResponse.getMockImplementation();
+
+            commandResponse.mockImplementation((cluster, command, ...args) => {
                 if (command === "upgradeEndResponse") {
                     return Promise.reject(new Error("upgrade-end-fail"));
                 }
 
-                return Promise.resolve();
+                return commandResponseImplementation?.(cluster, command, ...args);
             });
 
             await expect(run()).rejects.toThrow(/upgrade end response failed/i);
@@ -2527,12 +2520,15 @@ describe("Device OTA", () => {
                 dataSettings: {requestTimeout: 1000, responseDelay: 0, baseSize},
                 behavior: {baseSize, sendUpgradeEnd: true},
             });
-            endpoint.commandResponse = vi.fn((_cluster, command) => {
+            const commandResponse = endpoint.commandResponse as unknown as ReturnType<typeof vi.fn>;
+            const commandResponseImplementation = commandResponse.getMockImplementation();
+
+            commandResponse.mockImplementation((cluster, command, ...args) => {
                 if (command === "queryNextImageResponse") {
                     return Promise.reject(new Error("query-next-image-fail"));
                 }
 
-                return Promise.resolve();
+                return commandResponseImplementation?.(cluster, command, ...args);
             });
 
             await expect(run()).rejects.toThrow("query-next-image-fail");

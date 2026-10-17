@@ -509,27 +509,24 @@ export class OtaSession {
         promise: Promise<TZclFrame<"genOta", "upgradeEndRequest"> | TFoundationZclFrame<"defaultRsp">>;
         cancel: () => void;
     }): AsyncGenerator<OtaDataRequest | OtaUpgradeEndRequest | TFoundationZclFrame<"defaultRsp">> {
-        while (true) {
-            const imageBlockRequest = this.waitForOtaCommand<"imageBlockRequest">(
-                this.endpoint.ID,
-                IMAGE_BLOCK_REQUEST_ID,
-                IMAGE_BLOCK_RESPONSE_ID,
-                this.dataSettings.requestTimeout,
-            );
-            const imagePageRequest = this.waitForOtaCommand<"imagePageRequest">(
-                this.endpoint.ID,
-                IMAGE_PAGE_REQUEST_ID,
-                IMAGE_BLOCK_RESPONSE_ID,
-                this.dataSettings.requestTimeout,
-            );
-            const dataRequest = Promise.race([imageBlockRequest.promise, imagePageRequest.promise]);
-            const request = await Promise.race([dataRequest, upgradeEndRequest.promise]);
+        let {imageBlockRequest, imagePageRequest} = this.waitForRequest();
 
+        try {
+            while (true) {
+                const request = await Promise.race([imageBlockRequest.promise, imagePageRequest.promise, upgradeEndRequest.promise]);
+
+                imageBlockRequest.cancel();
+                imagePageRequest.cancel();
+
+                ({imageBlockRequest, imagePageRequest} = this.waitForRequest());
+
+                // if this is `UPGRADE_END_REQUEST_ID`, `run()` will return and thus terminate the generator (no endless loop possible)
+                yield request;
+            }
+        } finally {
             imageBlockRequest.cancel();
             imagePageRequest.cancel();
-
-            // if this is `UPGRADE_END_REQUEST_ID`, `run()` will return and thus terminate the generator (no endless loop possible)
-            yield request;
+            upgradeEndRequest.cancel();
         }
     }
 
@@ -595,5 +592,25 @@ export class OtaSession {
 
             return pageOffset;
         }
+    }
+
+    private waitForRequest() {
+        const imageBlockRequest = this.waitForOtaCommand<"imageBlockRequest">(
+            this.endpoint.ID,
+            IMAGE_BLOCK_REQUEST_ID,
+            IMAGE_BLOCK_RESPONSE_ID,
+            this.dataSettings.requestTimeout,
+        );
+        const imagePageRequest = this.waitForOtaCommand<"imagePageRequest">(
+            this.endpoint.ID,
+            IMAGE_PAGE_REQUEST_ID,
+            IMAGE_BLOCK_RESPONSE_ID,
+            this.dataSettings.requestTimeout,
+        );
+
+        void imageBlockRequest.promise.catch(() => {});
+        void imagePageRequest.promise.catch(() => {});
+
+        return {imageBlockRequest, imagePageRequest};
     }
 }
