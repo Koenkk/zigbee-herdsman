@@ -2752,6 +2752,55 @@ describe("Controller", () => {
         expect(events.message.length).toBe(1);
     });
 
+    it("Send default response with parsing error status to unparsable frame with default response disabled", async () => {
+        // cluster-specific, client to server, default response disabled, unknown command 0xfe on genOnOff
+        const data = Buffer.from([0x11, 5, 0xfe]);
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+        const endpointDefaultResponseSpy = vi.spyOn(endpoint, "defaultResponse");
+
+        await mockAdapterEvents.zclPayload({
+            wasBroadcast: false,
+            address: 129,
+            clusterID: Zcl.Clusters.genOnOff.ID,
+            data,
+            header: Zcl.Header.fromBuffer(data),
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 0,
+        });
+
+        expect(endpointDefaultResponseSpy).toHaveBeenCalledTimes(1);
+        expect(endpointDefaultResponseSpy).toHaveBeenCalledWith(0xfe, Zcl.Status.UNSUP_COMMAND, Zcl.Clusters.genOnOff.ID, 5, {
+            direction: Zcl.Direction.SERVER_TO_CLIENT,
+        });
+    });
+
+    it("Send default response once to unparsable frame received twice", async () => {
+        const data = Buffer.from([8, 84, 10, 2, 208, 72, 2, 0, 10]);
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+        const endpointDefaultResponseSpy = vi.spyOn(endpoint, "defaultResponse");
+        const payload = {
+            wasBroadcast: false,
+            address: 129,
+            clusterID: 0xe000,
+            data,
+            header: Zcl.Header.fromBuffer(data),
+            endpoint: 1,
+            linkquality: 50,
+            groupID: 0,
+        };
+
+        await mockAdapterEvents.zclPayload(payload);
+        await mockAdapterEvents.zclPayload(payload);
+
+        expect(events.message.length).toBe(2);
+        expect(endpointDefaultResponseSpy).toHaveBeenCalledTimes(1);
+    });
+
     it("Receive zclData from unkonwn device shouldnt emit anything", async () => {
         const buffer = Buffer.from([24, 169, 10, 0, 0, 24, 1]);
         const frame = Zcl.Frame.fromBuffer(Zcl.Utils.getCluster("msOccupancySensing", undefined, {}).ID, Zcl.Header.fromBuffer(buffer), buffer, {});
