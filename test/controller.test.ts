@@ -18,7 +18,8 @@ import * as timeService from "../src/utils/timeService";
 import * as ZSpec from "../src/zspec";
 import {BroadcastAddress} from "../src/zspec/enums";
 import * as Zcl from "../src/zspec/zcl";
-import type {CustomClusters} from "../src/zspec/zcl/definition/tstype";
+import {BuffaloZcl} from "../src/zspec/zcl/buffaloZcl";
+import type {CustomClusters, FrameControl} from "../src/zspec/zcl/definition/tstype";
 import * as Zdo from "../src/zspec/zdo";
 import type {IEEEAddressResponse, NetworkAddressResponse} from "../src/zspec/zdo/definition/tstypes";
 import {DEFAULT_184_CHECKIN_INTERVAL, LQI_TABLE_ENTRY_DEFAULTS, MOCK_DEVICES, ROUTING_TABLE_ENTRY_DEFAULTS} from "./mockDevices";
@@ -2644,6 +2645,229 @@ describe("Controller", () => {
             },
         };
         expect(events.message[0]).toStrictEqual(expected);
+    });
+
+    describe("Unparsable frame", () => {
+        /** Header of a global attribute report from server to client that asks for a default response. */
+        const reportHeader = (frameControl: Partial<FrameControl> = {}): Zcl.Header =>
+            new Zcl.Header(
+                {
+                    frameType: Zcl.FrameType.GLOBAL,
+                    manufacturerSpecific: false,
+                    direction: Zcl.Direction.SERVER_TO_CLIENT,
+                    disableDefaultResponse: false,
+                    reservedBits: 0,
+                    ...frameControl,
+                },
+                undefined,
+                84,
+                Zcl.Foundation.report.ID,
+            );
+
+        /**
+         * Payload of the attribute report that a BSEED TS011F (`_TZ3210_2uollq9d`) sends on cluster 0xE000 and retransmits until
+         * answered: attribute 0xD002 of type ARRAY, encoded by Tuya as raw data instead of a ZCL array, which fails to parse.
+         * https://github.com/Koenkk/zigbee2mqtt/issues/33174
+         */
+        const ts011fReportPayload = (): Buffer => {
+            const buffalo = new BuffaloZcl(Buffer.alloc(6));
+            buffalo.writeUInt16(0xd002);
+            buffalo.writeUInt8(Zcl.DataType.ARRAY);
+            buffalo.writeBuffer([0x02, 0x00, 0x0a], 3);
+            return buffalo.getWritten();
+        };
+
+        /** Header of a cluster-specific genOnOff command that does not exist, which fails to parse with UNSUP_COMMAND. */
+        const unknownOnOffCommandHeader = (disableDefaultResponse: boolean): Zcl.Header =>
+            new Zcl.Header(
+                {
+                    frameType: Zcl.FrameType.SPECIFIC,
+                    manufacturerSpecific: false,
+                    direction: Zcl.Direction.CLIENT_TO_SERVER,
+                    disableDefaultResponse,
+                    reservedBits: 0,
+                },
+                undefined,
+                5,
+                0xfe,
+            );
+
+        /** Serialize a frame as the adapter receives it. */
+        const toZclBuffer = (header: Zcl.Header, payload: Buffer = Buffer.alloc(0)): Buffer => {
+            const buffalo = new BuffaloZcl(Buffer.alloc(header.length + payload.length));
+            header.write(buffalo);
+            buffalo.writeBuffer(payload, payload.length);
+            return buffalo.getWritten();
+        };
+
+        it("Send default response when requested", async () => {
+            const header = reportHeader();
+            await controller.start();
+            await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+            const device = controller.getDeviceByIeeeAddr("0x129")!;
+            const endpoint = device.getEndpoint(1)!;
+            const endpointDefaultResponseSpy = vi.spyOn(endpoint, "defaultResponse");
+
+            await mockAdapterEvents.zclPayload({
+                wasBroadcast: false,
+                address: 129,
+                clusterID: 0xe000,
+                data: toZclBuffer(header, ts011fReportPayload()),
+                header,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 0,
+            });
+
+            expect(events.message.length).toBe(1);
+            expect(events.message[0].type).toBe("raw");
+            expect(endpointDefaultResponseSpy).toHaveBeenCalledTimes(1);
+            expect(endpointDefaultResponseSpy).toHaveBeenCalledWith(
+                Zcl.Foundation.report.ID,
+                Zcl.Status.SUCCESS,
+                0xe000,
+                header.transactionSequenceNumber,
+                {direction: Zcl.Direction.CLIENT_TO_SERVER},
+            );
+        });
+
+        it("Send default response with parsing error status when requested", async () => {
+            const header = unknownOnOffCommandHeader(false);
+            await controller.start();
+            await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+            const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+            const endpointDefaultResponseSpy = vi.spyOn(endpoint, "defaultResponse");
+
+            await mockAdapterEvents.zclPayload({
+                wasBroadcast: false,
+                address: 129,
+                clusterID: Zcl.Clusters.genOnOff.ID,
+                data: toZclBuffer(header),
+                header,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 0,
+            });
+
+            expect(endpointDefaultResponseSpy).toHaveBeenCalledTimes(1);
+            expect(endpointDefaultResponseSpy).toHaveBeenCalledWith(
+                header.commandIdentifier,
+                Zcl.Status.UNSUP_COMMAND,
+                Zcl.Clusters.genOnOff.ID,
+                header.transactionSequenceNumber,
+                {direction: Zcl.Direction.SERVER_TO_CLIENT},
+            );
+        });
+
+        it.each([
+            ["no header", reportHeader(), ts011fReportPayload(), false, false, false],
+            ["broadcast", reportHeader(), ts011fReportPayload(), true, true, false],
+            ["disable default response", reportHeader({disableDefaultResponse: true}), ts011fReportPayload(), true, false, false],
+            // default response without its payload
+            [
+                "default response",
+                new Zcl.Header(reportHeader().frameControl, undefined, 84, Zcl.Foundation.defaultRsp.ID),
+                Buffer.alloc(0),
+                true,
+                false,
+                false,
+            ],
+            ["skip default response", reportHeader(), ts011fReportPayload(), true, false, true],
+        ])("Do not send default response: %s", async (_name, header, payload, withHeader, wasBroadcast, skipDefaultResponse) => {
+            await controller.start();
+            await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+            const device = controller.getDeviceByIeeeAddr("0x129")!;
+            device.skipDefaultResponse = skipDefaultResponse;
+            const endpointDefaultResponseSpy = vi.spyOn(device.getEndpoint(1)!, "defaultResponse");
+
+            await mockAdapterEvents.zclPayload({
+                wasBroadcast,
+                address: 129,
+                clusterID: 0xe000,
+                data: toZclBuffer(header, payload),
+                header: withHeader ? header : undefined,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 0,
+            });
+
+            expect(events.message.length).toBe(1);
+            expect(endpointDefaultResponseSpy).toHaveBeenCalledTimes(0);
+        });
+
+        it("Ignore failure to send default response", async () => {
+            const header = reportHeader();
+            await controller.start();
+            await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+            const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+            const endpointDefaultResponseSpy = vi.spyOn(endpoint, "defaultResponse").mockRejectedValueOnce(new Error("timeout"));
+
+            await mockAdapterEvents.zclPayload({
+                wasBroadcast: false,
+                address: 129,
+                clusterID: 0xe000,
+                data: toZclBuffer(header, ts011fReportPayload()),
+                header,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 0,
+            });
+
+            expect(endpointDefaultResponseSpy).toHaveBeenCalledTimes(1);
+            expect(events.message.length).toBe(1);
+        });
+
+        it("Send default response with parsing error status when default response is disabled", async () => {
+            const header = unknownOnOffCommandHeader(true);
+            await controller.start();
+            await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+            const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+            const endpointDefaultResponseSpy = vi.spyOn(endpoint, "defaultResponse");
+
+            await mockAdapterEvents.zclPayload({
+                wasBroadcast: false,
+                address: 129,
+                clusterID: Zcl.Clusters.genOnOff.ID,
+                data: toZclBuffer(header),
+                header,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 0,
+            });
+
+            expect(endpointDefaultResponseSpy).toHaveBeenCalledTimes(1);
+            expect(endpointDefaultResponseSpy).toHaveBeenCalledWith(
+                header.commandIdentifier,
+                Zcl.Status.UNSUP_COMMAND,
+                Zcl.Clusters.genOnOff.ID,
+                header.transactionSequenceNumber,
+                {direction: Zcl.Direction.SERVER_TO_CLIENT},
+            );
+        });
+
+        it("Send default response once to frame received twice", async () => {
+            const header = reportHeader();
+            await controller.start();
+            await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+            const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+            const endpointDefaultResponseSpy = vi.spyOn(endpoint, "defaultResponse");
+            const payload = {
+                wasBroadcast: false,
+                address: 129,
+                clusterID: 0xe000,
+                data: toZclBuffer(header, ts011fReportPayload()),
+                header,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 0,
+            };
+
+            await mockAdapterEvents.zclPayload(payload);
+            await mockAdapterEvents.zclPayload(payload);
+
+            expect(events.message.length).toBe(2);
+            expect(endpointDefaultResponseSpy).toHaveBeenCalledTimes(1);
+        });
     });
 
     it("Receive zclData from unkonwn device shouldnt emit anything", async () => {

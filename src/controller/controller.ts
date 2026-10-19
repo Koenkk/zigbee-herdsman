@@ -1142,9 +1142,7 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
             this.selfAndDeviceEmit(device, "lastSeenChanged", {device, reason: "messageNonEmitted"});
         }
 
-        if (frame) {
-            await device.onZclData(payload, frame, endpoint, defaultResponse);
-        }
+        await device.onZclData(payload, frame, endpoint, defaultResponse);
     }
 }
 
