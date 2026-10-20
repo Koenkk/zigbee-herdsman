@@ -23,6 +23,8 @@ export const WILDCARD_PROFILE_ID = 0xffff;
 export const CUSTOM_SHELLY_PROFILE_ID = 0xc001;
 /** The profile ID used to access Control4 devices custom clusters. */
 export const CUSTOM_CONTROL4_PROFILE_ID = 0xc25c;
+/** The profile ID used by Miele@home / Con@ctivity 2.0 devices. */
+export const CUSTOM_MIELE_PROFILE_ID = 0xc51e;
 
 /** The default HA endpoint. */
 export const HA_ENDPOINT = 0x01;

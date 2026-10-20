@@ -579,6 +579,7 @@ describe("Ember Adapter Layer", () => {
         await vi.advanceTimersByTimeAsync(5000);
         await expect(result).resolves.toStrictEqual("resumed");
         expect(mockEzspSetProtocolVersion).toHaveBeenCalledWith(EZSP_PROTOCOL_VERSION);
+        expect(mockEzspAddEndpoint).toHaveBeenCalledWith(2, 0xc51e, 0x0000, 1, expect.any(Array), expect.any(Array));
         expect(
             // @ts-expect-error private
             adapter.networkCache,
@@ -1164,7 +1165,8 @@ describe("Ember Adapter Layer", () => {
 
         mockEzspGetEndpointFlags
             .mockResolvedValueOnce([SLStatus.NOT_FOUND, EzspEndpointFlag.DISABLED])
-            .mockResolvedValueOnce([SLStatus.OK, EzspEndpointFlag.ENABLED]); // mock GP already registered
+            .mockResolvedValueOnce([SLStatus.OK, EzspEndpointFlag.ENABLED]) // mock GP already registered
+            .mockResolvedValueOnce([SLStatus.OK, EzspEndpointFlag.ENABLED]); // mock Miele already registered
 
         const result = adapter.start();
 
@@ -3370,7 +3372,7 @@ describe("Ember Adapter Layer", () => {
         it("Adapter impl: sendZclFrameToGroup with source endpoint", async () => {
             const groupId: number = 32;
             const zclFrame = Zcl.Frame.create(Zcl.FrameType.GLOBAL, Zcl.Direction.SERVER_TO_CLIENT, true, undefined, 1, 1, 0, [{}], {});
-            const p = adapter.sendZclFrameToGroup(groupId, zclFrame, 2);
+            const p = adapter.sendZclFrameToGroup(groupId, zclFrame, 3);
 
             await vi.advanceTimersByTimeAsync(5000);
             await expect(p).resolves.toStrictEqual(undefined);
@@ -3378,7 +3380,7 @@ describe("Ember Adapter Layer", () => {
             const apsFrame: EmberApsFrame = {
                 profileId: FIXED_ENDPOINTS[0].profileId,
                 clusterId: zclFrame.cluster.ID,
-                sourceEndpoint: 2,
+                sourceEndpoint: 3,
                 destinationEndpoint: 0xff,
                 options: DEFAULT_APS_OPTIONS,
                 groupId,
