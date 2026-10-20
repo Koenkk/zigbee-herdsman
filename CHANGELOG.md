@@ -1,5 +1,14 @@
 # Changelog
 
+## [11.1.1](https://github.com/Koenkk/zigbee-herdsman/compare/v11.1.0...v11.1.1) (2026-10-19)
+
+
+### Bug Fixes
+
+* **ignore:** bump @types/node from 26.6.4 to 26.6.5 in the minor-patch group ([#1915](https://github.com/Koenkk/zigbee-herdsman/issues/1915)) ([e399aec](https://github.com/Koenkk/zigbee-herdsman/commit/e399aec41602622de6bfe56e5f465fec9c13fdbd))
+* OTA delayed for some devices due to order of operations ([#1918](https://github.com/Koenkk/zigbee-herdsman/issues/1918)) ([cf29e23](https://github.com/Koenkk/zigbee-herdsman/commit/cf29e23a3c0fbfcbad9cb5c6694448381b6f61ba))
+* send default response on unknown ZCL frame ([#1917](https://github.com/Koenkk/zigbee-herdsman/issues/1917)) ([87d1f6b](https://github.com/Koenkk/zigbee-herdsman/commit/87d1f6b68ab95d3ca912731284da80e73447becf))
+
 ## [11.1.0](https://github.com/Koenkk/zigbee-herdsman/compare/v11.0.3...v11.1.0) (2026-10-13)
 
 
