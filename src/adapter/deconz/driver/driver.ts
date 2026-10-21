@@ -897,7 +897,7 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    private sendReadParameterRequest(parameterId: ParamId, seqNumber: number, arg?: Buffer | number | bigint): CommandResult {
+    private sendReadParameterRequest(parameterId: ParamId, seqNumber: number, arg?: Buffer | number | bigint) {
         let frameLength = 8; // starts with min. frame length
         let payloadLength = 1; // min. parameterId
 
@@ -919,10 +919,10 @@ class Driver extends events.EventEmitter {
             buf.writeBuffer(arg, arg.byteLength);
         }
 
-        return this.sendRequest(buf.getBuffer());
+        this.sendRequest(buf.getBuffer());
     }
 
-    private sendWriteParameterRequest(parameterId: ParamId, value: Buffer | number | bigint, seqNumber: number): CommandResult {
+    private sendWriteParameterRequest(parameterId: ParamId, value: Buffer | number | bigint, seqNumber: number) {
         // command id, sequence number, 0, framelength(U16), payloadlength(U16), parameter id, parameter
         const param = stackParameters.find((x) => x.id === parameterId);
         if (!param) {
@@ -974,40 +974,43 @@ class Driver extends events.EventEmitter {
         buf.writeUInt16LE(pos, posFrameLength); // actual frame length
 
         const out = buf.subarray(0, pos);
-        return this.sendRequest(out);
+
+        this.sendRequest(out);
     }
 
-    private sendReadFirmwareVersionRequest(seqNumber: number): CommandResult {
+    private sendReadFirmwareVersionRequest(seqNumber: number) {
         /* command id, sequence number, 0, framelength(U16) */
-        return this.sendRequest(Buffer.from([FirmwareCommand.FirmwareVersion, seqNumber, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00]));
+        this.sendRequest(Buffer.from([FirmwareCommand.FirmwareVersion, seqNumber, 0x00, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00]));
     }
 
-    private sendReadDeviceStateRequest(seqNumber: number): CommandResult {
+    private sendReadDeviceStateRequest(seqNumber: number) {
         /* command id, sequence number, 0, framelength(U16) */
-        return this.sendRequest(Buffer.from([FirmwareCommand.Status, seqNumber, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00]));
+        this.sendRequest(Buffer.from([FirmwareCommand.Status, seqNumber, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00]));
     }
 
-    private sendRequest(buffer: Buffer): CommandResult {
+    private sendRequest(buffer: Buffer) {
         const frame = Buffer.concat([buffer, this.calcCrc(buffer)]);
         const slipframe = slip.encode(frame);
 
         if (frame[0] === 0x00) {
+            // XXX: broken, can throw in places where uncaught
             throw new Error(`send unexpected frame with invalid command ID: 0x${frame[0].toString(16).padStart(2, "0")}`);
         }
 
         if (slipframe.length >= 256) {
+            // XXX: broken, can throw in places where uncaught
             throw new Error("send unexpected long slip frame");
         }
 
-        const written = this.transport.write(Buffer.from(slipframe));
-
-        if (!written) {
-            throw new Error(`Failed to send request cmd: ${frame[0]}, seq: ${frame[1]}`);
-        }
-
-        const result = {cmd: frame[0], seq: frame[1]};
-        this.emitStateEvent(DriverEvent.FirmwareCommandSend, result);
-        return result;
+        this.transport.write(Buffer.from(slipframe)).then(
+            () => {
+                const result = {cmd: frame[0], seq: frame[1]};
+                this.emitStateEvent(DriverEvent.FirmwareCommandSend, result);
+            },
+            (reason) => {
+                logger.error(`Failed to send request cmd: ${frame[0]}, seq: ${frame[1]}, ${reason}`, NS);
+            },
+        );
     }
 
     private processQueue(): void {
@@ -1091,8 +1094,8 @@ class Driver extends events.EventEmitter {
         });
     }
 
-    private sendChangeNetworkStateRequest(seqNumber: number, networkState: NetworkState): CommandResult {
-        return this.sendRequest(Buffer.from([FirmwareCommand.ChangeNetworkState, seqNumber, 0x00, 0x06, 0x00, networkState]));
+    private sendChangeNetworkStateRequest(seqNumber: number, networkState: NetworkState) {
+        this.sendRequest(Buffer.from([FirmwareCommand.ChangeNetworkState, seqNumber, 0x00, 0x06, 0x00, networkState]));
     }
 
     private checkDeviceStatus(deviceStatus: number): void {
@@ -1144,17 +1147,17 @@ class Driver extends events.EventEmitter {
         }
     }
 
-    private sendReadApsConfirmRequest(seqNumber: number): CommandResult {
+    private sendReadApsConfirmRequest(seqNumber: number) {
         logger.debug(`Request APS-DATA.confirm seq: ${seqNumber}`, NS);
-        return this.sendRequest(Buffer.from([FirmwareCommand.ApsDataConfirm, seqNumber, 0x00, 0x07, 0x00, 0x00, 0x00]));
+        this.sendRequest(Buffer.from([FirmwareCommand.ApsDataConfirm, seqNumber, 0x00, 0x07, 0x00, 0x00, 0x00]));
     }
 
-    private sendReadApsIndicationRequest(seqNumber: number): CommandResult {
+    private sendReadApsIndicationRequest(seqNumber: number) {
         logger.debug(`Request APS-DATA.indication seq: ${seqNumber}`, NS);
-        return this.sendRequest(Buffer.from([FirmwareCommand.ApsDataIndication, seqNumber, 0x00, 0x08, 0x00, 0x01, 0x00, 0x01]));
+        this.sendRequest(Buffer.from([FirmwareCommand.ApsDataIndication, seqNumber, 0x00, 0x08, 0x00, 0x01, 0x00, 0x01]));
     }
 
-    private sendEnqueueApsDataRequest(request: ApsDataRequest, seqNumber: number): CommandResult {
+    private sendEnqueueApsDataRequest(request: ApsDataRequest, seqNumber: number) {
         const payloadLength =
             12 + (request.destAddrMode === ApsAddressMode.Group ? 2 : request.destAddrMode === ApsAddressMode.Nwk ? 3 : 9) + request.asduLength;
         const frameLength = 7 + payloadLength;
@@ -1182,7 +1185,7 @@ class Driver extends events.EventEmitter {
 
         logger.debug(`Request APS-DATA.request: dest: 0x${dest} seq: ${seqNumber} requestId: ${request.requestId}`, NS);
 
-        return this.sendRequest(
+        this.sendRequest(
             Buffer.from([
                 FirmwareCommand.ApsDataRequest,
                 seqNumber,

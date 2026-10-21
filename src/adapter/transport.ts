@@ -1,8 +1,6 @@
 import events from "node:events";
 import {Socket} from "node:net";
-import {platform} from "node:os";
-import {autoDetect, type SetOptions} from "@serialport/bindings-cpp";
-import {type ModemBitsCallback, type OpenOptions, SerialPortStream} from "@serialport/stream";
+import {NativeSerialPort, type NativeSerialPortOptions} from "@koenkk/serialport-napi-rs";
 import {logger} from "../utils/logger";
 import type {TransportOptions} from "./tstype";
 import {isTcpPath, parseTcpPath} from "./utils";
@@ -16,16 +14,11 @@ const NS = "zh:adapter:transport";
 
 /** A raw serial or TCP connection shared by an adapter's protocol stack. */
 export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
-    private serialPort?: SerialPortStream;
+    private serialPort?: NativeSerialPort;
     private socket?: Socket;
     private opening = false;
     private closing = false;
     readonly options: TransportOptions;
-    /** Access to the lower level, arch-specific binding. Mainly for tests. */
-    serialPortBinding: OpenOptions["binding"] | undefined;
-
-    // TODO: WORKAROUND https://github.com/serialport/node-serialport/issues/3148
-    private node26SerialWorkaround: NodeJS.Timeout | undefined;
 
     constructor(options: TransportOptions) {
         super();
@@ -34,7 +27,7 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
     }
 
     get isOpen(): boolean {
-        return !this.opening && !this.closing && (this.serialPort?.isOpen ?? (this.socket !== undefined && !this.socket.closed));
+        return !this.opening && !this.closing && (!!this.serialPort || (this.socket !== undefined && !this.socket.closed));
     }
 
     get isOpening(): boolean {
@@ -53,7 +46,7 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
         return this.options.rtscts ?? false;
     }
 
-    get serialPortInstance(): SerialPortStream | undefined {
+    get serialPortInstance(): NativeSerialPort | undefined {
         return this.serialPort;
     }
 
@@ -96,16 +89,7 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
 
         try {
             if (serialPort) {
-                serialPort.removeAllListeners();
-                clearInterval(this.node26SerialWorkaround);
-
-                this.node26SerialWorkaround = undefined;
-
-                if (serialPort.isOpen) {
-                    await new Promise<void>((resolve, reject): void => {
-                        serialPort.close((err) => (err ? reject(err) : resolve()));
-                    });
-                }
+                await serialPort.close();
             } else if (socket) {
                 socket.removeAllListeners();
                 socket.destroy();
@@ -115,7 +99,7 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
         }
     }
 
-    public write(data: Buffer): boolean {
+    public async write(data: Buffer): Promise<void> {
         if (!this.isOpen) {
             throw new Error("Cannot write while transport is closed");
         }
@@ -123,28 +107,28 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
         // expensive and very verbose, enable locally only if necessary
         // logger.debug(() => `>>>> [TRANSPORT ${data.toString("hex")}]`, NS);
 
-        // biome-ignore lint/style/noNonNullAssertion: one always valid from top check
-        return (this.serialPort ?? this.socket)!.write(data);
+        if (this.serialPort) {
+            await this.serialPort.write(data);
+        } else {
+            // biome-ignore lint/style/noNonNullAssertion: one always valid from top check
+            this.socket!.write(data);
+        }
     }
 
-    public async set(options: SetOptions): Promise<void> {
-        if (!this.serialPort?.isOpen) {
-            throw new Error("Cannot set while serial transport is closed");
+    public async writeDataTerminalReady(level: boolean): Promise<void> {
+        if (!this.serialPort) {
+            throw new Error("Cannot write DTR while serial transport is closed");
         }
 
-        await new Promise<void>((resolve, reject): void => {
-            this.serialPort?.set(options, (err) => (err ? reject(err) : resolve()));
-        });
+        return await this.serialPort.writeDataTerminalReady(level);
     }
 
-    public async get(): Promise<Parameters<ModemBitsCallback>[1]> {
-        if (!this.serialPort?.isOpen) {
-            throw new Error("Cannot get while serial transport is closed");
+    public async writeRequestToSend(level: boolean): Promise<void> {
+        if (!this.serialPort) {
+            throw new Error("Cannot write RTS while serial transport is closed");
         }
 
-        return await new Promise((resolve, reject): void => {
-            this.serialPort?.get((err, options) => (err ? reject(err) : resolve(options)));
-        });
+        return await this.serialPort.writeRequestToSend(level);
     }
 
     /**
@@ -152,77 +136,30 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
      *       requires Z2M migration for no-break
      */
     private async openSerial(path: string, noFlowCtrl: boolean): Promise<void> {
-        const rtscts = this.options.rtscts ?? false;
-        const swFlow = !rtscts && !noFlowCtrl;
-
-        if (!this.serialPortBinding) {
-            this.serialPortBinding = autoDetect() as OpenOptions["binding"];
-        }
-
-        const openOptions: OpenOptions = {
-            path,
+        const openOptions: NativeSerialPortOptions = {
             baudRate: this.options.baudRate ?? 115200,
-            rtscts,
-            xon: swFlow,
-            xoff: swFlow,
             dataBits: 8,
             parity: "none",
             stopBits: 1,
-            autoOpen: false,
-            binding: this.serialPortBinding,
+            flowControl: this.options.rtscts ? "hardware" : noFlowCtrl ? "none" : "software",
         };
 
-        if (platform() === "win32") {
-            // this controls `DTR` on "open", whereas on Unix, it's on "close"
-            // https://github.com/serialport/bindings-cpp/blob/19820c39fbbedc1b5f09d6508b5ef1268df3d455/src/serialport_win.cpp#L123-L127
-            // https://github.com/serialport/bindings-cpp/blob/19820c39fbbedc1b5f09d6508b5ef1268df3d455/src/serialport_unix.cpp#L254-L256
-            openOptions.hupcl = false;
-        }
-
-        const serialPort = new SerialPortStream(openOptions);
-        this.serialPort = serialPort;
-
-        serialPort.on("data", (data: Buffer) => {
-            // expensive and very verbose, enable locally only if necessary
-            // logger.debug(() => `<<<< [TRANSPORT ${data.toString("hex")}]`, NS);
-            this.emit("data", data);
-        });
-        serialPort.once("close", (error) => this.onClose(serialPort, error));
-        serialPort.on("error", (error) => logger.error(`Serial port error: ${error}`, NS));
-
-        // TODO: WORKAROUND https://github.com/serialport/node-serialport/issues/3148
-        /* v8 ignore start */
-        {
-            const [nodeMajor = 0, nodeMinor = 0] = process.versions.node.split(".").map(Number);
-
-            if (nodeMajor > 26 || (nodeMajor === 26 && nodeMinor > 3)) {
-                this.node26SerialWorkaround = setInterval(() => undefined, 16).unref();
-            }
-        }
-        /* v8 ignore stop */
-
         try {
-            await new Promise<void>((resolve, reject): void => {
-                serialPort.open((err) => (err ? reject(err) : resolve()));
+            const serialPort = await NativeSerialPort.open(path, openOptions, (error, data) => {
+                if (error) {
+                    logger.error(`Serial port error: ${error}`, NS);
+                    this.onClose(serialPort, error);
+                } else {
+                    // expensive and very verbose, enable locally only if necessary
+                    // logger.debug(() => `<<<< [TRANSPORT ${data.toString("hex")}]`, NS);
+                    this.emit("data", data);
+                }
             });
+            this.serialPort = serialPort;
 
             logger.info("Serial port opened", NS);
         } catch (error) {
-            clearInterval(this.node26SerialWorkaround);
-
-            this.node26SerialWorkaround = undefined;
             this.serialPort = undefined;
-
-            serialPort.removeAllListeners();
-
-            // defensive but likely unreachable, can't test
-            /* v8 ignore start */
-            if (serialPort.isOpen) {
-                await new Promise<void>((resolve, reject): void => {
-                    serialPort.close((err) => (err ? reject(err) : resolve()));
-                });
-            }
-            /* v8 ignore stop */
 
             throw error;
         }
@@ -268,11 +205,8 @@ export class AdapterTransport extends events.EventEmitter<TransportEventMap> {
         }
     }
 
-    private onClose(port: SerialPortStream | Socket, error?: boolean | Error): void {
+    private onClose(port: NativeSerialPort | Socket, error?: boolean | Error): void {
         if (port === this.serialPort) {
-            clearInterval(this.node26SerialWorkaround);
-
-            this.node26SerialWorkaround = undefined;
             this.serialPort = undefined;
         } else if (port === this.socket) {
             this.socket = undefined;
