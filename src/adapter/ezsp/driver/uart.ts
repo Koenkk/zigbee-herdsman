@@ -124,7 +124,9 @@ export class SerialDriver extends EventEmitter {
 
         encoded.push(consts.FLAG);
 
-        this.transport.write(Buffer.from(encoded));
+        this.transport.write(Buffer.from(encoded)).catch((error) => {
+            logger.error(`Failed to write to transport ${error}`, NS);
+        });
     }
 
     async connect(): Promise<void> {

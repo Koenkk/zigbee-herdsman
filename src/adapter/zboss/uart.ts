@@ -294,7 +294,9 @@ export class ZBOSSUart extends EventEmitter {
 
     private writeBuffer(buffer: Buffer): void {
         logger.debug(`--> [${buffer.toString("hex")}]`, NS);
-        this.transport.write(buffer);
+        this.transport.write(buffer).catch((error) => {
+            logger.error(`Failed to write to transport ${error}`, NS);
+        });
     }
 
     private makePack(flags: number, data?: Buffer): Buffer {

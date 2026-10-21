@@ -126,7 +126,9 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
                     resultPromise = statusWaiter.promise;
                 }
 
-                this.transport.write(sendBuffer);
+                this.transport.write(sendBuffer).catch((error) => {
+                    logger.error(`Failed to write to transport ${error}`, NS);
+                });
 
                 // biome-ignore lint/nursery/noMisusedPromises: ignore
                 if (ziGateObject.command.waitStatus !== false && resultPromise) {
@@ -171,7 +173,9 @@ export default class ZiGate extends EventEmitter<ZiGateEventMap> {
 
             const statusWaiter = this.waitress.waitFor({rules: ruleStatus}, timeouts.default);
 
-            this.transport.write(sendBuffer);
+            this.transport.write(sendBuffer).catch((error) => {
+                logger.error(`Failed to write to transport ${error}`, NS);
+            });
 
             const statusResponse: ZiGateObject = await statusWaiter.start().promise;
 

@@ -1,4 +1,3 @@
-import {MockBinding, type MockPortBinding} from "@serialport/binding-mock";
 import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
 import {EzspStatus} from "../../../src/adapter/ember/enums";
 import {EzspBuffalo} from "../../../src/adapter/ember/ezsp/buffalo";

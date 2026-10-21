@@ -1,4 +1,3 @@
-import {MockBinding, type MockPortBinding} from "@serialport/binding-mock";
 import type {Mock, MockInstance} from "vitest";
 import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
 import {AdapterTransport} from "../../../src/adapter";

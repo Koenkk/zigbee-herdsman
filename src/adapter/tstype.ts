@@ -2,8 +2,8 @@ export type Adapter = "deconz" | "ember" | "zstack" | "zboss" | "zigate" | "ezsp
 export type DiscoverableUsbAdapter = "deconz" | "ember" | "zstack" | "zboss" | "zigate";
 
 export type UsbAdapterFingerprint = {
-    vendorId: string;
-    productId: string;
+    vendorId: number;
+    productId: number;
     manufacturer?: string;
     pathRegex: string;
     options?: Pick<TransportOptions, "baudRate" | "rtscts">;

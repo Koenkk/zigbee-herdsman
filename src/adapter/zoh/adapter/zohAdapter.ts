@@ -199,11 +199,14 @@ export class ZoHAdapter extends Adapter {
         /* v8 ignore start */
         if (this.stackConfig.tiSerialSkipBootloader && this.transport.isSerial) {
             logger.info("TI skip bootloader", NS);
-            await this.transport.set({dtr: false, rts: false});
+            await this.transport.writeDataTerminalReady(false);
+            await this.transport.writeRequestToSend(false);
             await wait(150);
-            await this.transport.set({dtr: false, rts: true});
+            await this.transport.writeDataTerminalReady(false);
+            await this.transport.writeRequestToSend(true);
             await wait(150);
-            await this.transport.set({dtr: false, rts: false});
+            await this.transport.writeDataTerminalReady(false);
+            await this.transport.writeRequestToSend(false);
             await wait(150);
         }
         /* v8 ignore stop */
