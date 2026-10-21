@@ -434,7 +434,9 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
     private flushOutput(): void {
         if (this.outputLength > 0) {
             // copy output buffer chunk before writing to prevent possible overwrite before actual write
-            this.transport.write(Buffer.from(this.outputBuffer.subarray(0, this.outputLength)));
+            this.transport.write(Buffer.from(this.outputBuffer.subarray(0, this.outputLength))).catch((error) => {
+                logger.error(`Failed to write to transport ${error}`, NS);
+            });
 
             this.outputLength = 0;
         }
