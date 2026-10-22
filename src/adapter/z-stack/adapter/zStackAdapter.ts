@@ -17,7 +17,7 @@ import {Constants as UnpiConstants} from "../unpi";
 import {Znp, type ZpiObject} from "../znp";
 import Definition from "../znp/definition";
 import {isMtCmdAreqZdo} from "../znp/utils";
-import {Endpoints} from "./endpoints";
+import {type EndpointDefinition, endpoints} from "./endpoints";
 import {ZnpAdapterManager} from "./manager";
 import {ZnpVersion} from "./tstype";
 
@@ -55,6 +55,7 @@ export class ZStackAdapter extends Adapter {
     };
     // @ts-expect-error initialized in `start`
     private queue: Queue;
+    private endpoints: readonly EndpointDefinition[];
     private supportsLED?: boolean;
     private interpanLock: boolean;
     private interpanEndpointRegistered: boolean;
@@ -70,6 +71,8 @@ export class ZStackAdapter extends Adapter {
         this.deviceAnnounceRouteDiscoveryDebouncers = new Map();
         this.interpanLock = false;
         this.interpanEndpointRegistered = false;
+        // Build once so endpoint registration and profile-based source endpoint lookup use the same list.
+        this.endpoints = endpoints(adapterOptions.additionalCoordinatorEndpoints ?? []);
         this.waitress = new Waitress(Adapter.zclWaitressValidator, Adapter.clusterWaitressTimeoutFormatter);
 
         this.znp.on("received", this.onZnpRecieved.bind(this));
@@ -114,6 +117,7 @@ export class ZStackAdapter extends Adapter {
             greenPowerGroup: ZSpec.GP_GROUP_ID,
             networkOptions: this.networkOptions,
             adapterOptions: this.adapterOptions,
+            endpoints: this.endpoints,
         });
 
         const startResult = this.adapterManager.start();
@@ -1272,7 +1276,7 @@ export class ZStackAdapter extends Adapter {
         let srcEndpoint = sourceEndpoint;
         // If sourceEndpoint is not provided, try to select the source endpoint based on the profileId.
         if (srcEndpoint === undefined && profileId !== undefined) {
-            srcEndpoint = Endpoints.find((e) => e.appprofid === profileId)?.endpoint;
+            srcEndpoint = this.endpoints.find((e) => e.appprofid === profileId)?.endpoint;
         }
         //If no profileId is provided, or if no corresponding endpoint exists, use endpoint 1.
         if (srcEndpoint === undefined) {
@@ -1280,7 +1284,7 @@ export class ZStackAdapter extends Adapter {
         }
 
         // Validate that the requested profileId can be satisfied by the adapter.
-        if (profileId !== undefined && Endpoints.find((e) => e.endpoint === srcEndpoint)?.appprofid !== profileId) {
+        if (profileId !== undefined && this.endpoints.find((e) => e.endpoint === srcEndpoint)?.appprofid !== profileId) {
             throw new Error(`Profile ID ${profileId} is not supported by this adapter.`);
         }
 

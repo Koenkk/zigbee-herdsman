@@ -15,7 +15,6 @@ import * as Utils from "../utils";
 import type {Znp} from "../znp";
 import {AdapterBackup} from "./adapter-backup";
 import {AdapterNvMemory} from "./adapter-nv-memory";
-import {Endpoints} from "./endpoints";
 import {ZnpVersion} from "./tstype";
 import type {ZStackAdapter} from "./zStackAdapter";
 
@@ -467,7 +466,7 @@ export class ZnpAdapterManager {
         if (Zdo.Buffalo.checkStatus<Zdo.ClusterId.ACTIVE_ENDPOINTS_RESPONSE>(response)) {
             const activeEndpoints = response[1].endpointList;
 
-            for (const endpoint of Endpoints) {
+            for (const endpoint of this.options.endpoints) {
                 if (activeEndpoints.includes(endpoint.endpoint)) {
                     logger.debug(`endpoint '${endpoint.endpoint}' already registered`, NS);
                 } else {
