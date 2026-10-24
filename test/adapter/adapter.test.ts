@@ -1,4 +1,7 @@
-import type {AvailablePort} from "@koenkk/serialport-napi-rs";
+// biome-ignore assist/source/organizeImports: mock
+import {mockAvailablePorts, scheduleSerialPortData} from "../mockSerialPort";
+
+// import type {AvailablePort} from "@koenkk/serialport-napi-rs";
 import type {BrowserConfig, Service} from "bonjour-service";
 import type {MockInstance} from "vitest";
 import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
@@ -34,16 +37,6 @@ const mockPlatform = vi.fn(() => "linux");
 
 vi.mock("node:os", () => ({
     platform: vi.fn(() => mockPlatform()),
-}));
-
-const {mockAvailablePorts} = vi.hoisted(() => {
-    const mockAvailablePorts = vi.fn((): AvailablePort[] => []);
-
-    return {mockAvailablePorts};
-});
-
-vi.mock("@koenkk/serialport-napi-rs", () => ({
-    availablePorts: mockAvailablePorts,
 }));
 
 const {mockBonjourResult, mockBonjourFind, mockBonjourFindOne, mockBonjourDestroy, mockBonjour} = vi.hoisted(() => {
@@ -1337,21 +1330,17 @@ describe("Adapter", () => {
     });
 
     it("emits disconnected on transport close", async () => {
-        MockBinding.createPort(EMBER_ZBDONGLE_E.portName, {record: false});
-
         const adapter = await Adapter.create(
             {panID: 0x1a62, channelList: [11]},
             {adapter: "ember", path: EMBER_ZBDONGLE_E.portName},
             "test.db.backup",
-            {
-                disableLED: false,
-            },
+            {disableLED: false},
         );
-        adapter.transport.serialPortBinding = MockBinding;
         const emitSpy = vi.spyOn(adapter, "emit");
 
         await adapter.transport.open();
-        adapter.transport.serialPortInstance?.close();
+        scheduleSerialPortData(new Error("closed"));
+        await adapter.transport.serialPortInstance?.write(Buffer.alloc(1));
         await flushPromises();
 
         expect(emitSpy).toHaveBeenCalledTimes(1);
@@ -1363,30 +1352,23 @@ describe("Adapter", () => {
             {panID: 0x1a62, channelList: [11]},
             {adapter: "ember", path: EMBER_ZBDONGLE_E.portName},
             "test.db.backup",
-            {
-                disableLED: false,
-            },
+            {disableLED: false},
         );
         const emitSpy = vi.spyOn(adapter, "emit");
 
-        adapter.transport.serialPortInstance?.close();
+        await adapter.transport.serialPortInstance?.close();
         await flushPromises();
 
         expect(emitSpy).toHaveBeenCalledTimes(0);
     });
 
     it("does not emit disconnected on manual close of transport", async () => {
-        MockBinding.createPort(EMBER_ZBDONGLE_E.portName, {record: false});
-
         const adapter = await Adapter.create(
             {panID: 0x1a62, channelList: [11]},
             {adapter: "ember", path: EMBER_ZBDONGLE_E.portName},
             "test.db.backup",
-            {
-                disableLED: false,
-            },
+            {disableLED: false},
         );
-        adapter.transport.serialPortBinding = MockBinding;
         const emitSpy = vi.spyOn(adapter, "emit");
 
         await adapter.transport.open();

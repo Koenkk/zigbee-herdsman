@@ -1,3 +1,6 @@
+// biome-ignore assist/source/organizeImports: mock
+import {emitSerialPortData, scheduleSerialPortData} from "../../mockSerialPort";
+
 import type {Mock, MockInstance} from "vitest";
 import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
 import {AdapterTransport} from "../../../src/adapter";
@@ -31,16 +34,12 @@ describe("ZNP", () => {
     });
 
     beforeEach(() => {
-        MockBinding.createPort(ADAPTER_PATH, {record: false});
-
         transport = new AdapterTransport({path: ADAPTER_PATH, baudRate: 100, rtscts: true});
-        transport.serialPortBinding = MockBinding;
         znp = new Znp(transport);
         requestSpy = vi.spyOn(znp, "request").mockImplementation(async () => undefined);
     });
 
     afterEach(() => {
-        MockBinding.reset();
         requestSpy.mockRestore();
     });
 
@@ -48,14 +47,13 @@ describe("ZNP", () => {
         requestSpy.mockImplementation(() => {
             throw new Error("failed");
         });
-        const transportSetSpy = vi
-            .spyOn(transport, "set")
-            .mockImplementationOnce(async () => {})
-            .mockImplementationOnce(async () => {})
-            .mockImplementationOnce(async () => {});
+        const writeDataTerminalReady = vi.spyOn(transport, "writeDataTerminalReady");
+        const writeRequestToSend = vi.spyOn(transport, "writeRequestToSend");
+
         await znp.open();
 
-        expect(transportSetSpy).toHaveBeenCalledTimes(3);
+        expect(writeDataTerminalReady).toHaveBeenCalledTimes(3);
+        expect(writeRequestToSend).toHaveBeenCalledTimes(3);
     });
 
     it("open and close", async () => {
@@ -72,7 +70,7 @@ describe("ZNP", () => {
         znp.on("received", received);
 
         await znp.open();
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(
+        await emitSerialPortData(
             new UnpiFrame(
                 UnpiConstants.Type.SRSP,
                 UnpiConstants.Subsystem.SYS,
@@ -98,7 +96,7 @@ describe("ZNP", () => {
         znp.on("received", received);
 
         await znp.open();
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(
+        await emitSerialPortData(
             new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x02, Buffer.from([0x01, 0x02, 0x03, 0x04])).toBuffer(),
         );
         await flushPromises();
@@ -107,17 +105,14 @@ describe("ZNP", () => {
     });
 
     it("znp request SREQ", async () => {
-        const portWriteSpy = vi.spyOn(transport, "write").mockImplementationOnce(() => {
-            (transport.serialPortInstance!.port as MockPortBinding).emitData(
-                new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x00, 0x02, 0x01, 0x02])).toBuffer(),
-            );
-
-            return false;
-        });
+        const portWriteSpy = vi.spyOn(transport, "write");
 
         await znp.open();
         requestSpy.mockRestore();
 
+        scheduleSerialPortData(
+            new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x00, 0x02, 0x01, 0x02])).toBuffer(),
+        );
         const result = await znp.requestWithReply(UnpiConstants.Subsystem.SYS, "osalNvRead", {id: 1, offset: 2});
 
         expect(portWriteSpy).toHaveBeenCalledTimes(1);
@@ -133,18 +128,13 @@ describe("ZNP", () => {
     });
 
     it("znp request SREQ failed", async () => {
-        vi.spyOn(transport, "write").mockImplementationOnce(() => {
-            (transport.serialPortInstance!.port as MockPortBinding).emitData(
-                new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x01, 0x02, 0x01, 0x02])).toBuffer(),
-            );
-
-            return false;
-        });
-
         await znp.open();
         requestSpy.mockRestore();
 
         expect(znp.waitress.waiters.size).toBe(0);
+        scheduleSerialPortData(
+            new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x01, 0x02, 0x01, 0x02])).toBuffer(),
+        );
 
         let error;
         try {
@@ -160,18 +150,13 @@ describe("ZNP", () => {
     });
 
     it("znp request SREQ failed should cancel waiter when provided", async () => {
-        vi.spyOn(transport, "write").mockImplementationOnce(() => {
-            (transport.serialPortInstance!.port as MockPortBinding).emitData(
-                new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x01, 0x02, 0x01, 0x02])).toBuffer(),
-            );
-
-            return false;
-        });
-
         await znp.open();
         requestSpy.mockRestore();
 
         expect(znp.waitress.waiters.size).toBe(0);
+        scheduleSerialPortData(
+            new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x01, 0x02, 0x01, 0x02])).toBuffer(),
+        );
         const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, "osalNvRead", undefined, undefined, undefined);
         expect(znp.waitress.waiters.size).toBe(1);
 
@@ -189,23 +174,20 @@ describe("ZNP", () => {
     });
 
     it("znp request SREQ with parsed in between", async () => {
-        const portWriteSpy = vi.spyOn(transport, "write").mockImplementationOnce(() => {
-            (transport.serialPortInstance!.port as MockPortBinding).emitData(
-                new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.AF, 0x00, Buffer.from([0x00])).toBuffer(),
-            );
-
-            (transport.serialPortInstance!.port as MockPortBinding).emitData(
-                new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x00, 0x02, 0x01, 0x02])).toBuffer(),
-            );
-
-            return false;
-        });
+        const portWriteSpy = vi.spyOn(transport, "write");
 
         await znp.open();
         requestSpy.mockRestore();
 
-        const result = await znp.request(UnpiConstants.Subsystem.SYS, "osalNvRead", {id: 1, offset: 2});
+        scheduleSerialPortData(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.AF, 0x00, Buffer.from([0x00])).toBuffer());
 
+        const p = znp.request(UnpiConstants.Subsystem.SYS, "osalNvRead", {id: 1, offset: 2});
+
+        await emitSerialPortData(
+            new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x00, 0x02, 0x01, 0x02])).toBuffer(),
+        );
+
+        const result = (await p)!;
         expect(portWriteSpy).toHaveBeenCalledTimes(1);
         expect(portWriteSpy).toHaveBeenCalledWith(
             new UnpiFrame(UnpiConstants.Type.SREQ, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x01, 0x00, 0x02])).toBuffer(),
@@ -219,23 +201,15 @@ describe("ZNP", () => {
     });
 
     it("znp request AREQ reset", async () => {
-        const portWriteSpy = vi.spyOn(transport, "write").mockImplementationOnce(() => {
-            (transport.serialPortInstance!.port as MockPortBinding).emitData(
-                new UnpiFrame(
-                    UnpiConstants.Type.AREQ,
-                    UnpiConstants.Subsystem.SYS,
-                    0x80,
-                    Buffer.from([0x01, 0x02, 0x03, 0x04, 0x05, 0x06]),
-                ).toBuffer(),
-            );
-
-            return false;
-        });
+        const portWriteSpy = vi.spyOn(transport, "write");
 
         await znp.open();
         requestSpy.mockRestore();
 
-        const result = await znp.request(UnpiConstants.Subsystem.SYS, "resetReq", {type: 1});
+        scheduleSerialPortData(
+            new UnpiFrame(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.SYS, 0x80, Buffer.from([0x01, 0x02, 0x03, 0x04, 0x05, 0x06])).toBuffer(),
+        );
+        const result = (await znp.request(UnpiConstants.Subsystem.SYS, "resetReq", {type: 1}))!;
 
         expect(portWriteSpy).toHaveBeenCalledTimes(1);
         expect(portWriteSpy).toHaveBeenCalledWith(
@@ -283,6 +257,7 @@ describe("ZNP", () => {
         let error;
 
         try {
+            // @ts-expect-error invalid on purpose
             await znp.request(999, "startConfirm", {status: 1});
         } catch (e) {
             error = e;
@@ -344,21 +319,15 @@ describe("ZNP", () => {
         await znp.open();
         requestSpy.mockRestore();
 
-        let result = znp.request(UnpiConstants.Subsystem.SYS, "osalNvRead", {id: 1, offset: 2});
+        const result = znp.request(UnpiConstants.Subsystem.SYS, "osalNvRead", {id: 1, offset: 2});
         vi.runOnlyPendingTimers();
 
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(
+        // XXX: awaiting this results in unhandled rejection
+        emitSerialPortData(
             new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x00, 0x02, 0x01, 0x02])).toBuffer(),
-        );
+        ).catch(() => {});
 
-        let error;
-        try {
-            result = await result;
-        } catch (e) {
-            error = e;
-        }
-
-        expect(error).toStrictEqual(new Error("SRSP - SYS - osalNvRead after 6000ms"));
+        await expect(result).rejects.toThrow(new Error("SRSP - SYS - osalNvRead after 6000ms"));
     });
 
     it("znp request, waitFor", async () => {
@@ -369,7 +338,7 @@ describe("ZNP", () => {
         // biome-ignore lint/nursery/noFloatingPromises: ignore
         znp.request(UnpiConstants.Subsystem.SYS, "osalNvRead", {id: 1, offset: 2});
 
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(
+        await emitSerialPortData(
             new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x00, 0x02, 0x01, 0x02])).toBuffer(),
         );
 
@@ -378,16 +347,11 @@ describe("ZNP", () => {
     });
 
     it("znp request ZDO", async () => {
-        const portWriteSpy = vi.spyOn(transport, "write").mockImplementationOnce(() => {
-            (transport.serialPortInstance!.port as MockPortBinding).emitData(
-                new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.ZDO, 2, Buffer.from([0x00])).toBuffer(),
-            );
-
-            return false;
-        });
+        const portWriteSpy = vi.spyOn(transport, "write");
 
         await znp.open();
 
+        scheduleSerialPortData(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.ZDO, 2, Buffer.from([0x00])).toBuffer());
         const zdoPayload = Buffer.from([2 & 0xff, (2 >> 8) & 0xff, ...Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, 2)]);
         const result = await znp.requestZdo(Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, zdoPayload, 1);
 
@@ -405,25 +369,16 @@ describe("ZNP", () => {
         // biome-ignore lint/nursery/noFloatingPromises: ignore
         znp.requestZdo(Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, zdoPayload, 1);
 
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(
-            new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.ZDO, 2, Buffer.from([0x00])).toBuffer(),
-        );
+        await emitSerialPortData(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.ZDO, 2, Buffer.from([0x00])).toBuffer());
 
         const object = await waiter.start().promise;
         expect(object.payload).toStrictEqual({status: 0x00});
     });
 
     it("znp request ZDO FAILURE", async () => {
-        vi.spyOn(transport, "write").mockImplementationOnce(() => {
-            (transport.serialPortInstance!.port as MockPortBinding).emitData(
-                new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.ZDO, 2, Buffer.from([0x01])).toBuffer(),
-            );
-
-            return false;
-        });
-
         await znp.open();
 
+        scheduleSerialPortData(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.ZDO, 2, Buffer.from([0x01])).toBuffer());
         const zdoPayload = Buffer.from([2 & 0xff, (2 >> 8) & 0xff, ...Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.NODE_DESCRIPTOR_REQUEST, 2)]);
         let error;
         try {
@@ -438,16 +393,9 @@ describe("ZNP", () => {
     });
 
     it("znp request ZDO failed should cancel waiter when provided", async () => {
-        vi.spyOn(transport, "write").mockImplementationOnce(() => {
-            (transport.serialPortInstance!.port as MockPortBinding).emitData(
-                new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.ZDO, 2, Buffer.from([0x01])).toBuffer(),
-            );
-
-            return false;
-        });
-
         await znp.open();
 
+        scheduleSerialPortData(new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.ZDO, 2, Buffer.from([0x01])).toBuffer());
         expect(znp.waitress.waiters.size).toBe(0);
         const waiter = znp.waitFor(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, "nodeDescRsp", undefined, undefined, undefined);
         expect(znp.waitress.waiters.size).toBe(1);
@@ -472,9 +420,7 @@ describe("ZNP", () => {
 
         const waiter = znp.waitFor(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.AF, "dataConfirm", undefined, 123, undefined);
 
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(
-            new UnpiFrame(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.AF, 128, Buffer.from([0, 1, 123])).toBuffer(),
-        );
+        await emitSerialPortData(new UnpiFrame(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.AF, 128, Buffer.from([0, 1, 123])).toBuffer());
 
         const object = await waiter.start().promise;
         expect(object.payload).toStrictEqual({status: 0, endpoint: 1, transid: 123});
@@ -486,7 +432,7 @@ describe("ZNP", () => {
 
         const waiter = znp.waitFor(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, "activeEpRsp", 0x1234, undefined, undefined);
 
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(
+        await emitSerialPortData(
             new UnpiFrame(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, 133, Buffer.from([0x34, 0x12, 0x00, 0x34, 0x12, 0x00])).toBuffer(),
         );
 
@@ -506,7 +452,7 @@ describe("ZNP", () => {
 
         const waiter = znp.waitFor(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, "nwkAddrRsp", "0x0807060504030201", undefined, undefined);
 
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(
+        await emitSerialPortData(
             new UnpiFrame(
                 UnpiConstants.Type.AREQ,
                 UnpiConstants.Subsystem.ZDO,
@@ -536,7 +482,7 @@ describe("ZNP", () => {
             .waitFor(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, "nwkAddrRsp", "0x0807060504030201", undefined, undefined)
             .start();
 
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(
+        await emitSerialPortData(
             new UnpiFrame(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, 128, Buffer.from([Zdo.Status.INVALID_INDEX])).toBuffer(),
         );
 
@@ -550,9 +496,7 @@ describe("ZNP", () => {
 
         const waiter = znp.waitFor(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, "stateChangeInd", undefined, undefined, 9);
 
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(
-            new UnpiFrame(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, 192, Buffer.from([9])).toBuffer(),
-        );
+        await emitSerialPortData(new UnpiFrame(UnpiConstants.Type.AREQ, UnpiConstants.Subsystem.ZDO, 192, Buffer.from([9])).toBuffer());
 
         const object = await waiter.start().promise;
         expect(object.payload).toStrictEqual({state: 9});
@@ -564,7 +508,7 @@ describe("ZNP", () => {
 
         const waiter = znp.waitFor(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, "osalNvRead", "abcd", undefined, undefined).start();
 
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(
+        await emitSerialPortData(
             new UnpiFrame(UnpiConstants.Type.SRSP, UnpiConstants.Subsystem.SYS, 0x08, Buffer.from([0x00, 0x02, 0x01, 0x02])).toBuffer(),
         );
 
@@ -930,7 +874,7 @@ describe("ZNP", () => {
 
         znp.on("received", received);
         await znp.open();
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(buffer);
+        await emitSerialPortData(buffer);
         await flushPromises();
         expect(received).toHaveBeenCalledTimes(1);
 
@@ -950,7 +894,7 @@ describe("ZNP", () => {
 
         znp.on("received", received);
         await znp.open();
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(buffer);
+        await emitSerialPortData(buffer);
         await flushPromises();
 
         expect(received).toHaveBeenCalledTimes(2);
@@ -972,7 +916,7 @@ describe("ZNP", () => {
 
         znp.on("received", received);
         await znp.open();
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(buffer);
+        await emitSerialPortData(buffer);
         await flushPromises();
 
         expect(received).toHaveBeenCalledTimes(0);
@@ -984,14 +928,14 @@ describe("ZNP", () => {
 
         znp.on("received", received);
         await znp.open();
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(buffer);
+        await emitSerialPortData(buffer);
         await flushPromises();
 
         expect(received).toHaveBeenCalledTimes(0);
 
         buffer = Buffer.from([0x55, 0x3e]);
 
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(buffer);
+        await emitSerialPortData(buffer);
         await flushPromises();
 
         expect(received).toHaveBeenCalledTimes(1);
@@ -1010,14 +954,14 @@ describe("ZNP", () => {
 
         znp.on("received", received);
         await znp.open();
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(buffer);
+        await emitSerialPortData(buffer);
         await flushPromises();
 
         expect(received).toHaveBeenCalledTimes(0);
 
         buffer = Buffer.from([0x3e]);
 
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(buffer);
+        await emitSerialPortData(buffer);
         await flushPromises();
 
         expect(received).toHaveBeenCalledTimes(1);
@@ -1040,7 +984,7 @@ describe("ZNP", () => {
 
         znp.on("received", received);
         await znp.open();
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(buffer);
+        await emitSerialPortData(buffer);
         await flushPromises();
 
         const obj1 = received.mock.calls[0][0];
@@ -1123,10 +1067,10 @@ describe("ZNP", () => {
 
         znp.on("received", received);
         await znp.open();
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(buffer1);
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(buffer2);
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(buffer3);
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(buffer4);
+        await emitSerialPortData(buffer1);
+        await emitSerialPortData(buffer2);
+        await emitSerialPortData(buffer3);
+        await emitSerialPortData(buffer4);
         await flushPromises();
 
         expect(received).toHaveBeenCalledTimes(1);

@@ -1,5 +1,9 @@
+// biome-ignore assist/source/organizeImports: mock
+import {emitSerialPortData, mockNativeSerialPortOpen, scheduleSerialPortData} from "../mockSerialPort";
+
 import {afterEach, beforeEach, describe, expect, test, vi} from "vitest";
 import {AdapterTransport} from "../../src/adapter/transport";
+import {flushPromises} from "../testUtils";
 
 type Listener = (...args: unknown[]) => void;
 
@@ -124,14 +128,11 @@ describe("Adapter transport", () => {
         let transport: AdapterTransport;
 
         beforeEach(() => {
-            MockBinding.createPort(ADAPTER_PATH, {record: false});
-
             transport = new AdapterTransport({path: ADAPTER_PATH, baudRate: 100, rtscts: true});
-            transport.serialPortBinding = MockBinding;
         });
 
-        afterEach(() => {
-            MockBinding.reset();
+        afterEach(async () => {
+            await transport.close();
         });
 
         test("opens and closes", async () => {
@@ -161,7 +162,6 @@ describe("Adapter transport", () => {
 
         test("opens with no flow", async () => {
             transport = new AdapterTransport({path: ADAPTER_PATH, baudRate: 100});
-            transport.serialPortBinding = MockBinding;
             const transportOpenSpy = vi.spyOn(transport, "open");
             const transportCloseSpy = vi.spyOn(transport, "close");
 
@@ -231,7 +231,7 @@ describe("Adapter transport", () => {
 
             const emitSpy = vi.spyOn(transport, "emit");
 
-            transport.serialPortInstance!.emit("data", Buffer.from([0x01]));
+            await emitSerialPortData(Buffer.from([0x01]));
 
             expect(emitSpy).toHaveBeenCalledTimes(1);
             expect(emitSpy).toHaveBeenNthCalledWith(1, "data", Buffer.from([0x01]));
@@ -240,49 +240,47 @@ describe("Adapter transport", () => {
         test("writes DTR", async () => {
             await transport.open();
 
-            const setSpy = vi.spyOn(transport.serialPortInstance!, "writeDataTerminalReady");
+            const writeDataTerminalReadySpy = vi.spyOn(transport.serialPortInstance!, "writeDataTerminalReady");
 
             await transport.writeDataTerminalReady(true);
 
-            expect(setSpy).toHaveBeenCalledTimes(1);
-            expect(setSpy).toHaveBeenNthCalledWith(1, true, expect.any(Function));
+            expect(writeDataTerminalReadySpy).toHaveBeenCalledTimes(1);
+            expect(writeDataTerminalReadySpy).toHaveBeenNthCalledWith(1, true);
         });
 
         test("writes RTS", async () => {
             await transport.open();
 
-            const setSpy = vi.spyOn(transport.serialPortInstance!, "writeRequestToSend");
+            const writeRequestToSend = vi.spyOn(transport.serialPortInstance!, "writeRequestToSend");
 
             await transport.writeRequestToSend(true);
 
-            expect(setSpy).toHaveBeenCalledTimes(1);
-            expect(setSpy).toHaveBeenNthCalledWith(1, true, expect.any(Function));
+            expect(writeRequestToSend).toHaveBeenCalledTimes(1);
+            expect(writeRequestToSend).toHaveBeenNthCalledWith(1, true);
         });
 
         test("port closes in background", async () => {
             await transport.open();
 
             const emitSpy = vi.spyOn(transport, "emit");
-            const serialEmitSpy = vi.spyOn(transport.serialPortInstance!, "emit");
 
-            transport.serialPortInstance!.emit("close");
-
-            await new Promise((resolve) => setImmediate(resolve));
+            scheduleSerialPortData(new Error("closed"));
+            await transport.serialPortInstance!.write(Buffer.alloc(1));
+            await flushPromises();
 
             expect(emitSpy).toHaveBeenCalledTimes(1);
-            expect(emitSpy).toHaveBeenNthCalledWith(1, "close", undefined);
-            expect(serialEmitSpy).toHaveBeenCalledTimes(1);
-            expect(serialEmitSpy).toHaveBeenNthCalledWith(1, "close");
+            expect(emitSpy).toHaveBeenNthCalledWith(1, "close", new Error("closed"));
             expect(transport.serialPortInstance).toStrictEqual(undefined);
         });
 
         test("throws when unable to open", async () => {
-            const openSpy = vi.spyOn(MockBinding, "open").mockRejectedValueOnce(new Error("failed to open"));
+            console.log(mockNativeSerialPortOpen.mock.calls);
+            mockNativeSerialPortOpen.mockRejectedValueOnce(new Error("failed to open"));
             const p = transport.open();
 
             await expect(p).rejects.toThrow("failed to open");
 
-            expect(openSpy).toHaveBeenCalledTimes(1);
+            expect(mockNativeSerialPortOpen).toHaveBeenCalledTimes(1);
             expect(transport.serialPortInstance).toStrictEqual(undefined);
             expect(transport.isOpen).toStrictEqual(false);
             expect(transport.isOpening).toStrictEqual(false);
@@ -300,6 +298,23 @@ describe("Adapter transport", () => {
 
             expect(closeSpy).toHaveBeenCalledTimes(1);
             expect(transport.serialPortInstance).toStrictEqual(undefined);
+            expect(transport.isOpen).toStrictEqual(false);
+            expect(transport.isOpening).toStrictEqual(false);
+            expect(transport.isClosing).toStrictEqual(false);
+        });
+
+        test("throws when unable to write", async () => {
+            await transport.open();
+
+            const setSpy = vi.spyOn(transport.serialPortInstance!, "write").mockImplementationOnce((_level) => {
+                throw new Error("failed to write");
+            });
+
+            await expect(transport.write(Buffer.alloc(1))).rejects.toThrow(new Error("failed to write"));
+
+            await transport.close();
+
+            expect(setSpy).toHaveBeenCalledTimes(1);
             expect(transport.isOpen).toStrictEqual(false);
             expect(transport.isOpening).toStrictEqual(false);
             expect(transport.isClosing).toStrictEqual(false);
@@ -436,8 +451,7 @@ describe("Adapter transport", () => {
             const socketEmitSpy = vi.spyOn(transport.socketInstance!, "emit");
 
             transport.socketInstance!.emit("close");
-
-            await new Promise((resolve) => setImmediate(resolve));
+            await flushPromises();
 
             expect(emitSpy).toHaveBeenCalledTimes(1);
             expect(emitSpy).toHaveBeenNthCalledWith(1, "close", undefined);
