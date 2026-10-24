@@ -1,3 +1,6 @@
+// biome-ignore assist/source/organizeImports: mock
+import {currentMockPort, emitSerialPortData} from "../../mockSerialPort";
+
 import type {MockInstance} from "vitest";
 import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
 import {EzspStatus} from "../../../src/adapter/ember/enums";
@@ -5,7 +8,6 @@ import {Ezsp} from "../../../src/adapter/ember/ezsp/ezsp";
 import {AdapterTransport} from "../../../src/adapter/transport";
 import {
     ASH_ACK_FIRST_BYTES,
-    adapterSONOFFDongleE,
     INCOMING_MESSAGE_HANDLER_FN2_ASH_RAW,
     MESSAGE_SENT_HANDLER_FN0_ASH_RAW,
     MESSAGE_SENT_HANDLER_FN1_ASH_RAW,
@@ -22,14 +24,6 @@ import {
     SET_POLICY_REPLY_FN1_ASH_RAW,
 } from "./consts";
 
-const emitFromSerial = async (transport: AdapterTransport, data: Buffer, skipAdvanceTimers = false): Promise<void> => {
-    (transport.serialPortInstance!.port as MockPortBinding).emitData(Buffer.from(data));
-
-    if (!skipAdvanceTimers) {
-        await vi.advanceTimersByTimeAsync(1000);
-    }
-};
-
 const advanceTime100ms = async (times: number): Promise<void> => {
     for (let i = 0; i < times; i++) {
         await vi.advanceTimersByTimeAsync(100);
@@ -41,7 +35,6 @@ const advanceTimeToRSTACK = async (): Promise<void> => {
     await advanceTime100ms(10);
 };
 
-const POST_RSTACK_SERIAL_BYTES = Buffer.from([...SEND_RST_BYTES, ...ASH_ACK_FIRST_BYTES]);
 const ADAPTER_PATH = "/dev/ttyACM0";
 
 describe("Ember Ezsp Layer", () => {
@@ -56,25 +49,26 @@ describe("Ember Ezsp Layer", () => {
 
     beforeEach(() => {
         transport = new AdapterTransport({path: ADAPTER_PATH, baudRate: 100, rtscts: true});
-        transport.serialPortBinding = MockBinding;
         ezsp = new Ezsp(transport);
-        MockBinding.createPort(ADAPTER_PATH, {record: true, ...adapterSONOFFDongleE});
         vi.useFakeTimers();
     });
 
     afterEach(async () => {
         vi.useRealTimers();
         await ezsp.stop();
-        MockBinding.reset();
     });
 
     it("Starts ASH layer normally", async () => {
         const startResult = ezsp.start();
 
         await advanceTimeToRSTACK();
-        await emitFromSerial(transport, Buffer.from(RECD_RSTACK_BYTES));
+        await emitSerialPortData(Buffer.from(RECD_RSTACK_BYTES));
+        await vi.advanceTimersByTimeAsync(1000);
         await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS);
-        expect((transport.serialPortInstance!.port as MockPortBinding).recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
+
+        const port = currentMockPort();
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(1, Buffer.from(SEND_RST_BYTES));
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(2, Buffer.from(ASH_ACK_FIRST_BYTES));
         expect(ezsp.checkConnection()).toBeTruthy();
     });
 
@@ -85,11 +79,15 @@ describe("Ember Ezsp Layer", () => {
         const startResult = ezsp.start();
 
         await advanceTime100ms(2);
-        await emitFromSerial(transport, RCED_DATA_WITH_CRC_ERROR, true);
+        await emitSerialPortData(RCED_DATA_WITH_CRC_ERROR);
         await advanceTimeToRSTACK();
-        await emitFromSerial(transport, Buffer.from(RECD_RSTACK_BYTES));
+        await emitSerialPortData(Buffer.from(RECD_RSTACK_BYTES));
+        await vi.advanceTimersByTimeAsync(1000);
         await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS);
-        expect((transport.serialPortInstance!.port as MockPortBinding).recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
+
+        const port = currentMockPort();
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(1, Buffer.from(SEND_RST_BYTES));
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(2, Buffer.from(ASH_ACK_FIRST_BYTES));
         expect(ezsp.checkConnection()).toBeTruthy();
         expect(ezsp.ash.counters.rxCrcErrors).toStrictEqual(1);
         expect(ashEmitSpy).not.toHaveBeenCalled();
@@ -100,11 +98,14 @@ describe("Ember Ezsp Layer", () => {
         const startResult = ezsp.start();
 
         await advanceTime100ms(2);
-        await emitFromSerial(transport, Buffer.from(RECD_ERROR_ACK_TIMEOUT_BYTES), true);
+        await emitSerialPortData(Buffer.from(RECD_ERROR_ACK_TIMEOUT_BYTES));
         await advanceTimeToRSTACK();
-        await emitFromSerial(transport, Buffer.from(RECD_RSTACK_BYTES));
+        await emitSerialPortData(Buffer.from(RECD_RSTACK_BYTES));
+        await vi.advanceTimersByTimeAsync(1000);
         await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS);
-        expect((transport.serialPortInstance!.port as MockPortBinding).recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
+        const port = currentMockPort();
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(1, Buffer.from(SEND_RST_BYTES));
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(2, Buffer.from(ASH_ACK_FIRST_BYTES));
         expect(ezsp.checkConnection()).toBeTruthy();
     });
 
@@ -112,11 +113,14 @@ describe("Ember Ezsp Layer", () => {
         const startResult = ezsp.start();
 
         await advanceTime100ms(2);
-        await emitFromSerial(transport, Buffer.from(RCED_ERROR_WATCHDOG_BYTES), true);
+        await emitSerialPortData(Buffer.from(RCED_ERROR_WATCHDOG_BYTES));
         await advanceTimeToRSTACK();
-        await emitFromSerial(transport, Buffer.from(RECD_RSTACK_BYTES));
+        await emitSerialPortData(Buffer.from(RECD_RSTACK_BYTES));
+        await vi.advanceTimersByTimeAsync(1000);
         await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS);
-        expect((transport.serialPortInstance!.port as MockPortBinding).recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
+        const port = currentMockPort();
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(1, Buffer.from(SEND_RST_BYTES));
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(2, Buffer.from(ASH_ACK_FIRST_BYTES));
         expect(ezsp.checkConnection()).toBeTruthy();
     });
 
@@ -135,21 +139,30 @@ describe("Ember Ezsp Layer", () => {
                 const startResult = ezsp.start();
 
                 await advanceTimeToRSTACK();
-                await emitFromSerial(transport, Buffer.from(RECD_RSTACK_BYTES));
+                await emitSerialPortData(Buffer.from(RECD_RSTACK_BYTES));
+                await vi.advanceTimersByTimeAsync(1000);
                 return await Promise.resolve(startResult);
             };
         });
         const startResult = ezsp.start();
 
         await advanceTimeToRSTACK();
-        await emitFromSerial(transport, Buffer.from(RECD_RSTACK_BYTES));
-        expect((transport.serialPortInstance!.port as MockPortBinding).recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
-        await emitFromSerial(transport, Buffer.from(RECD_RSTACK_BYTES));
-        await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS); // dup is received after this returns
+        await emitSerialPortData(Buffer.from(RECD_RSTACK_BYTES));
+        await vi.advanceTimersByTimeAsync(1000);
+
+        const port = currentMockPort();
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(1, Buffer.from(SEND_RST_BYTES));
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(2, Buffer.from(ASH_ACK_FIRST_BYTES));
+        await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS);
+        expect(ezsp.checkConnection()).toBeTruthy();
+
+        await emitSerialPortData(Buffer.from(RECD_RSTACK_BYTES)); // dup is received
+        await vi.advanceTimersByTimeAsync(1000);
         expect(ezsp.checkConnection()).toBeFalsy();
         expect(restart).toBeDefined();
         await expect(restart?.()).resolves.toStrictEqual(EzspStatus.SUCCESS);
-        expect((transport.serialPortInstance!.port as MockPortBinding).recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(1, Buffer.from(SEND_RST_BYTES));
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(2, Buffer.from(ASH_ACK_FIRST_BYTES));
         expect(ashEmitSpy).toHaveBeenCalledWith("fatalError", EzspStatus.HOST_FATAL_ERROR);
         expect(onAshFatalErrorSpy).toHaveBeenCalledWith(EzspStatus.HOST_FATAL_ERROR);
         expect(ezsp.checkConnection()).toBeTruthy();
@@ -171,23 +184,33 @@ describe("Ember Ezsp Layer", () => {
                 const startResult = ezsp.start();
 
                 await advanceTimeToRSTACK();
-                await emitFromSerial(transport, Buffer.from(RECD_RSTACK_BYTES));
+                await emitSerialPortData(Buffer.from(RECD_RSTACK_BYTES));
+                await vi.advanceTimersByTimeAsync(1000);
                 return await Promise.resolve(startResult);
             };
         });
         const startResult = ezsp.start();
 
         await advanceTime100ms(2);
-        await emitFromSerial(transport, Buffer.from(RCED_ERROR_WATCHDOG_BYTES), true);
+        await emitSerialPortData(Buffer.from(RCED_ERROR_WATCHDOG_BYTES));
         await advanceTimeToRSTACK();
-        await emitFromSerial(transport, Buffer.from(RECD_RSTACK_BYTES));
-        expect((transport.serialPortInstance!.port as MockPortBinding).recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
-        await emitFromSerial(transport, Buffer.from(RECD_RSTACK_BYTES));
-        await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS); // dup is received after this returns
+        await emitSerialPortData(Buffer.from(RECD_RSTACK_BYTES));
+        await vi.advanceTimersByTimeAsync(1000);
+
+        const port = currentMockPort();
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(1, Buffer.from(SEND_RST_BYTES));
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(2, Buffer.from(ASH_ACK_FIRST_BYTES));
+
+        await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS);
+        expect(ezsp.checkConnection()).toBeTruthy();
+
+        await emitSerialPortData(Buffer.from(RECD_RSTACK_BYTES)); // dup is received
+        await vi.advanceTimersByTimeAsync(1000);
         expect(ezsp.checkConnection()).toBeFalsy();
         expect(restart).toBeDefined();
         await expect(restart?.()).resolves.toStrictEqual(EzspStatus.SUCCESS);
-        expect((transport.serialPortInstance!.port as MockPortBinding).recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(1, Buffer.from(SEND_RST_BYTES));
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(2, Buffer.from(ASH_ACK_FIRST_BYTES));
         expect(ashEmitSpy).toHaveBeenCalledWith("fatalError", EzspStatus.HOST_FATAL_ERROR);
         expect(onAshFatalErrorSpy).toHaveBeenCalledWith(EzspStatus.HOST_FATAL_ERROR);
         expect(ezsp.checkConnection()).toBeTruthy();
@@ -208,7 +231,8 @@ describe("Ember Ezsp Layer", () => {
                 const startResult = ezsp.start();
 
                 await advanceTimeToRSTACK();
-                await emitFromSerial(transport, Buffer.from(RECD_RSTACK_BYTES));
+                await emitSerialPortData(Buffer.from(RECD_RSTACK_BYTES));
+                await vi.advanceTimersByTimeAsync(1000);
                 return await Promise.resolve(startResult);
             };
             // @ts-expect-error private
@@ -217,29 +241,33 @@ describe("Ember Ezsp Layer", () => {
         const startResult = ezsp.start();
 
         await advanceTimeToRSTACK();
-        await emitFromSerial(transport, Buffer.from(RECD_RSTACK_BYTES));
+        await emitSerialPortData(Buffer.from(RECD_RSTACK_BYTES));
+        await vi.advanceTimersByTimeAsync(1000);
         await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS);
-        expect((transport.serialPortInstance!.port as MockPortBinding).recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
+        const port = currentMockPort();
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(1, Buffer.from(SEND_RST_BYTES));
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(2, Buffer.from(ASH_ACK_FIRST_BYTES));
         expect(ezsp.checkConnection()).toBeTruthy();
         // started clean
 
         const version = ezsp.ezspVersion(13);
 
         await vi.advanceTimersByTimeAsync(1000);
-        await emitFromSerial(transport, RCED_DATA_VERSION);
+        await emitSerialPortData(RCED_DATA_VERSION);
         await vi.advanceTimersByTimeAsync(1000);
         await expect(version).resolves.toStrictEqual(RCED_DATA_VERSION_RES);
-        expect((transport.serialPortInstance!.port as MockPortBinding).recording).toStrictEqual(
-            Buffer.from([...POST_RSTACK_SERIAL_BYTES, ...SEND_DATA_VERSION, ...SEND_ACK_FIRST_BYTES]),
-        );
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(3, Buffer.from(SEND_DATA_VERSION));
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(4, Buffer.from(SEND_ACK_FIRST_BYTES));
 
         await vi.advanceTimersByTimeAsync(10000); // any time after startup sequence
 
-        await emitFromSerial(transport, Buffer.from(RECD_ERROR_ACK_TIMEOUT_BYTES));
+        await emitSerialPortData(Buffer.from(RECD_ERROR_ACK_TIMEOUT_BYTES));
+        await vi.advanceTimersByTimeAsync(1000);
         expect(ezsp.checkConnection()).toBeFalsy();
         expect(restart).toBeDefined();
         await expect(restart?.()).resolves.toStrictEqual(EzspStatus.SUCCESS);
-        expect((transport.serialPortInstance!.port as MockPortBinding).recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(1, Buffer.from(SEND_RST_BYTES));
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(2, Buffer.from(ASH_ACK_FIRST_BYTES));
         expect(onAshFatalErrorSpy).toHaveBeenCalledWith(EzspStatus.ASH_NCP_FATAL_ERROR);
         expect(emitSpy).toHaveBeenCalledWith("ncpNeedsResetAndInit", EzspStatus.ASH_NCP_FATAL_ERROR);
         expect(ezsp.checkConnection()).toBeTruthy();
@@ -249,9 +277,12 @@ describe("Ember Ezsp Layer", () => {
         const startResult = ezsp.start();
 
         await advanceTimeToRSTACK();
-        await emitFromSerial(transport, Buffer.from(RECD_RSTACK_BYTES));
+        await emitSerialPortData(Buffer.from(RECD_RSTACK_BYTES));
+        await vi.advanceTimersByTimeAsync(1000);
         await expect(startResult).resolves.toStrictEqual(EzspStatus.SUCCESS);
-        expect((transport.serialPortInstance!.port as MockPortBinding).recording).toStrictEqual(POST_RSTACK_SERIAL_BYTES);
+        const port = currentMockPort();
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(1, Buffer.from(SEND_RST_BYTES));
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(2, Buffer.from(ASH_ACK_FIRST_BYTES));
         expect(ezsp.checkConnection()).toBeTruthy();
         // started clean
 
@@ -270,7 +301,8 @@ describe("Ember Ezsp Layer", () => {
             const startResult = ezsp.start();
 
             await advanceTimeToRSTACK();
-            await emitFromSerial(transport, Buffer.from(RECD_RSTACK_BYTES));
+            await emitSerialPortData(Buffer.from(RECD_RSTACK_BYTES));
+            await vi.advanceTimersByTimeAsync(1000);
             await startResult;
             expect(ezsp.checkConnection()).toBeTruthy();
 
@@ -284,7 +316,7 @@ describe("Ember Ezsp Layer", () => {
             // @ts-expect-error private
             ezsp.responseWaiter = {timer: setTimeout(() => {}, 15000), resolve: mockResponseWaiterResolve};
 
-            await emitFromSerial(transport, Buffer.from(SEND_UNICAST_REPLY_FN0_ASH_RAW, "hex"));
+            await emitSerialPortData(Buffer.from(SEND_UNICAST_REPLY_FN0_ASH_RAW, "hex"));
             await vi.advanceTimersByTimeAsync(1000);
 
             expect(callbackDispatchSpy).toHaveBeenCalledTimes(0);
@@ -293,7 +325,7 @@ describe("Ember Ezsp Layer", () => {
             expect(ezsp.frameToString).toStrictEqual(`[FRAME: ID=52:"SEND_UNICAST" Seq=39 Len=10]`);
             expect(ashSendExecSpy).toHaveBeenCalledTimes(1);
 
-            await emitFromSerial(transport, Buffer.from(MESSAGE_SENT_HANDLER_FN1_ASH_RAW, "hex"));
+            await emitSerialPortData(Buffer.from(MESSAGE_SENT_HANDLER_FN1_ASH_RAW, "hex"));
             await vi.advanceTimersByTimeAsync(1000);
 
             expect(callbackDispatchSpy).toHaveBeenCalledTimes(1);
@@ -302,7 +334,7 @@ describe("Ember Ezsp Layer", () => {
             expect(ezsp.frameToString).toStrictEqual(`[FRAME: ID=52:"SEND_UNICAST" Seq=39 Len=10]`);
             expect(ashSendExecSpy).toHaveBeenCalledTimes(2);
 
-            await emitFromSerial(transport, Buffer.from(INCOMING_MESSAGE_HANDLER_FN2_ASH_RAW, "hex"));
+            await emitSerialPortData(Buffer.from(INCOMING_MESSAGE_HANDLER_FN2_ASH_RAW, "hex"));
             await vi.advanceTimersByTimeAsync(1000);
 
             expect(callbackDispatchSpy).toHaveBeenCalledTimes(2);
@@ -316,7 +348,7 @@ describe("Ember Ezsp Layer", () => {
             // @ts-expect-error private
             ezsp.responseWaiter = {timer: setTimeout(() => {}, 15000), resolve: mockResponseWaiterResolve};
 
-            await emitFromSerial(transport, Buffer.from(MESSAGE_SENT_HANDLER_FN0_ASH_RAW, "hex"));
+            await emitSerialPortData(Buffer.from(MESSAGE_SENT_HANDLER_FN0_ASH_RAW, "hex"));
             await vi.advanceTimersByTimeAsync(1000);
 
             expect(callbackDispatchSpy).toHaveBeenCalledTimes(1);
@@ -325,7 +357,7 @@ describe("Ember Ezsp Layer", () => {
             expect(ezsp.frameToString).toStrictEqual(`[FRAME: ID=0:"VERSION" Seq=0 Len=0]`);
             expect(ashSendExecSpy).toHaveBeenCalledTimes(1);
 
-            await emitFromSerial(transport, Buffer.from(SET_POLICY_REPLY_FN1_ASH_RAW, "hex"));
+            await emitSerialPortData(Buffer.from(SET_POLICY_REPLY_FN1_ASH_RAW, "hex"));
             await vi.advanceTimersByTimeAsync(1000);
 
             expect(callbackDispatchSpy).toHaveBeenCalledTimes(1);
@@ -342,7 +374,7 @@ describe("Ember Ezsp Layer", () => {
             // @ts-expect-error private
             ezsp.responseWaiter = {timer: setTimeout(() => {}, 15000), resolve: mockResponseWaiterResolve};
 
-            await emitFromSerial(transport, Buffer.from(SEND_UNICAST_REPLY_FN0_ASH_RAW, "hex"));
+            await emitSerialPortData(Buffer.from(SEND_UNICAST_REPLY_FN0_ASH_RAW, "hex"));
             await vi.advanceTimersByTimeAsync(1000);
 
             expect(callbackDispatchSpy).toHaveBeenCalledTimes(0);
@@ -355,7 +387,7 @@ describe("Ember Ezsp Layer", () => {
         it("Parses invalid incoming callback frame", async () => {
             vi.spyOn(ezsp, "validateReceivedFrame").mockReturnValueOnce(EzspStatus.ERROR_WRONG_DIRECTION);
 
-            await emitFromSerial(transport, Buffer.from(MESSAGE_SENT_HANDLER_FN0_ASH_RAW, "hex"));
+            await emitSerialPortData(Buffer.from(MESSAGE_SENT_HANDLER_FN0_ASH_RAW, "hex"));
             await vi.advanceTimersByTimeAsync(1000);
 
             expect(callbackDispatchSpy).toHaveBeenCalledTimes(0);
