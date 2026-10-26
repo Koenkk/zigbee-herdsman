@@ -5766,6 +5766,33 @@ describe("Controller", () => {
         );
     });
 
+    it("Adds endpoint to group when Add Group response reports duplicate", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+        const group = controller.createGroup(2);
+
+        mocksendZclFrameToEndpoint.mockImplementationOnce((_ieeeAddr, _networkAddress, _endpoint, frame: Zcl.Frame) => {
+            const responseFrame = Zcl.Frame.create(
+                Zcl.FrameType.SPECIFIC,
+                Zcl.Direction.SERVER_TO_CLIENT,
+                true,
+                undefined,
+                frame.header.transactionSequenceNumber,
+                "addRsp",
+                frame.cluster.ID,
+                {status: Zcl.Status.DUPLICATE_EXISTS, groupid: group.groupID},
+                {},
+            );
+            return {clusterID: responseFrame.cluster.ID, header: responseFrame.header, data: responseFrame.toBuffer()};
+        });
+
+        await endpoint.addToGroup(group);
+
+        expect(group.members).toContain(endpoint);
+        expect(mockLogger.info).toHaveBeenCalledWith("Group '2' already exists on endpoint '0x129/1'", "zh:controller:endpoint");
+    });
+
     it("Does not add endpoint to group when Add Group response reports failure", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
