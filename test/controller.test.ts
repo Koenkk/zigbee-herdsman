@@ -9990,6 +9990,7 @@ describe("Controller", () => {
         expect(mockAdapterSendZdo.mock.calls.length - callsBefore).toStrictEqual(2);
         const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.LQI_TABLE_REQUEST, 2);
         expect(mockAdapterSendZdo).toHaveBeenLastCalledWith("0x140", 140, Zdo.ClusterId.LQI_TABLE_REQUEST, zdoPayload, false);
+        expect(mockLogger.warning).toHaveBeenCalledWith("LQI table of '0x140' ended early, got 2 of 4 announced entries", "zh:controller:device");
     });
 
     it("Device routing table stops on an empty page instead of looping forever", async () => {
@@ -10015,6 +10016,7 @@ describe("Controller", () => {
         const result = await device.routingTable();
         expect(result).toStrictEqual([{...ROUTING_TABLE_ENTRY_DEFAULTS, destinationAddress: 120, status: "ACTIVE", nextHopAddress: 1}]);
         expect(mockAdapterSendZdo.mock.calls.length - callsBefore).toStrictEqual(2);
+        expect(mockLogger.warning).toHaveBeenCalledWith("Routing table of '0x140' ended early, got 1 of 3 announced entries", "zh:controller:device");
     });
 
     it("Device binding table with more than 1 request", async () => {

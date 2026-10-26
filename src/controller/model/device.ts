@@ -1347,6 +1347,10 @@ export class Device extends Entity<ControllerEventMap> {
             nextStartIndex += entryCount;
         }
 
+        if (entryCount === 0 && table.length < size) {
+            logger.warning(`LQI table of '${this.ieeeAddr}' ended early, got ${table.length} of ${size} announced entries`, NS);
+        }
+
         return table;
     }
 
@@ -1378,6 +1382,10 @@ export class Device extends Entity<ControllerEventMap> {
             [tableEntries, entryCount] = await request(nextStartIndex);
 
             nextStartIndex += entryCount;
+        }
+
+        if (entryCount === 0 && table.length < size) {
+            logger.warning(`Routing table of '${this.ieeeAddr}' ended early, got ${table.length} of ${size} announced entries`, NS);
         }
 
         return table;
