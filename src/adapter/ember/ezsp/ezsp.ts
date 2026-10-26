@@ -221,6 +221,7 @@ export interface EmberEzspEventMap {
  */
 export class Ezsp extends EventEmitter<EmberEzspEventMap> {
     private version: number;
+    private readonly applicationProfileIds: ReadonlySet<number>;
     public readonly ash: UartAsh;
     private readonly buffalo: EzspBuffalo;
     /** The contents of the current EZSP frame. CAREFUL using this guy, it's pre-allocated. */
@@ -245,9 +246,16 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
     /** Counter for Queue Full errors */
     public counterErrQueueFull: number;
 
-    constructor(transport: AdapterTransport) {
+    constructor(transport: AdapterTransport, additionalProfileIds: readonly number[] = []) {
         super();
 
+        this.applicationProfileIds = new Set([
+            ZSpec.HA_PROFILE_ID,
+            ZSpec.WILDCARD_PROFILE_ID,
+            ZSpec.CUSTOM_SHELLY_PROFILE_ID,
+            ZSpec.CUSTOM_CONTROL4_PROFILE_ID,
+            ...additionalProfileIds,
+        ]);
         this.frameContents = Buffer.alloc(EZSP_MAX_FRAME_LENGTH);
         this.buffalo = new EzspBuffalo(this.frameContents, 0);
         this.callbackFrameContents = Buffer.alloc(EZSP_MAX_FRAME_LENGTH);
@@ -5384,14 +5392,10 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
         if (apsFrame.profileId === Zdo.ZDO_PROFILE_ID) {
             this.emit("zdoResponse", apsFrame, packetInfo.senderShortId, messageContents);
         } else if (
-            apsFrame.profileId === ZSpec.HA_PROFILE_ID ||
-            apsFrame.profileId === ZSpec.WILDCARD_PROFILE_ID ||
-            (apsFrame.profileId === ZSpec.GP_PROFILE_ID && type !== EmberIncomingMessageType.BROADCAST_LOOPBACK) ||
-            // TODO: Better (dynamic) way to handle this?
-            // Shelly custom Clusters require a special profile ID
-            apsFrame.profileId === ZSpec.CUSTOM_SHELLY_PROFILE_ID ||
-            // Control4 custom Clusters require a special profile ID
-            apsFrame.profileId === ZSpec.CUSTOM_CONTROL4_PROFILE_ID
+            // Green Power broadcast loopbacks must stay excluded even when its profile is configured explicitly.
+            apsFrame.profileId === ZSpec.GP_PROFILE_ID
+                ? type !== EmberIncomingMessageType.BROADCAST_LOOPBACK
+                : this.applicationProfileIds.has(apsFrame.profileId)
         ) {
             this.emit("incomingMessage", type, apsFrame, packetInfo.lastHopLqi, packetInfo.senderShortId, messageContents);
         }

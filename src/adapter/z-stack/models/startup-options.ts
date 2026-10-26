@@ -1,4 +1,5 @@
 import type {TsType} from "../../";
+import type {EndpointDefinition} from "../adapter/endpoints";
 import type {ZnpVersion} from "../adapter/tstype";
 
 /**
@@ -10,4 +11,5 @@ export interface StartupOptions {
     greenPowerGroup: number;
     backupPath: string;
     adapterOptions: TsType.AdapterOptions;
+    endpoints: readonly EndpointDefinition[];
 }
