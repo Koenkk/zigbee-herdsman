@@ -1347,8 +1347,9 @@ export class Device extends Entity<ControllerEventMap> {
             nextStartIndex += entryCount;
         }
 
-        if (entryCount === 0 && table.length < size) {
-            logger.warning(`LQI table of '${this.ieeeAddr}' ended early, got ${table.length} of ${size} announced entries`, NS);
+        // an empty table also answers with 0 entries on the first request; that is not a change
+        if (entryCount === 0 && size > 0) {
+            logger.warning(`LQI table of '${this.ieeeAddr}' changed while requesting; result is stale`, NS);
         }
 
         return table;
@@ -1384,8 +1385,9 @@ export class Device extends Entity<ControllerEventMap> {
             nextStartIndex += entryCount;
         }
 
-        if (entryCount === 0 && table.length < size) {
-            logger.warning(`Routing table of '${this.ieeeAddr}' ended early, got ${table.length} of ${size} announced entries`, NS);
+        // an empty table also answers with 0 entries on the first request; that is not a change
+        if (entryCount === 0 && size > 0) {
+            logger.warning(`Routing table of '${this.ieeeAddr}' changed while requesting; result is stale`, NS);
         }
 
         return table;
