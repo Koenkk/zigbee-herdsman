@@ -9958,6 +9958,84 @@ describe("Controller", () => {
         ]);
     });
 
+    it("Device LQI table stops on an empty page instead of looping forever", async () => {
+        // the device announces 4 entries, delivers 2, then answers the next page with an empty list (table shrank in between)
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
+        const device = controller.getDeviceByIeeeAddr("0x140")!;
+        mockAdapterSendZdo
+            .mockImplementationOnce(() => {
+                return [
+                    Zdo.Status.SUCCESS,
+                    {
+                        neighborTableEntries: 4,
+                        startIndex: 0,
+                        entryList: [
+                            {...LQI_TABLE_ENTRY_DEFAULTS, eui64: "0x160", nwkAddress: 160, lqi: 20, relationship: 2, depth: 5},
+                            {...LQI_TABLE_ENTRY_DEFAULTS, eui64: "0x170", nwkAddress: 170, lqi: 21, relationship: 4, depth: 8},
+                        ],
+                    },
+                ];
+            })
+            .mockImplementationOnce(() => {
+                return [Zdo.Status.SUCCESS, {neighborTableEntries: 4, startIndex: 2, entryList: []}];
+            });
+        const callsBefore = mockAdapterSendZdo.mock.calls.length;
+
+        const result = await device.lqi();
+        expect(result).toStrictEqual([
+            {...LQI_TABLE_ENTRY_DEFAULTS, eui64: "0x160", nwkAddress: 160, lqi: 20, relationship: 2, depth: 5},
+            {...LQI_TABLE_ENTRY_DEFAULTS, eui64: "0x170", nwkAddress: 170, lqi: 21, relationship: 4, depth: 8},
+        ]);
+        expect(mockAdapterSendZdo.mock.calls.length - callsBefore).toStrictEqual(2);
+        const zdoPayload = Zdo.Buffalo.buildRequest(false, Zdo.ClusterId.LQI_TABLE_REQUEST, 2);
+        expect(mockAdapterSendZdo).toHaveBeenLastCalledWith("0x140", 140, Zdo.ClusterId.LQI_TABLE_REQUEST, zdoPayload, false);
+        expect(mockLogger.warning).toHaveBeenCalledWith("LQI table of '0x140' changed while requesting; result is stale", "zh:controller:device");
+    });
+
+    it("Device LQI table that is empty does not warn", async () => {
+        // an empty table announces 0 entries and delivers 0: one request, no warning about a changed table
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
+        const device = controller.getDeviceByIeeeAddr("0x140")!;
+        mockAdapterSendZdo.mockImplementationOnce(() => {
+            return [Zdo.Status.SUCCESS, {neighborTableEntries: 0, startIndex: 0, entryList: []}];
+        });
+        const callsBefore = mockAdapterSendZdo.mock.calls.length;
+        mockLogger.warning.mockClear();
+
+        const result = await device.lqi();
+        expect(result).toStrictEqual([]);
+        expect(mockAdapterSendZdo.mock.calls.length - callsBefore).toStrictEqual(1);
+        expect(mockLogger.warning).not.toHaveBeenCalled();
+    });
+
+    it("Device routing table stops on an empty page instead of looping forever", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
+        const device = controller.getDeviceByIeeeAddr("0x140")!;
+        mockAdapterSendZdo
+            .mockImplementationOnce(() => {
+                return [
+                    Zdo.Status.SUCCESS,
+                    {
+                        routingTableEntries: 3,
+                        startIndex: 0,
+                        entryList: [{...ROUTING_TABLE_ENTRY_DEFAULTS, destinationAddress: 120, status: "ACTIVE", nextHopAddress: 1}],
+                    },
+                ];
+            })
+            .mockImplementationOnce(() => {
+                return [Zdo.Status.SUCCESS, {routingTableEntries: 3, startIndex: 1, entryList: []}];
+            });
+        const callsBefore = mockAdapterSendZdo.mock.calls.length;
+
+        const result = await device.routingTable();
+        expect(result).toStrictEqual([{...ROUTING_TABLE_ENTRY_DEFAULTS, destinationAddress: 120, status: "ACTIVE", nextHopAddress: 1}]);
+        expect(mockAdapterSendZdo.mock.calls.length - callsBefore).toStrictEqual(2);
+        expect(mockLogger.warning).toHaveBeenCalledWith("Routing table of '0x140' changed while requesting; result is stale", "zh:controller:device");
+    });
+
     it("Device binding table with more than 1 request", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 140, ieeeAddr: "0x140"});
