@@ -1092,8 +1092,12 @@ export class Endpoint extends ZigbeeEntity {
             Zcl.FrameType.SPECIFIC,
         );
 
-        if (response?.payload.status !== undefined && response.payload.status !== Zcl.Status.SUCCESS) {
-            throw new Zcl.StatusError(response.payload.status);
+        if (response?.payload.status !== undefined) {
+            if (response.payload.status === Zcl.Status.DUPLICATE_EXISTS) {
+                logger.info(`Group '${response.payload.groupid}' already exists on endpoint '${this.deviceIeeeAddress}/${this.ID}'`, NS);
+            } else if (response.payload.status !== Zcl.Status.SUCCESS) {
+                throw new Zcl.StatusError(response.payload.status);
+            }
         }
 
         group.addMember(this);
