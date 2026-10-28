@@ -5391,7 +5391,9 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             // Shelly custom Clusters require a special profile ID
             apsFrame.profileId === ZSpec.CUSTOM_SHELLY_PROFILE_ID ||
             // Control4 custom Clusters require a special profile ID
-            apsFrame.profileId === ZSpec.CUSTOM_CONTROL4_PROFILE_ID
+            apsFrame.profileId === ZSpec.CUSTOM_CONTROL4_PROFILE_ID ||
+            // Miele@home / Con@ctivity 2.0 devices use a special profile ID
+            apsFrame.profileId === ZSpec.CUSTOM_MIELE_PROFILE_ID
         ) {
             this.emit("incomingMessage", type, apsFrame, packetInfo.lastHopLqi, packetInfo.senderShortId, messageContents);
         }

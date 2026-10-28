@@ -1,8 +1,9 @@
 import {MockBinding, type MockPortBinding} from "@serialport/binding-mock";
 import type {MockInstance} from "vitest";
 import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
-import {EzspStatus} from "../../../src/adapter/ember/enums";
+import {EmberIncomingMessageType, EzspStatus} from "../../../src/adapter/ember/enums";
 import {Ezsp} from "../../../src/adapter/ember/ezsp/ezsp";
+import type {EmberApsFrame, EmberRxPacketInfo} from "../../../src/adapter/ember/types";
 import {AdapterTransport} from "../../../src/adapter/transport";
 import {
     ASH_ACK_FIRST_BYTES,
@@ -67,6 +68,34 @@ describe("Ember Ezsp Layer", () => {
         vi.useRealTimers();
         await ezsp.stop();
         MockBinding.reset();
+    });
+
+    it("Forwards incoming Miele messages", () => {
+        const onMessage = vi.fn();
+        ezsp.on("incomingMessage", onMessage);
+        const apsFrame: EmberApsFrame = {
+            profileId: 0xc51e,
+            clusterId: 0xfd02,
+            sourceEndpoint: 210,
+            destinationEndpoint: 2,
+            options: 0,
+            groupId: 0,
+            sequence: 1,
+        };
+        const packetInfo: EmberRxPacketInfo = {
+            senderShortId: 0x1234,
+            senderLongId: "0xf8302d739346ffff",
+            bindingIndex: 0xff,
+            addressIndex: 0xff,
+            lastHopLqi: 200,
+            lastHopRssi: -50,
+            lastHopTimestamp: 0,
+        };
+        const message = Buffer.from([0x18, 1, 0x0a, 0x20, 0, 0x41, 0]);
+
+        ezsp.ezspIncomingMessageHandler(EmberIncomingMessageType.UNICAST, apsFrame, packetInfo, message);
+
+        expect(onMessage).toHaveBeenCalledExactlyOnceWith(EmberIncomingMessageType.UNICAST, apsFrame, 200, 0x1234, message);
     });
 
     it("Starts ASH layer normally", async () => {
