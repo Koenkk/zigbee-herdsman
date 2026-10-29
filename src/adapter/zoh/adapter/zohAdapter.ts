@@ -7,6 +7,7 @@ import type {ZigbeeAPSHeader, ZigbeeAPSPayload} from "zigbee-on-host/dist/zigbee
 import type {ZigbeeNWKGPHeader} from "zigbee-on-host/dist/zigbee/zigbee-nwkgp";
 import type {Backup} from "../../../models/backup";
 import {logger} from "../../../utils/logger";
+import {MetricType, metrics} from "../../../utils/metrics";
 import {Queue} from "../../../utils/queue";
 import {wait} from "../../../utils/wait";
 import {Waitress} from "../../../utils/waitress";
@@ -317,21 +318,7 @@ export class ZoHAdapter extends Adapter {
 
     // #region ZDO
 
-    public async sendZdo(
-        ieeeAddress: string,
-        networkAddress: number,
-        clusterId: Zdo.ClusterId,
-        payload: Buffer,
-        disableResponse: true,
-    ): Promise<void>;
-    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
-        ieeeAddress: string,
-        networkAddress: number,
-        clusterId: K,
-        payload: Buffer,
-        disableResponse: false,
-    ): Promise<ZdoTypes.RequestToResponseMap[K]>;
-    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
+    protected async sendZdoImpl<K extends keyof ZdoTypes.RequestToResponseMap>(
         ieeeAddress: string,
         networkAddress: number,
         clusterId: K,
@@ -423,7 +410,7 @@ export class ZoHAdapter extends Adapter {
 
     // #region ZCL
 
-    public async sendZclFrameToEndpoint(
+    protected async sendZclFrameToEndpointImpl(
         ieeeAddr: string,
         networkAddress: number,
         endpoint: number,
@@ -498,6 +485,7 @@ export class ZoHAdapter extends Adapter {
                     if (disableRecovery || i === 1) {
                         throw error;
                     } // else retry
+                    metrics.emit("metric", {type: MetricType.AdapterRetry, adapterType: "zoh", ieeeAddr, reason: "send_failure"});
                 }
                 /* v8 ignore start */
             } // coverage detection failure
@@ -505,7 +493,7 @@ export class ZoHAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
+    protected async sendZclFrameToGroupImpl(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
         return await this.queue.execute<void>(async () => {
             this.checkInterpanLock();
 
@@ -517,7 +505,7 @@ export class ZoHAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameToAll(
+    protected async sendZclFrameToAllImpl(
         endpoint: number,
         zclFrame: Zcl.Frame,
         sourceEndpoint: number,
