@@ -1,5 +1,18 @@
 # Changelog
 
+## [11.2.0](https://github.com/Koenkk/zigbee-herdsman/compare/v11.1.1...v11.2.0) (2026-10-31)
+
+
+### Features
+
+* Support for SONOFF Dongle-MP10 auto-discovery ([#1920](https://github.com/Koenkk/zigbee-herdsman/issues/1920)) ([6764136](https://github.com/Koenkk/zigbee-herdsman/commit/6764136fdf781db6d965f8fd5b02e166d6b132e5))
+
+
+### Bug Fixes
+
+* Tuya: parse EF00 command 0x0A as `dataReportAlt` ([#1924](https://github.com/Koenkk/zigbee-herdsman/issues/1924)) ([8f5faff](https://github.com/Koenkk/zigbee-herdsman/commit/8f5faffa813ccbefe16b1de88a9832ecfe1ab6bf))
+* Update group database when device is already in the group ([#1923](https://github.com/Koenkk/zigbee-herdsman/issues/1923)) ([b560461](https://github.com/Koenkk/zigbee-herdsman/commit/b560461ed2c5322c60322e1679c278d413efb0b0))
+
 ## [11.1.1](https://github.com/Koenkk/zigbee-herdsman/compare/v11.1.0...v11.1.1) (2026-10-19)
 
 
