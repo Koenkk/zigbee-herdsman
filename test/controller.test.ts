@@ -2868,6 +2868,39 @@ describe("Controller", () => {
             expect(events.message.length).toBe(2);
             expect(endpointDefaultResponseSpy).toHaveBeenCalledTimes(1);
         });
+
+        it("Send default response again to frame retransmitted with the same sequence number after a while", async () => {
+            const header = reportHeader();
+            await controller.start();
+            await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+            const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+            const endpointDefaultResponseSpy = vi.spyOn(endpoint, "defaultResponse");
+            const payload = {
+                wasBroadcast: false,
+                address: 129,
+                clusterID: 0xe000,
+                data: toZclBuffer(header, ts011fReportPayload()),
+                header,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 0,
+            };
+
+            await mockAdapterEvents.zclPayload(payload);
+            // a device that never increments its sequence number keeps retransmitting until it is answered again
+            vi.setSystemTime(mockedDate.getTime() + 1000);
+            await mockAdapterEvents.zclPayload(payload);
+
+            expect(events.message.length).toBe(2);
+            expect(endpointDefaultResponseSpy).toHaveBeenCalledTimes(2);
+            expect(endpointDefaultResponseSpy).toHaveBeenLastCalledWith(
+                header.commandIdentifier,
+                Zcl.Status.SUCCESS,
+                0xe000,
+                header.transactionSequenceNumber,
+                {direction: Zcl.Direction.CLIENT_TO_SERVER},
+            );
+        });
     });
 
     it("Receive zclData from unkonwn device shouldnt emit anything", async () => {
