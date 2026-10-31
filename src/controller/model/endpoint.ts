@@ -348,9 +348,8 @@ export class Endpoint extends ZigbeeEntity {
 
     public hasClusterAttributes(clusterKey: number | string, access = false): boolean {
         const cluster = this.getCluster(clusterKey);
-        if (!access) {
-            return this.clusters[cluster.name]?.retreivedAttrs;
-        }
+        if (!this.clusters[cluster.name]?.retreivedAttrs) return false;
+        if (!access) return true;
         return this.clusters[cluster.name]?.attributeList[0] != null;
     }
 
@@ -358,16 +357,12 @@ export class Endpoint extends ZigbeeEntity {
         const cluster = this.getCluster(clusterKey);
         const clusterCache = this.clusters[cluster.name];
 
-        if (!clusterCache) {
-            return undefined;
-        }
+        if (!clusterCache) return undefined;
 
         const attribute = Zcl.Utils.getClusterAttribute(cluster, attributeKey, undefined);
         const cacheKey = attribute?.name ?? String(attributeKey);
 
-        if (Object.hasOwn(clusterCache.attributes, cacheKey) || Object.hasOwn(clusterCache.attributeList, cacheKey)) {
-            return true;
-        }
+        if (Object.hasOwn(clusterCache.attributes, cacheKey) || Object.hasOwn(clusterCache.attributeList, cacheKey)) return true;
 
         return clusterCache.retreivedAttrs ? false : undefined;
     }
