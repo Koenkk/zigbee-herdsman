@@ -30,6 +30,7 @@ import Group from "./group";
 import {ZigbeeEntity} from "./zigbeeEntity";
 
 const NS = "zh:controller:endpoint";
+const DISCOVER_EXT_UNSUPPORTED_META_KEY = "zclDiscoverExtUnsupported";
 
 export interface ConfigureReportingItem<Cl extends string | number, Custom extends TCustomCluster | undefined = undefined> {
     attribute: ClusterOrRawAttributeKeys<Cl, Custom>[number] | {ID: number; type: number};
@@ -345,10 +346,12 @@ export class Endpoint extends ZigbeeEntity {
         this.clusters[cluster.name].retreivedAttrs = discComplete;
     }
 
-    public hasClusterAttributes(clusterKey: number | string): boolean {
+    public hasClusterAttributes(clusterKey: number | string, access = false): boolean {
         const cluster = this.getCluster(clusterKey);
-
-        return this.clusters[cluster.name]?.retreivedAttrs;
+        if (!access) {
+            return this.clusters[cluster.name]?.retreivedAttrs;
+        }
+        return this.clusters[cluster.name]?.attributeList[0] != null;
     }
 
     public hasClusterAttribute(clusterKey: number | string, attributeKey: number | string): boolean | undefined {
@@ -653,12 +656,20 @@ export class Endpoint extends ZigbeeEntity {
 
     public async discoverAttributes(clusterKey: number | string, extended = false, options?: Options): Promise<void> {
         const cluster = this.getCluster(clusterKey, undefined, options?.manufacturerCode);
+        const clusterCache = this.clusters[cluster.name];
+        const device = this.getDevice();
+
+        if (extended && device.meta[DISCOVER_EXT_UNSUPPORTED_META_KEY] === true && clusterCache?.retreivedAttrs) {
+            return;
+        }
+
+        let useExtended = extended && device.meta[DISCOVER_EXT_UNSUPPORTED_META_KEY] !== true;
         let startAttrId = 0;
         let discComplete = false;
 
         while (!discComplete) {
             const request = {startAttrId, maxAttrIds: 0xff};
-            const response = extended
+            const response = useExtended
                 ? await this.zclCommand(cluster, "discoverExt", request, options)
                 : await this.zclCommand(cluster, "discover", request, options);
 
@@ -666,9 +677,23 @@ export class Endpoint extends ZigbeeEntity {
                 throw new Error(`No response received while discovering attributes for cluster '${cluster.name}'`);
             }
 
-            const payload = response.payload as TFoundation["discoverRsp"] | TFoundation["discoverExtRsp"];
-            const attrInfos = extended ? (payload as TFoundation["discoverExtRsp"]).attrInfos : (payload as TFoundation["discoverRsp"]).attrInfos;
+            if ("statusCode" in response.payload && response.payload.statusCode !== Zcl.Status.SUCCESS) {
+                if (useExtended && response.payload.statusCode === Zcl.Status.UNSUP_COMMAND) {
+                    device.meta[DISCOVER_EXT_UNSUPPORTED_META_KEY] = true;
+                    device.save();
+                    if (clusterCache?.retreivedAttrs) {
+                        return;
+                    }
+                    useExtended = false;
+                    startAttrId = 0;
+                    continue;
+                }
 
+                return;
+            }
+
+            const payload = response.payload as TFoundation["discoverRsp"] | TFoundation["discoverExtRsp"];
+            const attrInfos = useExtended ? (payload as TFoundation["discoverExtRsp"]).attrInfos : (payload as TFoundation["discoverRsp"]).attrInfos;
             this.saveClusterAttributeDiscovery(cluster.ID, attrInfos, payload.discComplete === 1);
 
             discComplete = payload.discComplete === 1;

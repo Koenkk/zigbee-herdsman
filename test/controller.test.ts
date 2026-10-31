@@ -9747,6 +9747,95 @@ describe("Controller", () => {
         });
     });
 
+    it("Falls back to basic discovery when extended discovery is unsupported", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        mocksendZclFrameToEndpoint.mockClear();
+
+        const extendedUnsupported = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            10,
+            "defaultRsp",
+            Zcl.Clusters.genOnOff.ID,
+            {cmdId: Zcl.Foundation.discoverExt.ID, statusCode: Zcl.Status.UNSUP_COMMAND},
+            {},
+        );
+        const basicResponse = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            11,
+            "discoverRsp",
+            Zcl.Clusters.genOnOff.ID,
+            {discComplete: 1, attrInfos: [{attrId: 0}]},
+            {},
+        );
+        mocksendZclFrameToEndpoint
+            .mockReturnValueOnce({
+                clusterID: extendedUnsupported.cluster.ID,
+                header: extendedUnsupported.header,
+                data: extendedUnsupported.toBuffer(),
+            })
+            .mockReturnValueOnce({clusterID: basicResponse.cluster.ID, header: basicResponse.header, data: basicResponse.toBuffer()});
+
+        await endpoint.discoverAttributes("genOnOff", true);
+
+        expect(mocksendZclFrameToEndpoint.mock.calls.map((call) => call[3].command.name)).toStrictEqual(["discoverExt", "discover"]);
+        expect(device.meta.zclDiscoverExtUnsupported).toBe(true);
+        expect(endpoint.clusters.genOnOff.retreivedAttrs).toBe(true);
+
+        mocksendZclFrameToEndpoint.mockClear();
+        await endpoint.discoverAttributes("genOnOff", true);
+        expect(mocksendZclFrameToEndpoint).not.toHaveBeenCalled();
+
+        const cachedBasicResponse = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            12,
+            "discoverRsp",
+            Zcl.Clusters.genOnOff.ID,
+            {discComplete: 1, attrInfos: [{attrId: 0}]},
+            {},
+        );
+        mocksendZclFrameToEndpoint.mockReturnValueOnce({
+            clusterID: cachedBasicResponse.cluster.ID,
+            header: cachedBasicResponse.header,
+            data: cachedBasicResponse.toBuffer(),
+        });
+        await endpoint.discoverAttributes("genOnOff", false);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint.mock.calls[0][3].command.name).toBe("discover");
+
+        const otherClusterResponse = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            13,
+            "discoverRsp",
+            Zcl.Clusters.genLevelCtrl.ID,
+            {discComplete: 1, attrInfos: [{attrId: 0}]},
+            {},
+        );
+        mocksendZclFrameToEndpoint.mockReturnValueOnce({
+            clusterID: otherClusterResponse.cluster.ID,
+            header: otherClusterResponse.header,
+            data: otherClusterResponse.toBuffer(),
+        });
+
+        await endpoint.discoverAttributes("genLevelCtrl", true);
+
+        expect(mocksendZclFrameToEndpoint.mock.calls[1][3].command.name).toBe("discover");
+    });
+
     it("zclCommand with cluster/command objects", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
