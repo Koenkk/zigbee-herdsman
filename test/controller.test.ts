@@ -3565,6 +3565,8 @@ describe("Controller", () => {
                             attributes: {
                                 modelId: "lumi.occupancy",
                             },
+                            attributeList: {},
+                            retreivedAttrs: false,
                         },
                     },
                     inputClusters: [],
@@ -3626,6 +3628,8 @@ describe("Controller", () => {
                             attributes: {
                                 modelId: "lumi.occupancy",
                             },
+                            attributeList: {},
+                            retreivedAttrs: false,
                         },
                     },
                     inputClusters: [],
@@ -6918,7 +6922,7 @@ describe("Controller", () => {
                     outputClusters: [0, 3, 4, 6, 8, 5],
                     profileID: 49246,
                     ID: 1,
-                    clusters: {genBasic: {dir: {value: 3}, attributes: {modelId: "RWL021"}}},
+                    clusters: {genBasic: {dir: {value: 3}, attributes: {modelId: "RWL021"}, attributeList: {}, retreivedAttrs: false}},
                     deviceIeeeAddress: "0x0017880104e45517",
                     deviceNetworkAddress: 6538,
                     _binds: [{type: "endpoint", endpointID: 1, deviceIeeeAddr: "0x000b57fffec6a5b2"}],
@@ -9672,6 +9676,311 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
 
         await endpoint.zclCommand("genOnOff", "discover", {startAttrId: 1, maxAttrIds: 255});
+    });
+
+    it("Migrate legacy endpoint attribute cache", () => {
+        const endpoint = Endpoint.fromDatabaseRecord(
+            {
+                epId: 1,
+                inClusterList: [],
+                outClusterList: [],
+                clusters: {genOnOff: {attributes: {onOff: 1}}},
+            },
+            129,
+            "0x129",
+        );
+
+        expect(endpoint.clusters.genOnOff).toStrictEqual({attributes: {onOff: 1}, attributeList: {}, retreivedAttrs: false});
+    });
+
+    it("Checks whether cluster attributes have been retrieved", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+
+        expect(endpoint.hasClusterAttributes("genOnOff")).toBe(false);
+        expect(endpoint.hasClusterAttributes("genOnOff", true)).toBe(false);
+
+        endpoint.saveClusterAttributeDiscovery("genOnOff", [], false);
+        expect(endpoint.hasClusterAttribute("genOnOff", 0xffff)).toBeUndefined();
+
+        endpoint.saveClusterAttributeDiscovery("genOnOff", [], true);
+        expect(endpoint.hasClusterAttributes("genOnOff")).toBe(true);
+        expect(endpoint.hasClusterAttribute("genOnOff", 0xffff)).toBe(false);
+
+        endpoint.clusters.genOnOff.attributeList[0] = 1;
+        expect(endpoint.hasClusterAttributes("genOnOff", true)).toBe(true);
+    });
+
+    it.each([false, true])("Discover attributes (extended: %s)", async (extended) => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+        mocksendZclFrameToEndpoint.mockClear();
+        const cluster = Zcl.Clusters.genOnOff;
+        expect(endpoint.hasClusterAttribute("genOnOff", "onOff")).toBeUndefined();
+        const frames = [
+            Zcl.Frame.create(
+                Zcl.FrameType.GLOBAL,
+                Zcl.Direction.SERVER_TO_CLIENT,
+                true,
+                undefined,
+                10,
+                extended ? "discoverExtRsp" : "discoverRsp",
+                cluster.ID,
+                {
+                    discComplete: 0,
+                    attrInfos: [extended ? {attrId: 0, access: 1} : {attrId: 0}],
+                },
+                {},
+            ),
+            Zcl.Frame.create(
+                Zcl.FrameType.GLOBAL,
+                Zcl.Direction.SERVER_TO_CLIENT,
+                true,
+                undefined,
+                11,
+                extended ? "discoverExtRsp" : "discoverRsp",
+                cluster.ID,
+                {
+                    discComplete: 1,
+                    attrInfos: [extended ? {attrId: 0x4000, access: 3} : {attrId: 0x4000}],
+                },
+                {},
+            ),
+        ];
+        mocksendZclFrameToEndpoint
+            .mockReturnValueOnce({clusterID: cluster.ID, header: frames[0].header, data: frames[0].toBuffer()})
+            .mockReturnValueOnce({clusterID: cluster.ID, header: frames[1].header, data: frames[1].toBuffer()});
+
+        await endpoint.discoverAttributes("genOnOff", extended, {});
+
+        expect(mocksendZclFrameToEndpoint.mock.calls[0][3].payload).toStrictEqual({startAttrId: 0, maxAttrIds: 255});
+        expect(mocksendZclFrameToEndpoint.mock.calls[1][3].payload).toStrictEqual({startAttrId: 1, maxAttrIds: 255});
+        expect(endpoint.hasClusterAttribute("genOnOff", "onOff")).toBe(true);
+        expect(endpoint.hasClusterAttribute("genOnOff", "startUpOnOff")).toBe(false);
+        expect(endpoint.clusters.genOnOff).toStrictEqual({
+            attributes: {},
+            attributeList: {onOff: extended ? 1 : null, globalSceneCtrl: extended ? 3 : null},
+            retreivedAttrs: true,
+        });
+    });
+
+    it("Caches incoming basic and extended discovery responses", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+        const responses = [
+            Zcl.Frame.create(
+                Zcl.FrameType.GLOBAL,
+                Zcl.Direction.SERVER_TO_CLIENT,
+                true,
+                undefined,
+                10,
+                "discoverRsp",
+                Zcl.Clusters.genOnOff.ID,
+                {discComplete: 1, attrInfos: [{attrId: 0, dataType: Zcl.DataType.BOOLEAN}]},
+                {},
+            ),
+            Zcl.Frame.create(
+                Zcl.FrameType.GLOBAL,
+                Zcl.Direction.SERVER_TO_CLIENT,
+                true,
+                undefined,
+                11,
+                "discoverExtRsp",
+                Zcl.Clusters.genLevelCtrl.ID,
+                {discComplete: 1, attrInfos: [{attrId: 0, dataType: Zcl.DataType.UINT8, access: 3}]},
+                {},
+            ),
+        ];
+
+        for (const response of responses) {
+            await mockAdapterEvents.zclPayload({
+                wasBroadcast: false,
+                address: 129,
+                clusterID: response.cluster.ID,
+                data: response.toBuffer(),
+                header: response.header,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 0,
+            });
+        }
+
+        expect(endpoint.clusters.genOnOff.attributeList.onOff).toBeNull();
+        expect(endpoint.clusters.genOnOff.retreivedAttrs).toBe(true);
+        expect(endpoint.clusters.genLevelCtrl.attributeList.currentLevel).toBe(3);
+        expect(endpoint.clusters.genLevelCtrl.retreivedAttrs).toBe(true);
+    });
+
+    it("Stops discovery on other failures and guards against non-progressing pages", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+        mocksendZclFrameToEndpoint.mockClear();
+
+        mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
+        await expect(endpoint.discoverAttributes("genOnOff")).rejects.toThrow("No response received");
+
+        const failureResponse = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            10,
+            "defaultRsp",
+            Zcl.Clusters.genOnOff.ID,
+            {cmdId: Zcl.Foundation.discover.ID, statusCode: Zcl.Status.FAILURE},
+            {},
+        );
+        mocksendZclFrameToEndpoint.mockReturnValueOnce({
+            clusterID: failureResponse.cluster.ID,
+            header: failureResponse.header,
+            data: failureResponse.toBuffer(),
+        });
+
+        await endpoint.discoverAttributes("genOnOff");
+        expect(endpoint.clusters.genOnOff).toBeUndefined();
+
+        const incompletePage = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            11,
+            "discoverRsp",
+            Zcl.Clusters.genOnOff.ID,
+            {discComplete: 0, attrInfos: [{attrId: 0xffff, dataType: Zcl.DataType.BOOLEAN}]},
+            {},
+        );
+        mocksendZclFrameToEndpoint.mockReturnValueOnce({
+            clusterID: incompletePage.cluster.ID,
+            header: incompletePage.header,
+            data: incompletePage.toBuffer(),
+        });
+
+        await expect(endpoint.discoverAttributes("genOnOff")).rejects.toThrow("did not make progress");
+    });
+
+    it("Does not fall back when the cluster cache completes during extended discovery", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+        mocksendZclFrameToEndpoint.mockClear();
+        endpoint.saveClusterAttributeDiscovery("genOnOff", [], true);
+
+        const unsupportedResponse = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            10,
+            "defaultRsp",
+            Zcl.Clusters.genOnOff.ID,
+            {cmdId: Zcl.Foundation.discoverExt.ID, statusCode: Zcl.Status.UNSUP_COMMAND},
+            {},
+        );
+        mocksendZclFrameToEndpoint.mockReturnValueOnce({
+            clusterID: unsupportedResponse.cluster.ID,
+            header: unsupportedResponse.header,
+            data: unsupportedResponse.toBuffer(),
+        });
+
+        await endpoint.discoverAttributes("genOnOff", true);
+
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        expect(endpoint.getDevice().meta.zclDiscoverExtUnsupported).toBe(true);
+        expect(endpoint.clusters.genOnOff.retreivedAttrs).toBe(true);
+    });
+
+    it("Falls back to basic discovery when extended discovery is unsupported", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const device = controller.getDeviceByIeeeAddr("0x129")!;
+        const endpoint = device.getEndpoint(1)!;
+        mocksendZclFrameToEndpoint.mockClear();
+
+        const extendedUnsupported = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            10,
+            "defaultRsp",
+            Zcl.Clusters.genOnOff.ID,
+            {cmdId: Zcl.Foundation.discoverExt.ID, statusCode: Zcl.Status.UNSUP_COMMAND},
+            {},
+        );
+        const basicResponse = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            11,
+            "discoverRsp",
+            Zcl.Clusters.genOnOff.ID,
+            {discComplete: 1, attrInfos: [{attrId: 0}]},
+            {},
+        );
+        mocksendZclFrameToEndpoint
+            .mockReturnValueOnce({
+                clusterID: extendedUnsupported.cluster.ID,
+                header: extendedUnsupported.header,
+                data: extendedUnsupported.toBuffer(),
+            })
+            .mockReturnValueOnce({clusterID: basicResponse.cluster.ID, header: basicResponse.header, data: basicResponse.toBuffer()});
+
+        await endpoint.discoverAttributes("genOnOff", true);
+
+        expect(mocksendZclFrameToEndpoint.mock.calls.map((call) => call[3].command.name)).toStrictEqual(["discoverExt", "discover"]);
+        expect(device.meta.zclDiscoverExtUnsupported).toBe(true);
+        expect(endpoint.clusters.genOnOff.retreivedAttrs).toBe(true);
+
+        mocksendZclFrameToEndpoint.mockClear();
+        await endpoint.discoverAttributes("genOnOff", true);
+        expect(mocksendZclFrameToEndpoint).not.toHaveBeenCalled();
+
+        const cachedBasicResponse = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            12,
+            "discoverRsp",
+            Zcl.Clusters.genOnOff.ID,
+            {discComplete: 1, attrInfos: [{attrId: 0}]},
+            {},
+        );
+        mocksendZclFrameToEndpoint.mockReturnValueOnce({
+            clusterID: cachedBasicResponse.cluster.ID,
+            header: cachedBasicResponse.header,
+            data: cachedBasicResponse.toBuffer(),
+        });
+        await endpoint.discoverAttributes("genOnOff", false);
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint.mock.calls[0][3].command.name).toBe("discover");
+
+        const otherClusterResponse = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            13,
+            "discoverRsp",
+            Zcl.Clusters.genLevelCtrl.ID,
+            {discComplete: 1, attrInfos: [{attrId: 0}]},
+            {},
+        );
+        mocksendZclFrameToEndpoint.mockReturnValueOnce({
+            clusterID: otherClusterResponse.cluster.ID,
+            header: otherClusterResponse.header,
+            data: otherClusterResponse.toBuffer(),
+        });
+
+        await endpoint.discoverAttributes("genLevelCtrl", true);
+
+        expect(mocksendZclFrameToEndpoint.mock.calls[1][3].command.name).toBe("discover");
     });
 
     it("zclCommand with cluster/command objects", async () => {

@@ -1090,6 +1090,16 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                         break;
                     }
 
+                    case "discoverRsp": {
+                        endpoint.saveClusterAttributeDiscovery(frame.cluster.ID, frame.payload.attrInfos, frame.payload.discComplete === 1);
+                        break;
+                    }
+
+                    case "discoverExtRsp": {
+                        endpoint.saveClusterAttributeDiscovery(frame.cluster.ID, frame.payload.attrInfos, frame.payload.discComplete === 1);
+                        break;
+                    }
+
                     case "defaultRsp": {
                         if (frame.payload.statusCode !== Zcl.Status.SUCCESS) {
                             logger.debug(

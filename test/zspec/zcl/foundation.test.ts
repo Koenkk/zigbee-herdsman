@@ -920,6 +920,10 @@ describe("Foundation", () => {
     });
 
     describe("discoverExt", () => {
+        it("expects discoverExtRsp", () => {
+            expect(Zcl.Foundation.discoverExt.response).toBe(Zcl.Foundation.discoverExtRsp.ID);
+        });
+
         const DISCOVER_EXT_FRAME = Zcl.Frame.create(
             Zcl.FrameType.GLOBAL,
             Zcl.Direction.SERVER_TO_CLIENT,
