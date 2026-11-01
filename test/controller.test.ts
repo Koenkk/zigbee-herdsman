@@ -2888,7 +2888,7 @@ describe("Controller", () => {
 
             await mockAdapterEvents.zclPayload(payload);
             // a device that never increments its sequence number keeps retransmitting until it is answered again
-            vi.setSystemTime(mockedDate.getTime() + 1000);
+            vi.setSystemTime(mockedDate.getTime() + 8000);
             await mockAdapterEvents.zclPayload(payload);
 
             expect(events.message.length).toBe(2);
