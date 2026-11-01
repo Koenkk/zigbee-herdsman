@@ -50,10 +50,11 @@ const GEN_OTA_CLUSTER_ID = Zcl.Clusters.genOta.ID;
 
 /**
  * Time window in which a frame carrying an already-answered transaction sequence number is considered a duplicate.
- * Duplicates handed up by the stack arrive back-to-back, so a few milliseconds would do; a device repeating the same
- * sequence number later is retransmitting and still expects an answer.
+ * Duplicates handed up by the stack arrive back-to-back, so a few milliseconds would do, but devices that retransmit
+ * heavily for no good reason should stay suppressed, so this is kept in the order of the spec's transmit timeouts.
+ * A device repeating the same sequence number beyond that is retransmitting and still expects an answer.
  */
-const DEFAULT_RESPONSE_DUPLICATE_WINDOW = 1000;
+const DEFAULT_RESPONSE_DUPLICATE_WINDOW = 8000;
 
 type CustomReadResponse = (frame: Zcl.Frame, endpoint: Endpoint) => boolean;
 
