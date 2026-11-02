@@ -3561,12 +3561,35 @@ describe("Ember Adapter Layer", () => {
             const sourceAddress: Eui64 = "0x1122334455aabbcc";
             const groupId: number = ZSpec.BroadcastAddress.SLEEPY;
             const lastHopLqi = 252;
-            // Received Zigbee message from '0x', type 'readResponse', cluster 'genBasic', data '{"zclVersion":3}' from endpoint 1 with groupID 0
-            const messageContents = Buffer.from("1800010000000100000000000000000088776655443322110154466341200", "hex");
+            const touchlinkScanResponse = Zcl.Frame.create(
+                Zcl.FrameType.SPECIFIC,
+                Zcl.Direction.SERVER_TO_CLIENT,
+                false,
+                undefined,
+                0,
+                "scanResponse",
+                Zcl.Clusters.touchlink.ID,
+                {
+                    transactionID: 1,
+                    rssiCorrection: 10,
+                    zigbeeInformation: 5,
+                    touchlinkInformation: 6,
+                    keyBitmask: 12,
+                    responseID: 11,
+                    extendedPanID: "0x0017210104d9cd33",
+                    networkUpdateID: 1,
+                    logicalChannel: 12,
+                    panID: 13,
+                    networkAddress: 5,
+                    numberOfSubDevices: 10,
+                    totalGroupIdentifiers: 5,
+                },
+                {},
+            ).toBuffer();
 
             mockEzspSendRawMessage.mockImplementationOnce(() => {
                 setTimeout(async () => {
-                    mockEzspEmitter.emit("touchlinkMessage", sourcePanId, sourceAddress, groupId, lastHopLqi, messageContents);
+                    mockEzspEmitter.emit("touchlinkMessage", sourcePanId, sourceAddress, groupId, lastHopLqi, touchlinkScanResponse);
                     await flushPromises();
                 }, 300);
 
@@ -3579,9 +3602,9 @@ describe("Ember Adapter Layer", () => {
 
             const payload: ZclPayload = {
                 clusterID: Zcl.Clusters.touchlink.ID,
-                header: Zcl.Header.fromBuffer(messageContents),
+                header: Zcl.Header.fromBuffer(touchlinkScanResponse),
                 address: sourceAddress,
-                data: messageContents,
+                data: touchlinkScanResponse,
                 endpoint: FIXED_ENDPOINTS[0].endpoint,
                 linkquality: lastHopLqi,
                 groupID: groupId,
