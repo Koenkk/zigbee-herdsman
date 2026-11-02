@@ -30,6 +30,7 @@ import Group from "./group";
 import {ZigbeeEntity} from "./zigbeeEntity";
 
 const NS = "zh:controller:endpoint";
+const DISCOVER_UNSUPPORTED_META_KEY = "zclDiscoverUnsupported";
 const DISCOVER_EXT_UNSUPPORTED_META_KEY = "zclDiscoverExtUnsupported";
 
 export interface ConfigureReportingItem<Cl extends string | number, Custom extends TCustomCluster | undefined = undefined> {
@@ -72,7 +73,12 @@ interface OptionsWithDefaults extends Options {
 export interface Clusters {
     [cluster: string]: {
         attributes: {[attribute: string]: number | string};
-        attributeList: {[attribute: string]: number | null};
+        attributeList: {
+            [attribute: string]: {
+                type: number;
+                access: number | null;
+            };
+        };
         retrievedAttrs: boolean;
     };
 }
@@ -328,7 +334,7 @@ export class Endpoint extends ZigbeeEntity {
 
     public saveClusterAttributeDiscovery(
         clusterKey: number | string,
-        attrInfos: Array<{attrId: number; access?: number}>,
+        attrInfos: Array<{attrId: number; dataType: number; access?: number}>,
         discComplete: boolean,
     ): void {
         const cluster = this.getCluster(clusterKey);
@@ -340,21 +346,25 @@ export class Endpoint extends ZigbeeEntity {
         for (const attrInfo of attrInfos) {
             const attribute = Zcl.Utils.getClusterAttribute(cluster, attrInfo.attrId, this.getDevice().manufacturerID);
             const attributeKey = attribute?.name ?? String(attrInfo.attrId);
-            this.clusters[cluster.name].attributeList[attributeKey] = attrInfo.access ?? null;
+            this.clusters[cluster.name].attributeList[attributeKey] ??= {type: attrInfo.dataType, access: attrInfo.access ?? null};
+            this.clusters[cluster.name].attributeList[attributeKey].type = attrInfo.dataType;
+            this.clusters[cluster.name].attributeList[attributeKey].access = attrInfo.access ?? null;
         }
-
+logger.info("save", NS);
         this.clusters[cluster.name].retrievedAttrs = discComplete;
     }
 
     public hasClusterAttributes(clusterKey: number | string, access = false): boolean {
         const cluster = this.getCluster(clusterKey);
-        if (!this.clusters[cluster.name]?.retrievedAttrs) {
+        const clusterCache = this.clusters[cluster.name];
+
+        if (!clusterCache?.retrievedAttrs) {
             return false;
         }
         if (!access) {
             return true;
         }
-        return this.clusters[cluster.name]?.attributeList[0] != null;
+        return this.clusters[cluster.name]?.attributeList[0]?.access != null;
     }
 
     public hasClusterAttribute(clusterKey: number | string, attributeKey: number | string): boolean | undefined {
@@ -657,22 +667,28 @@ export class Endpoint extends ZigbeeEntity {
             : ({} as ClusterOrRawWriteAttributes<Cl, Custom>);
     }
 
-    public async discoverAttributes(clusterKey: number | string, extended = false, options?: Options): Promise<void> {
-        const cluster = this.getCluster(clusterKey, undefined, options?.manufacturerCode);
-        const clusterCache = this.clusters[cluster.name];
+    public async discoverAttributes(
+        clusterKey: number | string,
+        extended = false,
+        options?: Options,
+        startAttrId = 0,
+        maxAttrIds = 0xff,
+    ): Promise<boolean> {
         const device = this.getDevice();
-
-        if (extended && device.meta[DISCOVER_EXT_UNSUPPORTED_META_KEY] === true && clusterCache?.retrievedAttrs) {
-            return;
+        // Return early if the device does not support the command
+        if (device.meta[DISCOVER_UNSUPPORTED_META_KEY]) {
+            return false;
+        }
+        if (extended && device.meta[DISCOVER_EXT_UNSUPPORTED_META_KEY]) {
+            return false;
         }
 
-        let useExtended = extended && device.meta[DISCOVER_EXT_UNSUPPORTED_META_KEY] !== true;
-        let startAttrId = 0;
+        const cluster = this.getCluster(clusterKey, undefined, options?.manufacturerCode);
         let discComplete = false;
 
         while (!discComplete) {
-            const request = {startAttrId, maxAttrIds: 0xff};
-            const response = useExtended
+            const request = {startAttrId, maxAttrIds};
+            const response = extended
                 ? await this.zclCommand(cluster, "discoverExt", request, options)
                 : await this.zclCommand(cluster, "discover", request, options);
 
@@ -681,24 +697,19 @@ export class Endpoint extends ZigbeeEntity {
             }
 
             if ("statusCode" in response.payload && response.payload.statusCode !== Zcl.Status.SUCCESS) {
-                if (useExtended && response.payload.statusCode === Zcl.Status.UNSUP_COMMAND) {
-                    device.meta[DISCOVER_EXT_UNSUPPORTED_META_KEY] = true;
-                    device.save();
-                    if (clusterCache?.retrievedAttrs) {
-                        return;
+                if (response.payload.statusCode === Zcl.Status.UNSUP_COMMAND) {
+                    if (extended) {
+                        device.meta[DISCOVER_EXT_UNSUPPORTED_META_KEY] = true;
+                    } else {
+                        device.meta[DISCOVER_UNSUPPORTED_META_KEY] = true;
                     }
-                    useExtended = false;
-                    startAttrId = 0;
-                    continue;
+                    device.save();
                 }
-
-                return;
+                return false;
             }
 
             const payload = response.payload as TFoundation["discoverRsp"] | TFoundation["discoverExtRsp"];
-            const attrInfos = useExtended ? (payload as TFoundation["discoverExtRsp"]).attrInfos : (payload as TFoundation["discoverRsp"]).attrInfos;
-            this.saveClusterAttributeDiscovery(cluster.ID, attrInfos, payload.discComplete === 1);
-
+            const attrInfos = extended ? (payload as TFoundation["discoverExtRsp"]).attrInfos : (payload as TFoundation["discoverRsp"]).attrInfos;
             discComplete = payload.discComplete === 1;
 
             if (!discComplete) {
@@ -711,6 +722,7 @@ export class Endpoint extends ZigbeeEntity {
                 startAttrId = lastAttrInfo.attrId + 1;
             }
         }
+        return true;
     }
 
     /**
