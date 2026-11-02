@@ -350,7 +350,6 @@ export class Endpoint extends ZigbeeEntity {
             this.clusters[cluster.name].attributeList[attributeKey].type = attrInfo.dataType;
             this.clusters[cluster.name].attributeList[attributeKey].access = attrInfo.access ?? null;
         }
-logger.info("save", NS);
         this.clusters[cluster.name].retrievedAttrs = discComplete;
     }
 
