@@ -98,8 +98,7 @@ export class AdapterNvMemory {
         const lengthResponse = await this.retry(() => this.znp.requestWithReply(Subsystem.SYS, "osalNvLength", {id}));
         const exists = lengthResponse.payload.length && lengthResponse.payload.length > 0;
         if (!exists) {
-            /* v8 ignore next */
-            const initLength = buffer.length > 240 ? 240 : buffer.length;
+            const initLength = Math.min(buffer.length, 240);
             /* v8 ignore start */
             if (!autoInit) {
                 throw new Error(`Cannot write NV memory item which does not exist (id=${id})`);
@@ -125,8 +124,7 @@ export class AdapterNvMemory {
         }
         let remaining = buffer.length;
         while (remaining > 0) {
-            /* v8 ignore next */
-            const writeLength = remaining > 240 ? 240 : remaining;
+            const writeLength = Math.min(remaining, 240);
             const dataOffset = buffer.length - remaining;
             const writeData = buffer.slice(dataOffset, dataOffset + writeLength);
             const writeResponse = await this.retry(() =>
