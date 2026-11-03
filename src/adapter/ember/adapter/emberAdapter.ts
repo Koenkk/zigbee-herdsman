@@ -1863,7 +1863,7 @@ export class EmberAdapter extends Adapter {
                             apsFrame,
                             zdoResponseClusterId: responseClusterId,
                         },
-                        DEFAULT_REQUEST_TIMEOUT,
+                        this.adapterOptions.zdoRequestTimeout ?? DEFAULT_REQUEST_TIMEOUT,
                     );
                 }
             }

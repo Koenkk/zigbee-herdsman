@@ -32,6 +32,8 @@ export interface AdapterOptions {
     disableLED: boolean;
     transmitPower?: number;
     forceStartWithInconsistentAdapterConfiguration?: boolean;
+    /** Timeout in milliseconds for ZDO requests (LQI table, routing table, etc.). @defaultValue 15000 */
+    zdoRequestTimeout?: number;
 }
 
 export interface CoordinatorVersion {

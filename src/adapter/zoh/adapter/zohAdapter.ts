@@ -378,7 +378,7 @@ export class ZoHAdapter extends Adapter {
                                 clusterId: responseClusterId,
                                 transactionSequenceNumber: zdoSeqNum,
                             },
-                            DEFAULT_REQUEST_TIMEOUT,
+                            this.adapterOptions.zdoRequestTimeout ?? DEFAULT_REQUEST_TIMEOUT,
                         )
                         .start().promise;
 
