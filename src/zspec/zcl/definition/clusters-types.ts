@@ -1218,7 +1218,7 @@ export interface TClusters {
             /** ID=0x0006 | type=ENUM8 | write=true | required=true | max=3 */
             startupControl: number;
             /** ID=0x0010 | type=IEEE_ADDR | write=true | required=true | default=0x0000000000000000 | special=AddressUnspecified,0000000000000000 */
-            trustCenterress: string;
+            trustCenterAddress: string;
             /** ID=0x0011 | type=SEC_KEY | write=true */
             trustCenterMasterKey: Buffer;
             /** ID=0x0012 | type=SEC_KEY | write=true | required=true */
@@ -1404,7 +1404,7 @@ export interface TClusters {
             queryNextImageRequest: {
                 /** type=BITMAP8 */
                 fieldControl: number;
-                /** type=UINT16 */
+                /** type=UINT16 | max=65535 */
                 manufacturerCode: number;
                 /** type=UINT16 | max=65471 */
                 imageType: number;
@@ -1417,7 +1417,7 @@ export interface TClusters {
             imageBlockRequest: {
                 /** type=BITMAP8 */
                 fieldControl: number;
-                /** type=UINT16 */
+                /** type=UINT16 | max=65535 */
                 manufacturerCode: number;
                 /** type=UINT16 | max=65471 */
                 imageType: number;
@@ -1436,7 +1436,7 @@ export interface TClusters {
             imagePageRequest: {
                 /** type=BITMAP8 */
                 fieldControl: number;
-                /** type=UINT16 */
+                /** type=UINT16 | max=65535 */
                 manufacturerCode: number;
                 /** type=UINT16 | max=65471 */
                 imageType: number;
@@ -1457,7 +1457,7 @@ export interface TClusters {
             upgradeEndRequest: {
                 /** type=ENUM8 */
                 status: number;
-                /** type=UINT16 */
+                /** type=UINT16 | max=65535 */
                 manufacturerCode: number;
                 /** type=UINT16 | max=65471 */
                 imageType: number;
@@ -1468,7 +1468,7 @@ export interface TClusters {
             queryDeviceSpecificFileRequest: {
                 /** type=IEEE_ADDR */
                 eui64: string;
-                /** type=UINT16 */
+                /** type=UINT16 | max=65535 */
                 manufacturerCode: number;
                 /** type=UINT16 | min=65472 | max=65534 */
                 imageType: number;
@@ -6879,17 +6879,17 @@ export interface TClusters {
             };
             /** ID=0x03 */
             dataQuery: Record<string, never>;
-            /** ID=0x10 */
-            mcuVersionRequest: {
-                /** type=UINT16 | max=65535 */
-                seq: number;
-            };
             /** ID=0x04 */
             sendData: {
                 /** type=UINT16 | max=65535 */
                 seq: number;
                 /** type=LIST_TUYA_DATAPOINT_VALUES */
                 dpValues: TuyaDataPointValue[];
+            };
+            /** ID=0x10 */
+            mcuVersionRequest: {
+                /** type=UINT16 | max=65535 */
+                seq: number;
             };
             /** ID=0x12 */
             mcuOtaNotify: {
@@ -6967,6 +6967,13 @@ export interface TClusters {
             };
             /** ID=0x06 */
             activeStatusReport: {
+                /** type=UINT16 | max=65535 */
+                seq: number;
+                /** type=LIST_TUYA_DATAPOINT_VALUES */
+                dpValues: TuyaDataPointValue[];
+            };
+            /** ID=0x0a */
+            dataReportAlt: {
                 /** type=UINT16 | max=65535 */
                 seq: number;
                 /** type=LIST_TUYA_DATAPOINT_VALUES */
