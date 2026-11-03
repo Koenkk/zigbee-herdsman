@@ -1339,10 +1339,17 @@ export class Device extends Entity<ControllerEventMap> {
         const size = tableEntries;
         let nextStartIndex = entryCount;
 
-        while (table.length < size) {
+        while (table.length < size && entryCount > 0) {
+            // stop on an empty page: the table may have shrunk since the first request, or the device announces more
+            // entries than it delivers; asking for the same start index again would loop forever
             [tableEntries, entryCount] = await request(nextStartIndex);
 
             nextStartIndex += entryCount;
+        }
+
+        // an empty table also answers with 0 entries on the first request; that is not a change
+        if (entryCount === 0 && size > 0) {
+            logger.warning(`LQI table of '${this.ieeeAddr}' changed while requesting; result is stale`, NS);
         }
 
         return table;
@@ -1371,10 +1378,16 @@ export class Device extends Entity<ControllerEventMap> {
         const size = tableEntries;
         let nextStartIndex = entryCount;
 
-        while (table.length < size) {
+        while (table.length < size && entryCount > 0) {
+            // same guard as in lqi(): an empty page ends the loop instead of repeating the request forever
             [tableEntries, entryCount] = await request(nextStartIndex);
 
             nextStartIndex += entryCount;
+        }
+
+        // an empty table also answers with 0 entries on the first request; that is not a change
+        if (entryCount === 0 && size > 0) {
+            logger.warning(`Routing table of '${this.ieeeAddr}' changed while requesting; result is stale`, NS);
         }
 
         return table;
