@@ -1,5 +1,18 @@
 # Changelog
 
+## [11.2.1](https://github.com/Koenkk/zigbee-herdsman/compare/v11.2.0...v11.2.1) (2026-11-03)
+
+
+### Bug Fixes
+
+* Deconz timeout handling ([#1932](https://github.com/Koenkk/zigbee-herdsman/issues/1932)) ([3c38148](https://github.com/Koenkk/zigbee-herdsman/commit/3c381485485e1c8abe79a30075ab3a31d54f8f01))
+* **ignore:** bump @biomejs/biome from 2.5.12 to 2.6.3 in the minor-patch group ([#1925](https://github.com/Koenkk/zigbee-herdsman/issues/1925)) ([48d47a4](https://github.com/Koenkk/zigbee-herdsman/commit/48d47a40d4849d97461037189bb3548f289b0e56))
+* **ignore:** bump source-map-js from 1.2.1 to 1.2.2 ([#1935](https://github.com/Koenkk/zigbee-herdsman/issues/1935)) ([1db528a](https://github.com/Koenkk/zigbee-herdsman/commit/1db528aeaff00463387e2ec172306d9992f0dab0))
+* **ignore:** bump the minor-patch group with 2 updates ([#1934](https://github.com/Koenkk/zigbee-herdsman/issues/1934)) ([5514149](https://github.com/Koenkk/zigbee-herdsman/commit/55141495a8089d9b9098a65372175a65841ad93a))
+* **ignore:** bump vite from 7.3.6 to 7.3.7 ([#1936](https://github.com/Koenkk/zigbee-herdsman/issues/1936)) ([fa53e2b](https://github.com/Koenkk/zigbee-herdsman/commit/fa53e2bd217d569dfe9c971732c49212379f6e64))
+* Regenerate cluster types to include Tuya `dataReportAlt` ([#1937](https://github.com/Koenkk/zigbee-herdsman/issues/1937)) ([0b85000](https://github.com/Koenkk/zigbee-herdsman/commit/0b8500042853f0c5c75b86416fa3711c1316fb6e))
+* Use ZCL frame type to deconflict matching ([#1930](https://github.com/Koenkk/zigbee-herdsman/issues/1930)) ([75e47fe](https://github.com/Koenkk/zigbee-herdsman/commit/75e47feee0c7cdd5e84b8f364d574b215d7d094e))
+
 ## [11.2.0](https://github.com/Koenkk/zigbee-herdsman/compare/v11.1.1...v11.2.0) (2026-10-31)
 
 
