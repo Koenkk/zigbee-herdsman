@@ -953,7 +953,7 @@ export class Endpoint extends ZigbeeEntity {
         payload: ClusterOrRawPayload<Cl, Co, Custom>,
         options?: Options,
     ): Promise<undefined | KeyValue> {
-        const frame = await this.zclCommand(clusterKey, commandKey, payload, options, undefined, false, Zcl.FrameType.SPECIFIC);
+        const frame = await this.zclCommand(clusterKey, commandKey, payload, options, undefined, true, Zcl.FrameType.SPECIFIC);
         if (frame) {
             return frame.payload;
         }
