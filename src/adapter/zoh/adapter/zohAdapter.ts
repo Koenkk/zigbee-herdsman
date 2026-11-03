@@ -41,6 +41,12 @@ interface StackConfig {
     enableCSMACA: boolean;
 }
 
+interface ZdoWaitressMatcher {
+    address: number | string | undefined;
+    clusterId: number;
+    transactionSequenceNumber?: number;
+}
+
 export interface StackConfigJSON extends Partial<Omit<StackConfig, "eui64">> {
     /** 0x${hex} format */
     eui64?: string;
@@ -63,7 +69,7 @@ export class ZoHAdapter extends Adapter {
     public readonly driver: OTRCPDriver;
     private readonly queue: Queue;
     private readonly zclWaitress: Waitress<ZclWaitressPayload, ClusterWaitressMatcher>;
-    private readonly zdoWaitress: Waitress<ZdoResponse, ClusterWaitressMatcher>;
+    private readonly zdoWaitress: Waitress<ZdoResponse, ZdoWaitressMatcher>;
 
     constructor(
         networkOptions: TsType.NetworkOptions,
@@ -129,7 +135,7 @@ export class ZoHAdapter extends Adapter {
         );
         this.queue = new Queue(this.adapterOptions.concurrent || /* v8 ignore next */ 8); // ORed to avoid 0 (not checked in settings/queue constructor)
         this.zclWaitress = new Waitress(Adapter.zclWaitressValidator, Adapter.clusterWaitressTimeoutFormatter);
-        this.zdoWaitress = new Waitress(this.zdoWaitressValidator, Adapter.clusterWaitressTimeoutFormatter);
+        this.zdoWaitress = new Waitress(this.zdoWaitressValidator, this.zdoWaitressTimeoutFormatter);
 
         this.interpanLock = false;
     }
@@ -297,7 +303,7 @@ export class ZoHAdapter extends Adapter {
     public waitFor(
         networkAddress: number,
         endpoint: number,
-        _frameType: Zcl.FrameType,
+        frameType: Zcl.FrameType,
         _direction: Zcl.Direction,
         transactionSequenceNumber: number | undefined,
         clusterId: number,
@@ -306,7 +312,7 @@ export class ZoHAdapter extends Adapter {
         timeout: number,
     ): {promise: Promise<ZclPayload>; cancel: () => void} {
         const waiter = this.zclWaitress.waitFor(
-            {address: networkAddress, endpoint, clusterId, commandId, defaultRspCommandId, transactionSequenceNumber},
+            {address: networkAddress, endpoint, frameType, clusterId, commandId, defaultRspCommandId, transactionSequenceNumber},
             timeout,
         );
         const cancel = (): void => this.zclWaitress.remove(waiter.ID);
@@ -480,6 +486,7 @@ export class ZoHAdapter extends Adapter {
                             .waitFor(
                                 {
                                     address: networkAddress,
+                                    frameType: zclFrame.header.frameControl.frameType,
                                     clusterId: zclFrame.cluster.ID,
                                     endpoint,
                                     commandId: commandResponseId,
@@ -750,8 +757,12 @@ export class ZoHAdapter extends Adapter {
     onDeviceAuthorized(_source16: number, _source64: bigint): void {}
     /* v8 ignore stop */
 
-    private zdoWaitressValidator(payload: ZdoResponse, matcher: ClusterWaitressMatcher): boolean {
+    private zdoWaitressValidator(payload: ZdoResponse, matcher: ZdoWaitressMatcher): boolean {
         return matcher.address === payload.address && matcher.clusterId === payload.clusterId && matcher.transactionSequenceNumber === payload.seqNum;
+    }
+
+    private zdoWaitressTimeoutFormatter(matcher: ZdoWaitressMatcher, timeout: number): string {
+        return `Timeout after ${timeout}ms [address=${matcher.address} clusterId=${matcher.clusterId} tsn=${matcher.transactionSequenceNumber}]`;
     }
     // #endregion
 }

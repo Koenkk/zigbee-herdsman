@@ -25,6 +25,7 @@ type OneWaitressMatcher = {
     apsFrame: EmberApsFrame;
     /** Cluster ID for ZDO (because request !== response). */
     zdoResponseClusterId?: number;
+    zclFrameType?: FrameType;
     /** ZCL frame transaction sequence number */
     zclSequence?: number;
     /** Expected command ID for ZCL commands */
@@ -165,8 +166,8 @@ export class EmberOneWaitress {
                     (address === matcher.target && endpoint === matcher.apsFrame.destinationEndpoint)) &&
                 clusterID === matcher.apsFrame.clusterId &&
                 (matcher.zclSequence === undefined || header.transactionSequenceNumber === matcher.zclSequence) &&
-                (matcher.commandIdentifier === undefined ||
-                    header.commandIdentifier === matcher.commandIdentifier ||
+                (((matcher.commandIdentifier === undefined || header.commandIdentifier === matcher.commandIdentifier) &&
+                    (matcher.zclFrameType === undefined || header.frameControl.frameType === matcher.zclFrameType)) ||
                     // defaultRsp
                     (header.frameControl.frameType === FrameType.GLOBAL &&
                         header.commandIdentifier === 0x0b &&

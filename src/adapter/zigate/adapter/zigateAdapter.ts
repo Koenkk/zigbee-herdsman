@@ -508,7 +508,7 @@ export class ZiGateAdapter extends Adapter {
     public waitFor(
         networkAddress: number,
         endpoint: number,
-        _frameType: Zcl.FrameType,
+        frameType: Zcl.FrameType,
         _direction: Zcl.Direction,
         transactionSequenceNumber: number | undefined,
         clusterId: number,
@@ -516,7 +516,7 @@ export class ZiGateAdapter extends Adapter {
         defaultRspCommandId: number | undefined,
         timeout: number,
     ): {promise: Promise<Events.ZclPayload>; cancel: () => void} {
-        const payload = {address: networkAddress, endpoint, clusterId, commandId, defaultRspCommandId, transactionSequenceNumber};
+        const payload = {address: networkAddress, endpoint, frameType, clusterId, commandId, defaultRspCommandId, transactionSequenceNumber};
         const waiter = this.waitress.waitFor(payload, timeout);
         const cancel = (): void => this.waitress.remove(waiter.ID);
         return {promise: waiter.start().promise, cancel};

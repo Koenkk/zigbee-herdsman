@@ -16,9 +16,10 @@ export interface ZclWaitressPayload extends AdapterEvents.ZclPayload {
 
 export interface ClusterWaitressMatcher {
     address: number | string | undefined;
+    frameType: Zcl.FrameType;
     clusterId: number;
-    endpoint?: number;
-    commandId?: number;
+    endpoint: number;
+    commandId: number;
     defaultRspCommandId?: number;
     transactionSequenceNumber?: number;
 }
@@ -133,7 +134,7 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
             clusterID === matcher.clusterId &&
             endpoint === matcher.endpoint &&
             (matcher.transactionSequenceNumber === undefined || header.transactionSequenceNumber === matcher.transactionSequenceNumber) &&
-            (header.commandIdentifier === matcher.commandId ||
+            ((header.commandIdentifier === matcher.commandId && header.frameControl.frameType === matcher.frameType) ||
                 // defaultRsp
                 (header.frameControl.frameType === Zcl.FrameType.GLOBAL &&
                     header.commandIdentifier === 0x0b &&

@@ -4022,6 +4022,59 @@ describe("zstack-adapter", () => {
         expect(result.data).toStrictEqual(Buffer.from([24, 100, 1, 0, 0, 0, 32, 2]));
     });
 
+    it("Wait for same frameType resolves on proper cmd", async () => {
+        basicMocks();
+        await adapter.start();
+
+        const badResponseFrame = Zcl.Frame.create(
+            Zcl.FrameType.SPECIFIC,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            100,
+            "viewRsp",
+            0x04,
+            {status: 0, groupid: 1, groupname: "abc"},
+            {},
+        );
+        const badObject = mockZpiObject(Type.AREQ, Subsystem.AF, "incomingMsg", {
+            clusterid: 0,
+            srcendpoint: 20,
+            srcaddr: 2,
+            linkquality: 101,
+            groupid: 12,
+            data: badResponseFrame.toBuffer(),
+        });
+        const responseFrame = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            100,
+            "readRsp",
+            0x04,
+            [{attrId: 0, attrData: 2, dataType: 32, status: 0}],
+            {},
+        );
+        const object = mockZpiObject(Type.AREQ, Subsystem.AF, "incomingMsg", {
+            clusterid: 0,
+            srcendpoint: 20,
+            srcaddr: 2,
+            linkquality: 101,
+            groupid: 12,
+            data: responseFrame.toBuffer(),
+        });
+        const wait = adapter.waitFor(2, 20, 0, 1, 100, 0, 1, undefined, 10);
+        znpReceived(badObject);
+        znpReceived(object);
+        const result = await wait.promise;
+        expect(result.endpoint).toStrictEqual(20);
+        expect(result.groupID).toStrictEqual(12);
+        expect(result.linkquality).toStrictEqual(101);
+        expect(result.address).toStrictEqual(2);
+        expect(result.data).toStrictEqual(Buffer.from([24, 100, 1, 0, 0, 0, 32, 2]));
+    });
+
     it("Wait for resolves on specified default response", async () => {
         basicMocks();
         await adapter.start();

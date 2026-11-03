@@ -347,6 +347,7 @@ export class ZBOSSAdapter extends Adapter {
             response = this.waitForInternal(
                 networkAddress,
                 endpoint,
+                zclFrame.header.frameControl.frameType,
                 zclFrame.header.transactionSequenceNumber,
                 zclFrame.cluster.ID,
                 // biome-ignore lint/style/noNonNullAssertion: ignored using `--suppress`
@@ -358,6 +359,7 @@ export class ZBOSSAdapter extends Adapter {
             response = this.waitForInternal(
                 networkAddress,
                 endpoint,
+                zclFrame.header.frameControl.frameType, // waitress automatically matches on defaultRsp no matter what
                 zclFrame.header.transactionSequenceNumber,
                 zclFrame.cluster.ID,
                 Zcl.Foundation.defaultRsp.ID,
@@ -470,6 +472,7 @@ export class ZBOSSAdapter extends Adapter {
     private waitForInternal(
         networkAddress: number,
         endpoint: number,
+        frameType: Zcl.FrameType,
         transactionSequenceNumber: number | undefined,
         clusterId: number,
         commandId: number,
@@ -477,7 +480,7 @@ export class ZBOSSAdapter extends Adapter {
         timeout: number,
     ): {start: () => {promise: Promise<ZclPayload>}; cancel: () => void} {
         const waiter = this.waitress.waitFor(
-            {address: networkAddress, endpoint, clusterId, commandId, defaultRspCommandId, transactionSequenceNumber},
+            {address: networkAddress, endpoint, frameType, clusterId, commandId, defaultRspCommandId, transactionSequenceNumber},
             timeout,
         );
         const cancel = (): void => this.waitress.remove(waiter.ID);
@@ -487,7 +490,7 @@ export class ZBOSSAdapter extends Adapter {
     public waitFor(
         networkAddress: number,
         endpoint: number,
-        _frameType: Zcl.FrameType,
+        frameType: Zcl.FrameType,
         _direction: Zcl.Direction,
         transactionSequenceNumber: number | undefined,
         clusterId: number,
@@ -495,7 +498,16 @@ export class ZBOSSAdapter extends Adapter {
         defaultRspCommandId: number | undefined,
         timeout: number,
     ): {promise: Promise<ZclPayload>; cancel: () => void} {
-        const waiter = this.waitForInternal(networkAddress, endpoint, transactionSequenceNumber, clusterId, commandId, defaultRspCommandId, timeout);
+        const waiter = this.waitForInternal(
+            networkAddress,
+            endpoint,
+            frameType,
+            transactionSequenceNumber,
+            clusterId,
+            commandId,
+            defaultRspCommandId,
+            timeout,
+        );
 
         return {cancel: waiter.cancel, promise: waiter.start().promise};
     }
