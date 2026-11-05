@@ -113,8 +113,8 @@ importers:
         specifier: ^1.5.0
         version: 1.5.0
       '@koenkk/serialport-napi-rs':
-        specifier: ^0.1.0
-        version: 0.1.0
+        specifier: ^0.1.1
+        version: 0.1.1
       bonjour-service:
         specifier: ^1.4.4
         version: 1.4.4
@@ -429,66 +429,66 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@koenkk/serialport-napi-rs-android-arm64@0.1.0':
-    resolution: {integrity: sha512-VRrEjajy0n5Fa/2CEKNW5vWvSxcD2hbImunowCfqdGLGRZED//d+eFlo5FUjrmNtOUKjGeIJ+486/iaxKcQutw==}
+  '@koenkk/serialport-napi-rs-android-arm64@0.1.1':
+    resolution: {integrity: sha512-5nZh8tg3xZedUluPmg1sYo29d925gTfaFF5aO8ACumei+/FSCaRtJLTIu7M0U5LT6tkeXynQ5SZ0ikid/vTNkg==}
     engines: {node: 24 || 26}
     cpu: [arm64]
     os: [android]
 
-  '@koenkk/serialport-napi-rs-darwin-arm64@0.1.0':
-    resolution: {integrity: sha512-+BJEtRCnPlQ+wu/KaesXBcCbpC2a4hyr9YxqwchgYXBws2H2zwZxV3mVOB+dfp+dWKpaU38qNZkE6uiDcsXd6w==}
+  '@koenkk/serialport-napi-rs-darwin-arm64@0.1.1':
+    resolution: {integrity: sha512-MWSu+8foLpDjIuxc+0EPRWLAt2qtYLps5zSm7KNTo7eHuKaGNeJ/4jtY3dnzdLWgth5mqoWzdlsLE3a267jBLA==}
     engines: {node: 24 || 26}
     cpu: [arm64]
     os: [darwin]
 
-  '@koenkk/serialport-napi-rs-darwin-x64@0.1.0':
-    resolution: {integrity: sha512-enwMkM1epVpdtshA/dC/QdSdmJ+hY7gwlitCMVC36sGm0eI57t7Vt2Df++5DeI1tLipIL/Vv0zIvhASLPN6L1g==}
+  '@koenkk/serialport-napi-rs-darwin-x64@0.1.1':
+    resolution: {integrity: sha512-BB4U+4CAkbnNvpA3Cd7o2g8EzzcBIK4zB073CNvjCQLuiTPvUurEKUy7xQ7yPCiBotmTpvkMVId8LyyZYWYXGQ==}
     engines: {node: 24 || 26}
     cpu: [x64]
     os: [darwin]
 
-  '@koenkk/serialport-napi-rs-linux-arm64-gnu@0.1.0':
-    resolution: {integrity: sha512-UOiK7Sqd62UlCkZbAYcnpQbVBvrhPo1VuCeFaQR4MrsO+M3MrC5K5KXiDx1e+1ctVHkCCWtvga6H5RXTOTH2Ig==}
+  '@koenkk/serialport-napi-rs-linux-arm64-gnu@0.1.1':
+    resolution: {integrity: sha512-SOVGLFNEaolPgwQKrs8olCXBzWaaObzYOO6o4EDjO365/grbsyTVS/xzCbJtsGHJg/zpdHp+IV/13Vq89/GptA==}
     engines: {node: 24 || 26}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  '@koenkk/serialport-napi-rs-linux-arm64-musl@0.1.0':
-    resolution: {integrity: sha512-zju+7W3dWzSnEHxuU3++T1JPh4FA5I+iKuWIGCV+OtIwT6NZPI2UqiM40SvMbyF7UeHQ3RYhsbQSJrpToTDP8Q==}
+  '@koenkk/serialport-napi-rs-linux-arm64-musl@0.1.1':
+    resolution: {integrity: sha512-/809/Ro6xUCCOVxfjPHXyH6FbEP3mHrAy0/zTla39JXu8ZDozGtZiAb9iSVwJSt5Id5bRvuB/B8TD281xB2p/g==}
     engines: {node: 24 || 26}
     cpu: [arm64]
     os: [linux]
     libc: [musl]
 
-  '@koenkk/serialport-napi-rs-linux-x64-gnu@0.1.0':
-    resolution: {integrity: sha512-V9SxfG2Uf2UwgOUfzQWM/eV2p4aqlCuXcth48zephfG2QXztnrIKqlKOqDb1jVyzv+j4oMRkq2n/SKGPRymurg==}
+  '@koenkk/serialport-napi-rs-linux-x64-gnu@0.1.1':
+    resolution: {integrity: sha512-2GNn5V0eAuk1Ci9J/8A7g1Ko4WBGXM6549gXstF+qI7cM5e9SE3Yrvrd81zGhRpnaNl9HfNPpmXOesHtUP655A==}
     engines: {node: 24 || 26}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  '@koenkk/serialport-napi-rs-linux-x64-musl@0.1.0':
-    resolution: {integrity: sha512-bMgCkFXBWhhBlJ/CHzzP3k1+bKnhRZa0IscJWf1th3deQ7H5XsdAVo9hM3SQj8dKZ3YGqiGc6M2xS2cK4LTF0g==}
+  '@koenkk/serialport-napi-rs-linux-x64-musl@0.1.1':
+    resolution: {integrity: sha512-kcJh9rCBH/QY5MWRtTW+gz5wWmxBF902qnGB8Bqe+UFvNRAczu6K53bsVKi8qHEm6WZfqAa9EdhMgb3jIFv8Hg==}
     engines: {node: 24 || 26}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  '@koenkk/serialport-napi-rs-win32-arm64-msvc@0.1.0':
-    resolution: {integrity: sha512-KBm2tD0BmEy22dGrTWwRl9kSI5fE/yOD/VFI+TIJlsiSPQwB/LjCM1pCC/YaCjvBxMT2BwTaWmBH45ciExP6LA==}
+  '@koenkk/serialport-napi-rs-win32-arm64-msvc@0.1.1':
+    resolution: {integrity: sha512-3lR38cf8lWHfmi2qiCcPPqTeQVeQHOIo4Q6jtZ0sc0iPPgGPXyaMioCoBAqEqhlfpZMbn5n+OWq/iNRCCDDNTQ==}
     engines: {node: 24 || 26}
     cpu: [arm64]
     os: [win32]
 
-  '@koenkk/serialport-napi-rs-win32-x64-msvc@0.1.0':
-    resolution: {integrity: sha512-YjnGIU3ycVRuQyKS6TZ3A8wBv284i8e4r0lBvPEuvABKz0HhxilHfIjpevS1SfaKgC4tN36tcNPWftY2exa44g==}
+  '@koenkk/serialport-napi-rs-win32-x64-msvc@0.1.1':
+    resolution: {integrity: sha512-/s+AyOmR26MmIlwcDT4HgRJx9OzPeOaUdsJkcAfS+eosVuOewzc2+Yj2JxI19QaLk1tDUN5cHGHypnaelE2BEw==}
     engines: {node: 24 || 26}
     cpu: [x64]
     os: [win32]
 
-  '@koenkk/serialport-napi-rs@0.1.0':
-    resolution: {integrity: sha512-nadpyOIkBODy/I9k7GAMwMPPrLghYPH0W/RMXf4KhOgUomqRgix+502DYIwf1wqI3T6qC8DMu5VPQhqc9o0nog==}
+  '@koenkk/serialport-napi-rs@0.1.1':
+    resolution: {integrity: sha512-sOryXpWBuUyp1hUWZ1tza7LeLdssIYv+SayCvoXMa+R/uSd3UyDqUh31YPVG+obgE0Ke+E2+XoSGbPk2+kAREw==}
     engines: {node: 24 || 26}
 
   '@leichtgewicht/ip-codec@2.0.5':
@@ -1438,44 +1438,44 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@koenkk/serialport-napi-rs-android-arm64@0.1.0':
+  '@koenkk/serialport-napi-rs-android-arm64@0.1.1':
     optional: true
 
-  '@koenkk/serialport-napi-rs-darwin-arm64@0.1.0':
+  '@koenkk/serialport-napi-rs-darwin-arm64@0.1.1':
     optional: true
 
-  '@koenkk/serialport-napi-rs-darwin-x64@0.1.0':
+  '@koenkk/serialport-napi-rs-darwin-x64@0.1.1':
     optional: true
 
-  '@koenkk/serialport-napi-rs-linux-arm64-gnu@0.1.0':
+  '@koenkk/serialport-napi-rs-linux-arm64-gnu@0.1.1':
     optional: true
 
-  '@koenkk/serialport-napi-rs-linux-arm64-musl@0.1.0':
+  '@koenkk/serialport-napi-rs-linux-arm64-musl@0.1.1':
     optional: true
 
-  '@koenkk/serialport-napi-rs-linux-x64-gnu@0.1.0':
+  '@koenkk/serialport-napi-rs-linux-x64-gnu@0.1.1':
     optional: true
 
-  '@koenkk/serialport-napi-rs-linux-x64-musl@0.1.0':
+  '@koenkk/serialport-napi-rs-linux-x64-musl@0.1.1':
     optional: true
 
-  '@koenkk/serialport-napi-rs-win32-arm64-msvc@0.1.0':
+  '@koenkk/serialport-napi-rs-win32-arm64-msvc@0.1.1':
     optional: true
 
-  '@koenkk/serialport-napi-rs-win32-x64-msvc@0.1.0':
+  '@koenkk/serialport-napi-rs-win32-x64-msvc@0.1.1':
     optional: true
 
-  '@koenkk/serialport-napi-rs@0.1.0':
+  '@koenkk/serialport-napi-rs@0.1.1':
     optionalDependencies:
-      '@koenkk/serialport-napi-rs-android-arm64': 0.1.0
-      '@koenkk/serialport-napi-rs-darwin-arm64': 0.1.0
-      '@koenkk/serialport-napi-rs-darwin-x64': 0.1.0
-      '@koenkk/serialport-napi-rs-linux-arm64-gnu': 0.1.0
-      '@koenkk/serialport-napi-rs-linux-arm64-musl': 0.1.0
-      '@koenkk/serialport-napi-rs-linux-x64-gnu': 0.1.0
-      '@koenkk/serialport-napi-rs-linux-x64-musl': 0.1.0
-      '@koenkk/serialport-napi-rs-win32-arm64-msvc': 0.1.0
-      '@koenkk/serialport-napi-rs-win32-x64-msvc': 0.1.0
+      '@koenkk/serialport-napi-rs-android-arm64': 0.1.1
+      '@koenkk/serialport-napi-rs-darwin-arm64': 0.1.1
+      '@koenkk/serialport-napi-rs-darwin-x64': 0.1.1
+      '@koenkk/serialport-napi-rs-linux-arm64-gnu': 0.1.1
+      '@koenkk/serialport-napi-rs-linux-arm64-musl': 0.1.1
+      '@koenkk/serialport-napi-rs-linux-x64-gnu': 0.1.1
+      '@koenkk/serialport-napi-rs-linux-x64-musl': 0.1.1
+      '@koenkk/serialport-napi-rs-win32-arm64-msvc': 0.1.1
+      '@koenkk/serialport-napi-rs-win32-x64-msvc': 0.1.1
 
   '@leichtgewicht/ip-codec@2.0.5': {}
 
