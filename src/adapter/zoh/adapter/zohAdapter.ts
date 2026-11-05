@@ -85,6 +85,7 @@ export class ZoHAdapter extends Adapter {
 
         const channel = networkOptions.channelList[0];
         this.driver = new OTRCPDriver(
+            // @ts-expect-error TODO: compat ZoH before merging
             this.transport,
             {
                 /* v8 ignore start */
