@@ -779,6 +779,7 @@ export const Foundation = {
     discoverExt: {
         name: "discoverExt",
         ID: 0x15,
+        response: 0x16,
         parse(buffalo) {
             const startAttrId = buffalo.readUInt16();
             const maxAttrIds = buffalo.readUInt8();
