@@ -9724,6 +9724,20 @@ describe("Controller", () => {
         expect(endpoint.hasClusterAttributes("genOnOff")).toBe(true);
     });
 
+    it("Updates existing discovered attribute cache entries", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+
+        endpoint.saveClusterAttributeDiscovery("genOnOff", [{attrId: 0xffff, dataType: Zcl.DataType.BOOLEAN, access: 1}], false);
+        const entry = endpoint.clusters.genOnOff.attributeList["65535"];
+
+        endpoint.saveClusterAttributeDiscovery("genOnOff", [{attrId: 0xffff, dataType: Zcl.DataType.UINT8, access: 3}], true);
+
+        expect(endpoint.clusters.genOnOff.attributeList["65535"]).toBe(entry);
+        expect(entry).toStrictEqual({type: Zcl.DataType.UINT8, access: 3});
+    });
+
     it.each([false, true])("Discover attributes (extended: %s)", async (extended) => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
@@ -9837,47 +9851,6 @@ describe("Controller", () => {
         expect(endpoint.clusters.genOnOff.retrievedAttrs).toBe(true);
         expect(endpoint.clusters.genLevelCtrl.attributeList.currentLevel).toStrictEqual({type: Zcl.DataType.UINT8, access: 3});
         expect(endpoint.clusters.genLevelCtrl.retrievedAttrs).toBe(true);
-    });
-
-    it("Does not retry basic discovery when basic discovery is unsupported", async () => {
-        await controller.start();
-        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
-        const device = controller.getDeviceByIeeeAddr("0x129")!;
-        const endpoint = device.getEndpoint(1)!;
-        mocksendZclFrameToEndpoint.mockClear();
-        device.meta.zclDiscoverUnsupported = true;
-
-        await expect(endpoint.discoverAttributes("genOnOff")).resolves.toBe(false);
-        expect(mocksendZclFrameToEndpoint).not.toHaveBeenCalled();
-    });
-
-    it("Marks basic discovery as unsupported when the device rejects the command", async () => {
-        await controller.start();
-        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
-        const device = controller.getDeviceByIeeeAddr("0x129")!;
-        const endpoint = device.getEndpoint(1)!;
-        mocksendZclFrameToEndpoint.mockClear();
-
-        const unsupportedResponse = Zcl.Frame.create(
-            Zcl.FrameType.GLOBAL,
-            Zcl.Direction.SERVER_TO_CLIENT,
-            true,
-            undefined,
-            10,
-            "defaultRsp",
-            Zcl.Clusters.genOnOff.ID,
-            {cmdId: Zcl.Foundation.discover.ID, statusCode: Zcl.Status.UNSUP_COMMAND},
-            {},
-        );
-        mocksendZclFrameToEndpoint.mockReturnValueOnce({
-            clusterID: unsupportedResponse.cluster.ID,
-            header: unsupportedResponse.header,
-            data: unsupportedResponse.toBuffer(),
-        });
-
-        await expect(endpoint.discoverAttributes("genOnOff")).resolves.toBe(false);
-        expect(mocksendZclFrameToEndpoint.mock.calls.map((call) => call[3].command.name)).toStrictEqual(["discover"]);
-        expect(device.meta.zclDiscoverUnsupported).toBe(true);
     });
 
     it("Runs normal discovery with an explicit options object", async () => {
