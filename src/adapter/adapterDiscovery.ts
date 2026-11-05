@@ -206,8 +206,8 @@ const USB_FINGERPRINTS: Record<DiscoverableUsbAdapter, UsbAdapterFingerprint[]> 
         },
         {
             // SONOFF Dongle-MP10 (CC2674P10)
-            vendorId: "303a",
-            productId: "4001",
+            vendorId: 0x303a,
+            productId: 0x4001,
             manufacturer: "SONOFF",
             // /dev/serial/by-id/usb-SONOFF_SONOFF_Dongle_Max_CC2674P10_sonoff_dongle_mp10-80B54EDBBD8C-if00
             pathRegex: ".*sonoff.*max.*cc2674p10.*",
