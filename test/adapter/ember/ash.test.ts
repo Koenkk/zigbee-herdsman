@@ -24,9 +24,6 @@ import {AdapterTransport} from "../../../src/adapter/transport";
 import {ASH_ACK_FIRST_BYTES, RECD_RSTACK_BYTES, SEND_ACK_FIRST_BYTES, SEND_DATA_VERSION, SEND_RST_BYTES} from "./consts";
 import {flushPromises} from "../../testUtils";
 
-const mockSerialPortCloseEvent = vi.fn();
-const mockSerialPortErrorEvent = vi.fn();
-
 // todo doesnt reset if closing
 // todo doesnt start if closing or connected
 // todo doesnt close port if already closed on stop
@@ -34,8 +31,6 @@ const mockSerialPortErrorEvent = vi.fn();
 // todo emit `reset` only on port error
 // todo emit `close` only when ASH layer stopped
 // todo emit `frame` only on valid DATA frame
-
-const mocks = [mockSerialPortCloseEvent, mockSerialPortErrorEvent];
 
 const ADAPTER_PATH = "/dev/ttyACM0";
 
@@ -61,10 +56,6 @@ describe("Ember UART ASH Protocol", () => {
     });
 
     beforeEach(() => {
-        for (const mock of mocks) {
-            mock.mockClear();
-        }
-
         frameSequence = 0;
         transport = new AdapterTransport({path: ADAPTER_PATH, baudRate: 100, rtscts: true});
         uartAsh = new UartAsh(transport);

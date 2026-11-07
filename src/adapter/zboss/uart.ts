@@ -299,7 +299,7 @@ export class ZBOSSUart extends EventEmitter {
         });
     }
 
-    private makePack(flags: number, data?: Buffer): Buffer {
+    makePack(flags: number, data?: Buffer): Buffer {
         /* Construct a package */
         const packLen = 5 + (data ? data.length + 2 : 0);
         const header = Buffer.alloc(7);
