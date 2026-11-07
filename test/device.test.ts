@@ -728,4 +728,11 @@ describe("Device", () => {
 
         delete process.env.DISABLE_TUYA_DEFAULT_RESPONSE;
     });
+
+    it("sets and reads gpSinkDevice", () => {
+        device.gpSinkDevice = "0xaabbccddeeff0011";
+        expect(device.gpSinkDevice).toBe("0xaabbccddeeff0011");
+        device.gpSinkDevice = undefined;
+        expect(device.gpSinkDevice).toBeUndefined();
+    });
 });

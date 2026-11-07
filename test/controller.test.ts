@@ -2241,6 +2241,66 @@ describe("Controller", () => {
         expect(deepClone(mocksendZclFrameToAll.mock.calls[1][1])).toStrictEqual(deepClone(commissionFrameDisable));
     });
 
+    it("sets and clears a green power sink device for a GPD", () => {
+        const gpd = Device.create(
+            "GreenPower",
+            "0x000b57fffe123456",
+            0x000b,
+            0x0000,
+            "GPD",
+            "Battery",
+            "GPD-Model",
+            InterviewState.Successful,
+            undefined,
+        );
+        const sink = Device.create(
+            "Router",
+            "0x00158d0001c4a800",
+            0x1234,
+            0x0000,
+            "Sink",
+            "Mains (single phase)",
+            "Sink-Model",
+            InterviewState.Successful,
+            undefined,
+        );
+
+        controller.setGreenPowerSinkDevice(gpd.ieeeAddr, sink.ieeeAddr);
+        expect(gpd.gpSinkDevice).toBe(sink.ieeeAddr);
+
+        controller.setGreenPowerSinkDevice(gpd.ieeeAddr, undefined);
+        expect(gpd.gpSinkDevice).toBeUndefined();
+    });
+
+    it("rejects setting a green power sink when the GPD or sink does not exist", () => {
+        Device.create(
+            "Router",
+            "0x00158d0002d4a901",
+            0x2345,
+            0x0000,
+            "Sink",
+            "Mains (single phase)",
+            "Sink-Model",
+            InterviewState.Successful,
+            undefined,
+        );
+        const gpd = Device.create(
+            "GreenPower",
+            "0x000b57fffe223457",
+            0x000c,
+            0x0000,
+            "GPD",
+            "Battery",
+            "GPD-Model",
+            InterviewState.Successful,
+            undefined,
+        );
+
+        expect(() => controller.setGreenPowerSinkDevice("0x000b57fffe333333", "0x00158d0002d4a901")).toThrowError("does not exist");
+        expect(() => controller.setGreenPowerSinkDevice(gpd.ieeeAddr, "0x000b57fffe444444")).toThrowError("does not exist");
+        expect(gpd.gpSinkDevice).toBeUndefined();
+    });
+
     it("Controller permit joining through specific device", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
@@ -2266,6 +2326,69 @@ describe("Controller", () => {
         expect(events.permitJoinChanged[1]).toStrictEqual({permitted: false});
         expect(controller.getPermitJoin()).toStrictEqual(false);
         expect(controller.getPermitJoinEnd()).toBeUndefined();
+    });
+
+    it("Controller permit join to a specific GP sink router", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const sink = controller.getDeviceByIeeeAddr("0x129")!;
+
+        mocksendZclFrameToEndpoint.mockClear();
+        mocksendZclFrameToAll.mockClear();
+
+        await controller.permitJoinToSink(254, sink);
+
+        // Green Power only: no normal permit join and no broadcast
+        expect(mockAdapterPermitJoin).toHaveBeenCalledTimes(0);
+        expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(0);
+        // commissioning-mode sent unicast to the sink router
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        const call = mocksendZclFrameToEndpoint.mock.calls[0];
+        expect(call[0]).toStrictEqual("0x129");
+        expect(call[1]).toStrictEqual(129);
+
+        expect(events.permitJoinChanged.length).toStrictEqual(1);
+        expect(events.permitJoinChanged[0]).toStrictEqual({permitted: true, time: 254});
+        expect(controller.getPermitJoin()).toStrictEqual(true);
+        expect(controller.getPermitJoinEnd()).toBeGreaterThan(0);
+
+        await vi.advanceTimersByTimeAsync(120 * 1000);
+        expect(controller.getPermitJoin()).toStrictEqual(true);
+
+        // Timer expired
+        await vi.advanceTimersByTimeAsync(300 * 1000);
+        expect(events.permitJoinChanged.length).toStrictEqual(2);
+        expect(events.permitJoinChanged[1]).toStrictEqual({permitted: false});
+        expect(controller.getPermitJoin()).toStrictEqual(false);
+        expect(controller.getPermitJoinEnd()).toBeUndefined();
+    });
+
+    it("Controller permit join to sink rejects invalid time", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const sink = controller.getDeviceByIeeeAddr("0x129")!;
+
+        mocksendZclFrameToEndpoint.mockClear();
+        mocksendZclFrameToAll.mockClear();
+
+        await expect(controller.permitJoinToSink(0, sink)).rejects.toThrow("Cannot permit join with time <= 0");
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
+        expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(0);
+        expect(events.permitJoinChanged.length).toStrictEqual(0);
+    });
+
+    it("Controller permit join to sink rejects too long time", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const sink = controller.getDeviceByIeeeAddr("0x129")!;
+
+        mocksendZclFrameToEndpoint.mockClear();
+        mocksendZclFrameToAll.mockClear();
+
+        await expect(controller.permitJoinToSink(255, sink)).rejects.toThrow("Cannot permit join for more than 254 seconds.");
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(0);
+        expect(mocksendZclFrameToAll).toHaveBeenCalledTimes(0);
+        expect(events.permitJoinChanged.length).toStrictEqual(0);
     });
 
     it("Controller permit joining for specific time", async () => {
