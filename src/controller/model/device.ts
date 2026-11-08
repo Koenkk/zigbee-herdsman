@@ -1103,7 +1103,7 @@ export class Device extends Entity<ControllerEventMap> {
             if (endpoint.supportsInputCluster("ssIasZone")) {
                 logger.debug(`Interview - IAS - enrolling '${this.ieeeAddr}' endpoint '${endpoint.ID}'`, NS);
 
-                const stateBefore = await endpoint.read("ssIasZone", ["iasCieAddr", "zoneState"], {sendPolicy: "immediate"});
+                const stateBefore = await endpoint.read("ssIasZone", ["iasCieAddr", "zoneState", "zoneType"], {sendPolicy: "immediate"});
                 logger.debug(() => `Interview - IAS - before enrolling state: '${JSON.stringify(stateBefore)}'`, NS);
 
                 // Do not enroll when device has already been enrolled
