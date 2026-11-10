@@ -7,6 +7,7 @@ import {Adapter, type TsType} from "../../src/adapter";
 import {findAllDevices} from "../../src/adapter/adapterDiscovery";
 import {DeconzAdapter} from "../../src/adapter/deconz/adapter/deconzAdapter";
 import {EmberAdapter} from "../../src/adapter/ember/adapter/emberAdapter";
+import {EspZbAdapter} from "../../src/adapter/espzb/adapter/espzbAdapter";
 import {EZSPAdapter} from "../../src/adapter/ezsp/adapter/ezspAdapter";
 import {parseTcpPath} from "../../src/adapter/utils";
 import {ZStackAdapter} from "../../src/adapter/z-stack/adapter/zStackAdapter";
@@ -121,6 +122,7 @@ describe("Adapter", () => {
         ["zboss", ZBOSSAdapter],
         ["zigate", ZiGateAdapter],
         ["zoh", ZoHAdapter],
+        ["espzb", EspZbAdapter],
     ])("Calls adapter contructor for %s", async (name, cls) => {
         const adapter = await Adapter.create(
             {
@@ -1093,7 +1095,7 @@ describe("Adapter", () => {
                         "test.db.backup",
                         {disableLED: false},
                     ),
-                ).rejects.toThrow(`Adapter 'invalid' does not exists, possible options: zstack, ember, deconz, zigate, zboss, zoh, ezsp`);
+                ).rejects.toThrow(`Adapter 'invalid' does not exists, possible options: zstack, ember, deconz, zigate, zboss, zoh, espzb, ezsp`);
             });
         });
 

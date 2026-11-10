@@ -1,4 +1,4 @@
-export type Adapter = "deconz" | "ember" | "zstack" | "zboss" | "zigate" | "ezsp" | "zoh";
+export type Adapter = "deconz" | "ember" | "zstack" | "zboss" | "zigate" | "ezsp" | "zoh" | "espzb";
 export type DiscoverableUsbAdapter = "deconz" | "ember" | "zstack" | "zboss" | "zigate";
 
 export type UsbAdapterFingerprint = {
