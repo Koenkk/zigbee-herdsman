@@ -629,7 +629,7 @@ class ZnpRequestMockBuilder {
 
 const baseZnpRequestMock = new ZnpRequestMockBuilder()
     .handle(Subsystem.SYS, "version", (payload) => (equals(payload, {}) ? {payload: {product: ZnpVersion.ZStack30x, revision: 20201026}} : undefined))
-    .handle(Subsystem.SYS, "ping", () => ({}))
+    .handle(Subsystem.SYS, "ping", () => ({payload: {capabilities: 0x0179}}))
     .handle(Subsystem.SYS, "resetReq", () => ({}))
     .handle(Subsystem.SYS, "getExtAddr", () => ({payload: {extaddress: "0x00124b0009d69f77"}}))
     .handle(Subsystem.SYS, "stackTune", () => ({}))
@@ -2254,8 +2254,29 @@ describe("zstack-adapter", () => {
     it("Get coordinator version", async () => {
         basicMocks();
         await adapter.start();
+        const versionLogCall = mockLogger.debug.mock.calls.find((call) => typeof call[0] === "function" && call[1] === "zh:zstack");
+        expect(versionLogCall?.[0]()).toBe(`Detected znp version 'ZStack3x0' ({"product":1,"revision":20210430})`);
         mockZnpRequest.mockClear();
         mockQueueExecute.mockClear();
+        expect(await adapter.getCoordinatorVersion()).toStrictEqual({type: "ZStack3x0", meta: {revision: 20210430, product: 1}});
+    });
+
+    it("Get coordinator version (ZeroStack)", async () => {
+        basicMocks();
+        mockZnpRequestWith(commissioned3x0AlignedRequestMock.clone().handle(Subsystem.SYS, "ping", () => ({payload: {capabilities: 0x2459}})));
+        await adapter.start();
+        const zsLogCall = mockLogger.debug.mock.calls.find((call) => typeof call[0] === "function" && call[1] === "zh:zstack");
+        expect(zsLogCall?.[0]()).toBe(`Detected znp version 'ZStack3x0' (ZeroStack) ({"product":1,"revision":20210430})`);
+        expect(await adapter.getCoordinatorVersion()).toStrictEqual({
+            type: "ZStack3x0",
+            meta: {revision: 20210430, product: 1, stack: "ZeroStack"},
+        });
+
+        mockLogger.debug.mockClear();
+        mockZnpRequestWith(commissioned3x0AlignedRequestMock);
+        await adapter.start();
+        const stockLogCall = mockLogger.debug.mock.calls.find((call) => typeof call[0] === "function" && call[1] === "zh:zstack");
+        expect(stockLogCall?.[0]()).toBe(`Detected znp version 'ZStack3x0' ({"product":1,"revision":20210430})`);
         expect(await adapter.getCoordinatorVersion()).toStrictEqual({type: "ZStack3x0", meta: {revision: 20210430, product: 1}});
     });
 
