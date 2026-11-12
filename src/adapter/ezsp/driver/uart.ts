@@ -41,6 +41,10 @@ export class SerialDriver extends EventEmitter {
     private rejectCondition = false;
     private waitress: Waitress<EZSPPacket, EZSPPacketMatcher>;
     private queue: AsyncMutex;
+    // XXX: due to ezsp's old internal reset mechanism, transport doesn't get reset properly
+    //      targeted removals to not remove transport's own handlers
+    private boundOnTransportData = this.onTransportData.bind(this);
+    private boundOnTransportClose = this.onTransportClose.bind(this);
 
     constructor(transport: AdapterTransport) {
         super();
@@ -48,14 +52,9 @@ export class SerialDriver extends EventEmitter {
         this.initialized = false;
         this.queue = new AsyncMutex();
         this.waitress = new Waitress<EZSPPacket, EZSPPacketMatcher>(this.waitressValidator, this.waitressTimeoutFormatter);
-        this.transport.on("data", this.onTransportData.bind(this));
-        this.transport.on("close", (error) => {
-            if (error != null && error !== false) {
-                this.emit("reset");
-            } else {
-                this.initialized = false;
-            }
-        });
+
+        this.transport.on("data", this.boundOnTransportData);
+        this.transport.on("close", this.boundOnTransportClose);
     }
 
     private onTransportData(chunk: Buffer): void {
@@ -84,6 +83,14 @@ export class SerialDriver extends EventEmitter {
         }
 
         this.parserTail.push(chunk);
+    }
+
+    private onTransportClose(error?: boolean | Error): void {
+        if (error != null && error !== false) {
+            this.emit("reset");
+        } else {
+            this.initialized = false;
+        }
     }
 
     private *unstuff(buffer: Buffer): Generator<number> {
@@ -333,6 +340,9 @@ export class SerialDriver extends EventEmitter {
     public async close(): Promise<void> {
         logger.debug("Closing UART", NS);
         this.queue.clear();
+
+        this.transport.removeListener("data", this.boundOnTransportData);
+        this.transport.removeListener("close", this.boundOnTransportClose);
 
         if (this.initialized) {
             this.initialized = false;
