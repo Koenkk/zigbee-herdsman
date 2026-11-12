@@ -13,6 +13,7 @@ import {ZStackAdapter} from "../../src/adapter/z-stack/adapter/zStackAdapter";
 import {ZBOSSAdapter} from "../../src/adapter/zboss/adapter/zbossAdapter";
 import {ZiGateAdapter} from "../../src/adapter/zigate/adapter/zigateAdapter";
 import {ZoHAdapter} from "../../src/adapter/zoh/adapter/zohAdapter";
+import * as Zcl from "../../src/zspec/zcl";
 import {
     DECONZ_CONBEE_II,
     EMBER_SKYCONNECT,
@@ -136,6 +137,34 @@ describe("Adapter", () => {
 
         expect(adapter).toBeInstanceOf(cls);
     });
+
+    it.each(["deconz", "ezsp", "zstack", "zboss", "zigate", "zoh"] as const)(
+        "rejects delivery requirements not implemented by %s before sending anything",
+        async (name) => {
+            const adapter = await Adapter.create(
+                {panID: 0x1a62, channelList: [11], extendedPanID: [1, 2, 3, 4, 5, 6, 7, 8], networkKey: Array.from({length: 16}, (_, i) => i)},
+                {path: "/dev/ttyUSB0", adapter: name},
+                "test.db.backup",
+                {disableLED: false},
+            );
+            const frame = Zcl.Frame.create(
+                Zcl.FrameType.GLOBAL,
+                Zcl.Direction.CLIENT_TO_SERVER,
+                true,
+                undefined,
+                3,
+                "read",
+                "genBasic",
+                [{attrId: 0}],
+                {},
+            );
+            for (const options of [{requestApsAck: true}, {sendDeadline: performance.now() + 5000}]) {
+                await expect(
+                    adapter.sendZclFrameToEndpoint("0x1122334455667788", 1234, 1, frame, 5000, true, true, undefined, undefined, options),
+                ).rejects.toThrow("does not support requested ZCL delivery options");
+            }
+        },
+    );
 
     it("finds all devices", async () => {
         mockList.mockResolvedValueOnce([

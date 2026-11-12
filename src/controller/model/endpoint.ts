@@ -1,5 +1,6 @@
 import assert from "node:assert";
 import type {Events as AdapterEvents} from "../../adapter";
+import type {ZclSendOptions} from "../../adapter/tstype";
 import {logger} from "../../utils/logger";
 import * as ZSpec from "../../zspec";
 import {BroadcastAddress} from "../../zspec/enums";
@@ -43,7 +44,7 @@ export interface ReadReportConfigItem<Cl extends string | number, Custom extends
     attribute: ClusterOrRawAttributeKeys<Cl, Custom>[number] | {ID: number};
 }
 
-interface Options {
+interface Options extends ZclSendOptions {
     manufacturerCode?: number;
     disableDefaultResponse?: boolean;
     disableResponse?: boolean;
@@ -403,7 +404,7 @@ export class Endpoint extends ZigbeeEntity {
         frame: Zcl.Frame,
         options: OptionsWithDefaults,
         func: () => Promise<Type> = (): Promise<Type> => {
-            return Entity.adapter.sendZclFrameToEndpoint(
+            const args: Parameters<typeof Entity.adapter.sendZclFrameToEndpoint> = [
                 this.deviceIeeeAddress,
                 this.deviceNetworkAddress,
                 this.ID,
@@ -413,7 +414,11 @@ export class Endpoint extends ZigbeeEntity {
                 options.disableRecovery,
                 options.srcEndpoint,
                 options.profileId,
-            ) as Promise<Type>;
+            ];
+            if (options.requestApsAck !== undefined || options.sendDeadline !== undefined) {
+                args.push({requestApsAck: options.requestApsAck, sendDeadline: options.sendDeadline});
+            }
+            return Entity.adapter.sendZclFrameToEndpoint(...args) as Promise<Type>;
         },
     ): Promise<Type> {
         const logPrefix = `Request Queue (${this.deviceIeeeAddress}/${this.ID}): `;

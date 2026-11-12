@@ -3401,6 +3401,26 @@ describe("Controller", () => {
         });
     });
 
+    it("forwards explicit unicast delivery requirements through the public endpoint API", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+        mocksendZclFrameToEndpoint.mockClear();
+        const sendDeadline = performance.now() + 5000;
+        await endpoint.command(
+            "genOnOff",
+            "on",
+            {},
+            {disableDefaultResponse: true, disableResponse: true, disableRecovery: true, sendPolicy: "immediate", requestApsAck: true, sendDeadline},
+        );
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        const call = mocksendZclFrameToEndpoint.mock.calls[0];
+        expect(call[9]).toEqual({requestApsAck: true, sendDeadline});
+        expect(call[5]).toBe(true);
+        expect(call[6]).toBe(true);
+        expect(call[3].toBuffer()[0]).toBe(0x11);
+    });
+
     it("Sends read response for unsupported attribute", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});

@@ -11,7 +11,16 @@ import * as Zdo from "../../../zspec/zdo";
 import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
 import Adapter, {type ClusterWaitressMatcher, type ZclWaitressPayload} from "../../adapter";
 import type * as Events from "../../events";
-import type {AdapterOptions, CoordinatorVersion, NetworkOptions, NetworkParameters, StartResult, TransportOptions} from "../../tstype";
+import type {
+    AdapterOptions,
+    CoordinatorVersion,
+    NetworkOptions,
+    NetworkParameters,
+    StartResult,
+    TransportOptions,
+    ZclSendOptions,
+} from "../../tstype";
+import {validateZclSendOptions} from "../../zclSendOptions";
 import * as Constants from "../constants";
 import {Constants as UnpiConstants} from "../unpi";
 import {Znp, type ZpiObject} from "../znp";
@@ -459,7 +468,9 @@ export class ZStackAdapter extends Adapter {
         disableRecovery: boolean,
         sourceEndpoint?: number,
         profileId?: number,
+        sendOptions?: ZclSendOptions,
     ): Promise<Events.ZclPayload | undefined> {
+        validateZclSendOptions(sendOptions);
         const srcEndpoint = this.selectSourceEndpoint(sourceEndpoint, profileId);
 
         return await this.queue.execute<Events.ZclPayload | undefined>(async () => {

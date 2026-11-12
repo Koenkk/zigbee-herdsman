@@ -214,6 +214,7 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
         disableRecovery: boolean,
         sourceEndpoint?: number,
         profileId?: number,
+        sendOptions?: TsType.ZclSendOptions,
     ): Promise<AdapterEvents.ZclPayload | undefined>;
 
     public abstract sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void>;

@@ -17,6 +17,8 @@ import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
 import {Adapter, type ClusterWaitressMatcher, type ZclWaitressPayload} from "../../adapter";
 import type {ZclPayload} from "../../events";
 import type * as TsType from "../../tstype";
+import type {ZclSendOptions} from "../../tstype";
+import {validateZclSendOptions} from "../../zclSendOptions";
 import {bigUInt64ToHexBE} from "./utils";
 
 const NS = "zh:zoh";
@@ -439,7 +441,9 @@ export class ZoHAdapter extends Adapter {
         disableRecovery: boolean,
         sourceEndpoint?: number,
         profileId?: number,
+        sendOptions?: ZclSendOptions,
     ): Promise<ZclPayload | undefined> {
+        validateZclSendOptions(sendOptions);
         /* v8 ignore start */
         if (networkAddress === ZSpec.COORDINATOR_ADDRESS) {
             // TODO: handle e.g. GP permit join

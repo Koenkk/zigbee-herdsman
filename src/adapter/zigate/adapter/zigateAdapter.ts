@@ -1,3 +1,5 @@
+import type {ZclSendOptions} from "../../tstype";
+import {validateZclSendOptions} from "../../zclSendOptions";
 /* v8 ignore start */
 
 import type * as Models from "../../../models";
@@ -278,7 +280,9 @@ export class ZiGateAdapter extends Adapter {
         disableRecovery: boolean,
         sourceEndpoint?: number,
         profileId?: number,
+        sendOptions?: ZclSendOptions,
     ): Promise<Events.ZclPayload | undefined> {
+        validateZclSendOptions(sendOptions);
         return await this.queue.execute<Events.ZclPayload | undefined>(async () => {
             return await this.sendZclFrameToEndpointInternal(
                 ieeeAddr,

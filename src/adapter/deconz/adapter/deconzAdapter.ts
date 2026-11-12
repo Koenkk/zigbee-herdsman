@@ -1,3 +1,5 @@
+import type {ZclSendOptions} from "../../tstype";
+import {validateZclSendOptions} from "../../zclSendOptions";
 /* v8 ignore start */
 
 //import Device from "../../../controller/model/device";
@@ -346,7 +348,9 @@ export class DeconzAdapter extends Adapter {
         _disableRecovery: boolean,
         sourceEndpoint?: number,
         profileId?: number,
+        sendOptions?: ZclSendOptions,
     ): Promise<Events.ZclPayload | undefined> {
+        validateZclSendOptions(sendOptions);
         const transactionID = this.nextTransactionID();
         const payload = zclFrame.toBuffer();
 

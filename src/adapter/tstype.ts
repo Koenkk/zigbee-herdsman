@@ -57,3 +57,11 @@ export interface NetworkParameters {
     channel: number;
     nwkUpdateID: number;
 }
+
+/** Optional delivery requirements for one unicast, independent of ZCL response matching. */
+export interface ZclSendOptions {
+    /** Request APS acknowledgement/retries even when no matching ZCL response is expected. */
+    requestApsAck?: boolean;
+    /** Latest submission time to the radio, in this process's performance.now() clock. */
+    sendDeadline?: number;
+}

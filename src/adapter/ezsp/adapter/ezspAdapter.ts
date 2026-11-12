@@ -1,3 +1,5 @@
+import type {ZclSendOptions} from "../../tstype";
+import {validateZclSendOptions} from "../../zclSendOptions";
 /* v8 ignore start */
 
 import assert from "node:assert";
@@ -314,7 +316,9 @@ export class EZSPAdapter extends Adapter {
         disableRecovery: boolean,
         sourceEndpoint?: number,
         profileId?: number,
+        sendOptions?: ZclSendOptions,
     ): Promise<ZclPayload | undefined> {
+        validateZclSendOptions(sendOptions);
         return await this.queue.execute<ZclPayload | undefined>(async () => {
             this.checkInterpanLock();
             return await this.sendZclFrameToEndpointInternal(

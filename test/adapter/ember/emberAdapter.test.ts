@@ -3299,6 +3299,135 @@ describe("Ember Adapter Layer", () => {
             expect(mockEzspSend).toHaveBeenCalledWith(EmberOutgoingMessageType.DIRECT, networkAddress, apsFrame, zclFrame.toBuffer(), 0, 0);
         });
 
+        describe("Explicit APS delivery for asynchronous protocols", () => {
+            function frame() {
+                const cluster = {
+                    name: "encryptedLockTest",
+                    ID: 0xef00,
+                    attributes: {},
+                    commands: {request: {name: "request", ID: 2, parameters: [{name: "payload", type: Zcl.BuffaloZclDataType.BUFFER}]}},
+                    commandsResponse: {},
+                };
+                return Zcl.Frame.create(
+                    Zcl.FrameType.SPECIFIC,
+                    Zcl.Direction.CLIENT_TO_SERVER,
+                    true,
+                    undefined,
+                    3,
+                    "request",
+                    cluster.name,
+                    {payload: Buffer.from("aabb", "hex")},
+                    {[cluster.name]: cluster},
+                );
+            }
+
+            it("requests APS retries with the 0x11 header and no synchronous ZCL waiter, for this frame only", async () => {
+                const first = frame();
+                // @ts-expect-error private
+                const waiter = vi.spyOn(adapter.oneWaitress, "startWaitingFor");
+                await adapter.sendZclFrameToEndpoint("0x1122334455667788", 1234, 1, first, 5000, true, true, undefined, undefined, {
+                    requestApsAck: true,
+                    sendDeadline: performance.now() + 5000,
+                });
+                expect(waiter).not.toHaveBeenCalled();
+                expect(mockEzspSend).toHaveBeenCalledTimes(1);
+                expect(mockEzspSend.mock.calls[0][2].options).toBe(DEFAULT_APS_OPTIONS);
+                expect(mockEzspSend.mock.calls[0][3]).toEqual(Buffer.from("110302aabb", "hex"));
+                await adapter.sendZclFrameToEndpoint("0x1122334455667788", 1234, 1, frame(), 5000, true, true);
+                expect(mockEzspSend.mock.calls[1][2].options).toBe(DEFAULT_APS_OPTIONS & ~EmberApsOption.RETRY);
+                waiter.mockRestore();
+            });
+
+            it("does not release an expired packet after a real adapter queue wait, even if the caller mutates its options", async () => {
+                const clock = vi.spyOn(performance, "now").mockReturnValue(10);
+                let release!: () => void;
+                const gate = new Promise<void>((resolve) => {
+                    release = resolve;
+                });
+                // @ts-expect-error private: exercise the actual queue rather than mocking execute.
+                const blocked = adapter.queue.execute(async () => await gate, 1234);
+                const options = {requestApsAck: true, sendDeadline: 50};
+                const pending = defuseRejection(
+                    adapter.sendZclFrameToEndpoint("0x1122334455667788", 1234, 1, frame(), 5000, true, true, undefined, undefined, options),
+                );
+                options.sendDeadline = 10000;
+                clock.mockReturnValue(100);
+                release();
+                await blocked;
+                await expect(pending).rejects.toThrow("expired before transmission");
+                expect(mockEzspSend).not.toHaveBeenCalled();
+                clock.mockRestore();
+            });
+
+            it("checks expiration again after a resource-recovery delay", async () => {
+                const clock = vi.spyOn(performance, "now").mockReturnValue(10);
+                mockEzspSend.mockResolvedValueOnce([SLStatus.BUSY, 0]);
+                const pending = defuseRejection(
+                    adapter.sendZclFrameToEndpoint("0x1122334455667788", 1234, 1, frame(), 5000, true, false, undefined, undefined, {
+                        requestApsAck: true,
+                        sendDeadline: 50,
+                    }),
+                );
+                await flushPromises();
+                expect(mockEzspSend).toHaveBeenCalledTimes(1);
+                clock.mockReturnValue(100);
+                await vi.advanceTimersByTimeAsync(5000);
+                await expect(pending).rejects.toThrow("expired before transmission");
+                expect(mockEzspSend).toHaveBeenCalledTimes(1);
+                clock.mockRestore();
+            });
+
+            it("never retries a radio submission when recovery is disabled", async () => {
+                mockEzspSend.mockResolvedValueOnce([SLStatus.BUSY, 0]);
+                await expect(
+                    adapter.sendZclFrameToEndpoint("0x1122334455667788", 1234, 1, frame(), 5000, true, true, undefined, undefined, {
+                        requestApsAck: true,
+                    }),
+                ).rejects.toThrow("BUSY");
+                expect(mockEzspSend).toHaveBeenCalledTimes(1);
+            });
+
+            it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+                "rejects invalid deadline %s without radio submission",
+                async (sendDeadline) => {
+                    await expect(
+                        adapter.sendZclFrameToEndpoint("0x1122334455667788", 1234, 1, frame(), 5000, true, true, undefined, undefined, {
+                            requestApsAck: true,
+                            sendDeadline,
+                        }),
+                    ).rejects.toThrow("Invalid ZCL send deadline");
+                    expect(mockEzspSend).not.toHaveBeenCalled();
+                },
+            );
+
+            it("rejects a malformed APS acknowledgement option before radio submission", async () => {
+                await expect(
+                    adapter.sendZclFrameToEndpoint("0x1122334455667788", 1234, 1, frame(), 5000, true, true, undefined, undefined, {
+                        // @ts-expect-error exercise runtime validation at the public API boundary.
+                        requestApsAck: "yes",
+                    }),
+                ).rejects.toThrow("Invalid ZCL APS acknowledgement option");
+                expect(mockEzspSend).not.toHaveBeenCalled();
+            });
+
+            it("preserves legacy no-response delivery when the APS override is false", async () => {
+                await adapter.sendZclFrameToEndpoint("0x1122334455667788", 1234, 1, frame(), 5000, true, true, undefined, undefined, {
+                    requestApsAck: false,
+                });
+                expect(mockEzspSend).toHaveBeenCalledTimes(1);
+                expect(mockEzspSend.mock.calls[0][2].options).toBe(DEFAULT_APS_OPTIONS & ~EmberApsOption.RETRY);
+            });
+
+            it("rejects a packet already expired on arrival", async () => {
+                await expect(
+                    adapter.sendZclFrameToEndpoint("0x1122334455667788", 1234, 1, frame(), 5000, true, true, undefined, undefined, {
+                        sendDeadline: performance.now() - 1,
+                    }),
+                ).rejects.toThrow("expired before transmission");
+                expect(mockEzspSend).not.toHaveBeenCalled();
+            });
+        });
+
         it("Adapter impl: sendZclFrameToEndpoint without response", async () => {
             const networkAddress: NodeId = 1234;
             const endpoint: number = 3;

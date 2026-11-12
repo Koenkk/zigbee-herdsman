@@ -1,7 +1,6 @@
 import {randomBytes} from "node:crypto";
 import {readFileSync, renameSync} from "node:fs";
 import path from "node:path";
-
 import equals from "fast-deep-equal/es6";
 import type {Backup} from "../../../models";
 import {BackupUtils, Queue, wait} from "../../../utils";
@@ -14,7 +13,9 @@ import type * as ZdoTypes from "../../../zspec/zdo/definition/tstypes";
 import {Adapter, type TsType} from "../..";
 import {WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE} from "../../const";
 import type {DeviceJoinedPayload, DeviceLeavePayload, ZclPayload} from "../../events";
+import type {ZclSendOptions} from "../../tstype";
 import {readBackup} from "../../utils";
+import {assertZclSendDeadline, validateZclSendOptions} from "../../zclSendOptions";
 import {
     EMBER_HIGH_RAM_CONCENTRATOR,
     EMBER_LOW_RAM_CONCENTRATOR,
@@ -1955,7 +1956,10 @@ export class EmberAdapter extends Adapter {
         disableRecovery: boolean,
         sourceEndpoint?: number,
         profileId?: number,
+        sendOptions?: ZclSendOptions,
     ): Promise<ZclPayload | undefined> {
+        sendOptions = sendOptions ? {...sendOptions} : undefined;
+        validateZclSendOptions(sendOptions, true);
         const command = zclFrame.command;
         let commandResponseId: number | undefined;
 
@@ -1976,8 +1980,8 @@ export class EmberAdapter extends Adapter {
             sequence: 0, // set by stack
         };
 
-        // don't RETRY if no response expected
-        if (commandResponseId === undefined) {
+        // Preserve legacy defaults unless APS acknowledgement was explicitly requested.
+        if (commandResponseId === undefined && !sendOptions?.requestApsAck) {
             apsFrame.options &= ~EmberApsOption.RETRY;
         }
 
@@ -1990,6 +1994,7 @@ export class EmberAdapter extends Adapter {
 
         return await this.queue.execute<ZclPayload | undefined>(async () => {
             this.checkInterpanLock();
+            assertZclSendDeadline(sendOptions);
 
             logger.debug(
                 () => `~~~> [ZCL to=${ieeeAddr}:${networkAddress} apsFrame=${JSON.stringify(apsFrame)} header=${JSON.stringify(zclFrame.header)}]`,
@@ -1997,6 +2002,7 @@ export class EmberAdapter extends Adapter {
             );
 
             for (let i = 1; i <= QUEUE_MAX_SEND_ATTEMPTS; i++) {
+                assertZclSendDeadline(sendOptions);
                 let status: SLStatus = SLStatus.FAIL;
 
                 try {
