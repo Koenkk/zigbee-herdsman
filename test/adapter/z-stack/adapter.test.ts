@@ -1592,6 +1592,15 @@ describe("zstack-adapter", () => {
         expect(result).toBe("resumed");
     });
 
+    it("should fail to start network with 3.x.0 adapter when nv request fails", async () => {
+        mockZnpRequestWith(
+            commissioned3x0AlignedRequestMock.clone().handle(Subsystem.SYS, "osalNvLength", () => {
+                throw new Error("SRSP - SYS - osalNvLength after 6000ms");
+            }),
+        );
+        await expect(adapter.start()).rejects.toThrowError("SRSP - SYS - osalNvLength after 6000ms");
+    });
+
     it("should restore unified backup with 3.0.x adapter and create backup - empty", async () => {
         const backupFile = getTempFile();
         fs.writeFileSync(backupFile, JSON.stringify(backupMatchingConfig), "utf8");

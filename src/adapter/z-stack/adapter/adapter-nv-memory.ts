@@ -420,26 +420,21 @@ export class AdapterNvMemory {
      * *Some timeouts were present when working with SimpleLink Z-Stack 3.x.0+.*
      *
      * @param fn Function to retry.
-     * @param retries Maximum number of retries.
+     * @param retries Maximum number of total attempts.
      */
-    // @ts-expect-error always returns something or throws an error as retries >= 1
     private async retry<R>(fn: () => Promise<R>, retries = 3): Promise<R> {
         assert(retries >= 1);
         let i = 0;
-        while (i < retries) {
+        while (true) {
             try {
                 const result = await fn();
                 return result;
-                /* v8 ignore start */
             } catch (error) {
-                if (i >= retries) {
+                if (++i >= retries) {
                     throw error;
                 }
             }
-
-            i++;
         }
-        /* v8 ignore stop */
     }
 
     /**
