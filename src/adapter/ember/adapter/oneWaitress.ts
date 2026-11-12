@@ -190,7 +190,7 @@ export class EmberOneWaitress {
     public waitFor<T>(matcher: OneWaitressMatcher, timeout: number): {id: number; start: () => {promise: Promise<T>; id: number}} {
         this.currentId += 1;
         const id = this.currentId;
-        this.currentId &= 0xffff; // roll-over every so often - 65535 should be enough not to create conflicts ;-)
+        this.currentId &= 0xffffffff; // roll-over every so often
 
         const promise: Promise<T> = new Promise((resolve, reject): void => {
             const object: Waiter<typeof matcher, T> = {matcher, resolve, reject, timedout: false, resolved: false, id};
