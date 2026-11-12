@@ -1724,6 +1724,43 @@ describe("zstack-adapter", () => {
         expect(missingDevice?.linkKey?.key.toString("hex")).toBe("bff550908aa1529ee90eea3c3bdc26fc");
     });
 
+    it("should create backup with 3.x.0 adapter - link keys after freed address manager and aps link key data slots", async () => {
+        const backupFile = getTempFile();
+        fs.writeFileSync(backupFile, JSON.stringify(backupMatchingConfig), "utf8");
+        adapter = new ZStackAdapter(networkOptions, transportOptions, backupFile, {concurrent: 3});
+        mockZnpRequestWith(empty3x0AlignedRequestMock);
+        expect(await adapter.start()).toBe("restored");
+        const nvWrite = {sysid: NvSystemIds.ZSTACK, offset: 0};
+        for (const subid of [0, 1]) {
+            await mockZnpRequest(Subsystem.SYS, "nvWrite", {
+                ...nvWrite,
+                itemid: NvItemsIds.ZCD_NV_EX_ADDRMGR,
+                subid,
+                value: Buffer.from("00ff00000000000000000000", "hex"),
+            });
+        }
+        await mockZnpRequest(Subsystem.SYS, "nvWrite", {
+            ...nvWrite,
+            itemid: NvItemsIds.ZCD_NV_EX_APS_KEY_DATA_TABLE,
+            subid: 0,
+            value: Buffer.alloc(24, 0),
+        });
+
+        const backup = await adapter.backup([]);
+        const findDevice = (ieee: string) => backup.devices.find((d) => d.ieeeAddress.toString("hex") === ieee);
+        expect(findDevice("00158d00024f4518")?.linkKey).toStrictEqual({
+            key: Buffer.from("267e1e31fcd8171f8acf63459effbca5", "hex"),
+            rxCounter: 0,
+            txCounter: 2544,
+        });
+        expect(findDevice("00158d00024f810d")?.linkKey).toBeUndefined();
+        expect(findDevice("00158d00024f810e")?.linkKey).toStrictEqual({
+            key: Buffer.from("55ba1e31fcd8171fee0b63459effeea5", "hex"),
+            rxCounter: 24,
+            txCounter: 2591,
+        });
+    });
+
     it("should fail when backup file is corrupted - Coordinator backup is corrupted", async () => {
         const backupFile = getTempFile();
         fs.writeFileSync(backupFile, "{", "utf8");
