@@ -807,6 +807,7 @@ describe("Controller", () => {
             ],
             _ieeeAddr: "0x0000012300000000",
             _interviewState: InterviewState.Successful,
+            _lastDefaultResponseTime: 0,
             _skipDefaultResponse: false,
             _manufacturerID: 0x0007,
             _networkAddress: 0,
@@ -1372,6 +1373,7 @@ describe("Controller", () => {
                 _eventsCount: 0,
                 meta: {},
                 _skipDefaultResponse: false,
+                _lastDefaultResponseTime: 0,
                 _lastSeen: Date.now(),
                 ID: 2,
                 _pendingRequestTimeout: 0,
@@ -1390,6 +1392,7 @@ describe("Controller", () => {
             _eventsCount: 0,
             _pendingRequestTimeout: 0,
             _skipDefaultResponse: false,
+            _lastDefaultResponseTime: 0,
             _lastSeen: Date.now(),
             _type: "Router",
             _ieeeAddr: "0x129",
@@ -1463,6 +1466,7 @@ describe("Controller", () => {
                 _skipDefaultResponse: false,
                 _events: {},
                 _eventsCount: 0,
+                _lastDefaultResponseTime: 0,
                 _lastSeen: Date.now(),
                 ID: 2,
                 _pendingRequestTimeout: 0,
@@ -1481,6 +1485,7 @@ describe("Controller", () => {
             _eventsCount: 0,
             _pendingRequestTimeout: 0,
             _skipDefaultResponse: false,
+            _lastDefaultResponseTime: 0,
             _lastSeen: Date.now(),
             _type: "Router",
             _ieeeAddr: "0x129",
@@ -2868,6 +2873,39 @@ describe("Controller", () => {
             expect(events.message.length).toBe(2);
             expect(endpointDefaultResponseSpy).toHaveBeenCalledTimes(1);
         });
+
+        it("Send default response again to frame retransmitted with the same sequence number after a while", async () => {
+            const header = reportHeader();
+            await controller.start();
+            await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+            const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+            const endpointDefaultResponseSpy = vi.spyOn(endpoint, "defaultResponse");
+            const payload = {
+                wasBroadcast: false,
+                address: 129,
+                clusterID: 0xe000,
+                data: toZclBuffer(header, ts011fReportPayload()),
+                header,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 0,
+            };
+
+            await mockAdapterEvents.zclPayload(payload);
+            // a device that never increments its sequence number keeps retransmitting until it is answered again
+            vi.setSystemTime(mockedDate.getTime() + 8000);
+            await mockAdapterEvents.zclPayload(payload);
+
+            expect(events.message.length).toBe(2);
+            expect(endpointDefaultResponseSpy).toHaveBeenCalledTimes(2);
+            expect(endpointDefaultResponseSpy).toHaveBeenLastCalledWith(
+                header.commandIdentifier,
+                Zcl.Status.SUCCESS,
+                0xe000,
+                header.transactionSequenceNumber,
+                {direction: Zcl.Direction.CLIENT_TO_SERVER},
+            );
+        });
     });
 
     it("Receive zclData from unkonwn device shouldnt emit anything", async () => {
@@ -3551,6 +3589,7 @@ describe("Controller", () => {
             _pendingRequestTimeout: 0,
             _ieeeAddr: "0x150",
             _networkAddress: 150,
+            _lastDefaultResponseTime: 0,
             _lastSeen: Date.now(),
             _linkquality: 50,
             _skipDefaultResponse: false,
@@ -3612,6 +3651,7 @@ describe("Controller", () => {
             _pendingRequestTimeout: 0,
             _ieeeAddr: "0x151",
             _networkAddress: 151,
+            _lastDefaultResponseTime: 0,
             _lastSeen: Date.now(),
             _linkquality: 50,
             _skipDefaultResponse: false,
@@ -4232,6 +4272,7 @@ describe("Controller", () => {
                 _eventsCount: 0,
                 meta: {},
                 _skipDefaultResponse: false,
+                _lastDefaultResponseTime: 0,
                 _lastSeen: Date.now(),
                 ID: 2,
                 _pendingRequestTimeout: 0,
@@ -4275,6 +4316,7 @@ describe("Controller", () => {
                 _type: "Unknown",
                 _ieeeAddr: "0x129",
                 _interviewState: InterviewState.Pending,
+                _lastDefaultResponseTime: 0,
                 _networkAddress: 129,
             },
             status: "started",
@@ -6103,6 +6145,7 @@ describe("Controller", () => {
             ],
             _ieeeAddr: "0x90fd9ffffe4b64ae",
             _interviewState: InterviewState.Successful,
+            _lastDefaultResponseTime: 0,
             _manufacturerID: 4476,
             meta: {},
             _networkAddress: 19468,
@@ -6854,6 +6897,7 @@ describe("Controller", () => {
             ],
             _ieeeAddr: "0x0000012300000000",
             _interviewState: InterviewState.Failed,
+            _lastDefaultResponseTime: 0,
             _manufacturerID: 0,
             _networkAddress: 0,
             _type: "Coordinator",
@@ -6887,6 +6931,7 @@ describe("Controller", () => {
             ],
             _ieeeAddr: "0x000b57fffec6a5b2",
             _interviewState: InterviewState.Successful,
+            _lastDefaultResponseTime: 0,
             _manufacturerID: 4476,
             meta: {reporting: 1},
             _networkAddress: 40369,
@@ -6945,6 +6990,7 @@ describe("Controller", () => {
             ],
             _ieeeAddr: "0x0017880104e45517",
             _interviewState: InterviewState.Successful,
+            _lastDefaultResponseTime: 0,
             _lastSeen: 123,
             _manufacturerID: 4107,
             _networkAddress: 6538,
@@ -7006,6 +7052,7 @@ describe("Controller", () => {
             ],
             _ieeeAddr: "0x0017880104e45518",
             _interviewState: InterviewState.Successful,
+            _lastDefaultResponseTime: 0,
             _manufacturerID: 4107,
             _networkAddress: 6536,
             _type: "EndDevice",
@@ -7726,6 +7773,7 @@ describe("Controller", () => {
                 _eventsCount: 0,
                 _ieeeAddr: "0x000000000046f4fe",
                 _interviewState: InterviewState.Successful,
+                _lastDefaultResponseTime: 0,
                 _lastSeen: Date.now(),
                 _linkquality: 50,
                 _networkAddress: 0xf4fe,
@@ -7747,6 +7795,7 @@ describe("Controller", () => {
                 _eventsCount: 0,
                 _ieeeAddr: "0x000000000046f4fe",
                 _interviewState: InterviewState.Successful,
+                _lastDefaultResponseTime: 0,
                 _networkAddress: 0xf4fe,
                 _type: "GreenPower",
                 meta: {},
@@ -8435,6 +8484,7 @@ describe("Controller", () => {
                 ],
                 _ieeeAddr: "0x00000000017171f8",
                 _interviewState: InterviewState.Successful,
+                _lastDefaultResponseTime: 0,
                 _lastSeen: Date.now(),
                 _linkquality: 50,
                 _networkAddress: 0x71f8,
@@ -8457,6 +8507,7 @@ describe("Controller", () => {
                 _endpoints: [],
                 _ieeeAddr: "0x00000000017171f8",
                 _interviewState: InterviewState.Successful,
+                _lastDefaultResponseTime: 0,
                 _networkAddress: 0x71f8,
                 _type: "GreenPower",
                 meta: {},
@@ -8564,6 +8615,7 @@ describe("Controller", () => {
             ],
             _ieeeAddr: "0x00000000017171f8",
             _interviewState: InterviewState.Successful,
+            _lastDefaultResponseTime: 0,
             _lastSeen: Date.now(),
             _linkquality: 50,
             _networkAddress: 0x71f8,
@@ -8611,6 +8663,7 @@ describe("Controller", () => {
             ],
             _ieeeAddr: "0x00000000017171f8",
             _interviewState: InterviewState.Successful,
+            _lastDefaultResponseTime: 0,
             _lastSeen: Date.now(),
             _linkquality: 50,
             _networkAddress: 0x71f8,
