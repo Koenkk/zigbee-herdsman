@@ -77,7 +77,7 @@ export class Device extends Entity<ControllerEventMap> {
     private _skipDefaultResponse: boolean;
     private _customReadResponse?: CustomReadResponse;
     private _lastDefaultResponseSequenceNumber?: number;
-    #lastDefaultResponseTime = 0;
+    private _lastDefaultResponseTime = 0;
     private _checkinInterval?: number;
     private _pendingRequestTimeout: number;
     private _customClusters: CustomClusters = {};
@@ -590,7 +590,7 @@ export class Device extends Entity<ControllerEventMap> {
         // its transaction sequence number on retransmit would otherwise be answered once and keep retransmitting forever.
         const alreadyResponded =
             this._lastDefaultResponseSequenceNumber === header.transactionSequenceNumber &&
-            now - this.#lastDefaultResponseTime < DEFAULT_RESPONSE_DUPLICATE_WINDOW;
+            now - this._lastDefaultResponseTime < DEFAULT_RESPONSE_DUPLICATE_WINDOW;
 
         if (
             !this._skipDefaultResponse &&
@@ -600,7 +600,7 @@ export class Device extends Entity<ControllerEventMap> {
         ) {
             try {
                 this._lastDefaultResponseSequenceNumber = header.transactionSequenceNumber;
-                this.#lastDefaultResponseTime = now;
+                this._lastDefaultResponseTime = now;
                 const direction =
                     header.frameControl.direction === Zcl.Direction.CLIENT_TO_SERVER
                         ? Zcl.Direction.SERVER_TO_CLIENT
