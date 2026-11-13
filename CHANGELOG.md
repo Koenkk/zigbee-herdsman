@@ -1,5 +1,15 @@
 # Changelog
 
+## [11.2.2](https://github.com/Koenkk/zigbee-herdsman/compare/v11.2.1...v11.2.2) (2026-11-13)
+
+
+### Bug Fixes
+
+* ember: larger rollover for waitress ([#1951](https://github.com/Koenkk/zigbee-herdsman/issues/1951)) ([2c5157d](https://github.com/Koenkk/zigbee-herdsman/commit/2c5157db18b44f96499cdd44a75fefd668d56ab1))
+* **ignore:** bump the minor-patch group with 2 updates ([#1953](https://github.com/Koenkk/zigbee-herdsman/issues/1953)) ([199c2f2](https://github.com/Koenkk/zigbee-herdsman/commit/199c2f222a2b63c5c341af0c1bceda56845d34e0))
+* Koenkk/zigbee-herdsman[#1940](https://github.com/Koenkk/zigbee-herdsman/issues/1940) ([#1941](https://github.com/Koenkk/zigbee-herdsman/issues/1941)) ([c0e0f03](https://github.com/Koenkk/zigbee-herdsman/commit/c0e0f03293e9b1cd388dd383ec0f395617354f56))
+* ZStack: use physical NV slot indices for Z-Stack backup link keys ([#1950](https://github.com/Koenkk/zigbee-herdsman/issues/1950)) ([eb6338c](https://github.com/Koenkk/zigbee-herdsman/commit/eb6338c4d665aa5adb50c40dbdbe5910e4cbda14))
+
 ## [11.2.1](https://github.com/Koenkk/zigbee-herdsman/compare/v11.2.0...v11.2.1) (2026-11-03)
 
 
