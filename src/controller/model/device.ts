@@ -308,6 +308,7 @@ export class Device extends Entity<ControllerEventMap> {
      */
     resetTransient(cache: boolean): void {
         this._lastDefaultResponseSequenceNumber = undefined;
+        this._lastDefaultResponseTime = 0;
 
         if (cache) {
             // force retrieving this data again
