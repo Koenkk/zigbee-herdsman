@@ -5,10 +5,10 @@ export default defineConfig({
     plugins: [],
     test: {
         root: path.join(import.meta.dirname, ".."),
-        setupFiles: ["test/vitest.ts"],
         onConsoleLog(_log: string, _type: "stdout" | "stderr"): boolean | undefined {
             return false;
         },
+        clearMocks: true,
         coverage: {
             enabled: false,
             provider: "v8",
