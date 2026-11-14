@@ -49,7 +49,8 @@ export class Request<Type = any> {
         this.func = func;
         this.frame = frame;
         this.expires = timeout + Date.now();
-        this.sendPolicy = sendPolicy ?? (!frame.command ? undefined : Request.defaultSendPolicy[frame.command.ID]);
+        // defaultSendPolicy is keyed by foundation (global) command ID, cluster-specific commands reuse the same IDs
+        this.sendPolicy = sendPolicy ?? (frame.command && frame.header.isGlobal ? Request.defaultSendPolicy[frame.command.ID] : undefined);
         this.resolveQueue = resolve === undefined ? ([] as ((value: Type) => void)[]) : new Array<(value: Type) => void>(resolve);
         this.rejectQueue = reject === undefined ? ([] as ((error: Error) => void)[]) : new Array<(error: Error) => void>(reject);
         this.lastError = lastError ?? Error("Request rejected before first send");
