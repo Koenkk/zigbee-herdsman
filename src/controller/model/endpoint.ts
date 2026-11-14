@@ -30,6 +30,7 @@ import Group from "./group";
 import {ZigbeeEntity} from "./zigbeeEntity";
 
 const NS = "zh:controller:endpoint";
+const DISCOVER_EXT_UNSUPPORTED_META_KEY = "zclDiscoverExtUnsupported";
 
 export interface ConfigureReportingItem<Cl extends string | number, Custom extends TCustomCluster | undefined = undefined> {
     attribute: ClusterOrRawAttributeKeys<Cl, Custom>[number] | {ID: number; type: number};
@@ -71,6 +72,13 @@ interface OptionsWithDefaults extends Options {
 export interface Clusters {
     [cluster: string]: {
         attributes: {[attribute: string]: number | string};
+        attributeList: {
+            [attribute: string]: {
+                type: number;
+                access: number | null;
+            };
+        };
+        retrievedAttrs: boolean;
     };
 }
 
@@ -248,6 +256,10 @@ export class Endpoint extends ZigbeeEntity {
                 entry.attributes = entry.attrs;
                 delete entry.attrs;
             }
+
+            entry.attributes ??= {};
+            entry.attributeList ??= {};
+            entry.retrievedAttrs ??= false;
         }
 
         // Migrate cluster renames from https://github.com/Koenkk/zigbee-herdsman/pull/1503 @deprecated 3.0
@@ -311,12 +323,73 @@ export class Endpoint extends ZigbeeEntity {
         const cluster = this.getCluster(clusterKey);
 
         if (!this.clusters[cluster.name]) {
-            this.clusters[cluster.name] = {attributes: {}};
+            this.clusters[cluster.name] = {attributes: {}, attributeList: {}, retrievedAttrs: false};
         }
 
         for (const attribute in list) {
             this.clusters[cluster.name].attributes[attribute] = list[attribute];
         }
+    }
+
+    public saveClusterAttributeDiscovery(
+        clusterKey: number | string,
+        attrInfos: Array<{attrId: number; dataType: number; access?: number}>,
+        discComplete: boolean,
+    ): void {
+        const cluster = this.getCluster(clusterKey);
+        let clusterCache = this.clusters[cluster.name];
+
+        if (!clusterCache) {
+            clusterCache = {attributes: {}, attributeList: {}, retrievedAttrs: false};
+            this.clusters[cluster.name] = clusterCache;
+        }
+
+        const manufacturerID = this.getDevice().manufacturerID;
+        const attributeList = clusterCache.attributeList;
+        for (const attrInfo of attrInfos) {
+            const attribute = Zcl.Utils.getClusterAttribute(cluster, attrInfo.attrId, manufacturerID);
+            const attributeKey = attribute?.name ?? String(attrInfo.attrId);
+            const access = attrInfo.access ?? null;
+            const entry = attributeList[attributeKey];
+            if (entry) {
+                entry.type = attrInfo.dataType;
+                entry.access = access;
+            } else {
+                attributeList[attributeKey] = {type: attrInfo.dataType, access: attrInfo.access ?? null};
+            }
+        }
+        clusterCache.retrievedAttrs = discComplete;
+    }
+
+    public hasClusterAttributes(clusterKey: number | string, access = false): boolean {
+        const cluster = this.getCluster(clusterKey);
+        const clusterCache = this.clusters[cluster.name];
+
+        if (!clusterCache?.retrievedAttrs) {
+            return false;
+        }
+        if (!access) {
+            return true;
+        }
+        return Object.values(clusterCache.attributeList)[0]?.access != null;
+    }
+
+    public hasClusterAttribute(clusterKey: number | string, attributeKey: number | string): boolean | undefined {
+        const cluster = this.getCluster(clusterKey);
+        const clusterCache = this.clusters[cluster.name];
+
+        if (!clusterCache) {
+            return undefined;
+        }
+
+        const attribute = Zcl.Utils.getClusterAttribute(cluster, attributeKey, undefined);
+        const cacheKey = attribute?.name ?? String(attributeKey);
+
+        if (cacheKey in clusterCache.attributes || cacheKey in clusterCache.attributeList) {
+            return true;
+        }
+
+        return clusterCache.retrievedAttrs ? false : undefined;
     }
 
     public getClusterAttributeValue(clusterKey: number | string, attributeKey: number | string): number | string | undefined {
@@ -599,6 +672,59 @@ export class Endpoint extends ZigbeeEntity {
         return resultFrame
             ? ZclFrameConverter.attributeKeyValue<Cl, Custom>(resultFrame, device.manufacturerID, device.customClusters)
             : ({} as ClusterOrRawWriteAttributes<Cl, Custom>);
+    }
+
+    public async discoverAttributes(
+        clusterKey: number | string,
+        extended = false,
+        options?: Options,
+        startAttrId = 0,
+        maxAttrIds = 0xff,
+    ): Promise<boolean> {
+        const device = this.getDevice();
+        // Return early if the device does not support the command
+        if (extended && device.meta[DISCOVER_EXT_UNSUPPORTED_META_KEY]) {
+            return false;
+        }
+
+        const cluster = this.getCluster(clusterKey, undefined, options?.manufacturerCode);
+        let discComplete = false;
+
+        while (!discComplete) {
+            const request = {startAttrId, maxAttrIds};
+            const response = extended
+                ? await this.zclCommand(cluster, "discoverExt", request, options)
+                : await this.zclCommand(cluster, "discover", request, options);
+
+            if (!response) {
+                throw new Error(`No response received while discovering attributes for cluster '${cluster.name}'`);
+            }
+
+            if ("statusCode" in response.payload && response.payload.statusCode !== Zcl.Status.SUCCESS) {
+                if (response.payload.statusCode === Zcl.Status.UNSUP_COMMAND) {
+                    if (extended) {
+                        device.meta[DISCOVER_EXT_UNSUPPORTED_META_KEY] = true;
+                        device.save();
+                    }
+                }
+                return false;
+            }
+
+            const payload = response.payload as TFoundation["discoverRsp"] | TFoundation["discoverExtRsp"];
+            const attrInfos = extended ? (payload as TFoundation["discoverExtRsp"]).attrInfos : (payload as TFoundation["discoverRsp"]).attrInfos;
+            discComplete = payload.discComplete === 1;
+
+            if (!discComplete) {
+                const lastAttrInfo = attrInfos.at(-1);
+
+                if (!lastAttrInfo || lastAttrInfo.attrId === 0xffff) {
+                    throw new Error(`Attribute discovery for cluster '${cluster.name}' did not make progress`);
+                }
+
+                startAttrId = lastAttrInfo.attrId + 1;
+            }
+        }
+        return true;
     }
 
     /**
