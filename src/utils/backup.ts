@@ -23,6 +23,7 @@ export const toUnifiedBackup = (backup: Models.Backup): Models.UnifiedBackupStor
                 date: new Date().toISOString(),
                 ...(backup.znp ? {znpVersion: backup.znp?.version ?? undefined} : /* v8 ignore next */ undefined),
                 ...(backup.ezsp ? {ezspVersion: backup.ezsp?.version ?? undefined} : /* v8 ignore next */ undefined),
+                ...(backup.espzb ? {espzbVersion: backup.espzb.version} : undefined),
             },
         },
         stack_specific: {
@@ -91,6 +92,7 @@ export const fromUnifiedBackup = (backup: Models.UnifiedBackupStorage): Models.B
             version: backup.metadata.internal?.znpVersion || undefined,
             trustCenterLinkKeySeed: tclkSeedString ? Buffer.from(tclkSeedString, "hex") : undefined,
         },
+        espzb: backup.metadata.internal?.espzbVersion ? {version: backup.metadata.internal.espzbVersion} : undefined,
         ezsp: {
             version: backup.metadata.internal?.ezspVersion || undefined,
             hashed_tclk: backup.stack_specific?.ezsp?.hashed_tclk ? Buffer.from(backup.stack_specific.ezsp.hashed_tclk, "hex") : undefined,

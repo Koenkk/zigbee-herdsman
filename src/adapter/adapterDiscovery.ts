@@ -468,8 +468,8 @@ function matchUsbFingerprint(
 }
 
 export async function matchUsbAdapter(adapter: Adapter, path: string): Promise<UsbAdapterFingerprint | false> {
-    // no point in matching this
-    if (adapter === "zoh") {
+    // no point in matching these: `zoh` is any OT RCP; `espzb` NCPs enumerate as the generic Espressif USB-Serial-JTAG (303a:1001)
+    if (adapter === "zoh" || adapter === "espzb") {
         return false;
     }
 

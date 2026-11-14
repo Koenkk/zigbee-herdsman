@@ -14,6 +14,7 @@ export interface UnifiedBackupStorage {
             date: string;
             znpVersion?: number;
             ezspVersion?: number;
+            espzbVersion?: number;
 
             [key: string]: unknown;
         };
