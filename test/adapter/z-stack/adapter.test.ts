@@ -1761,6 +1761,29 @@ describe("zstack-adapter", () => {
         });
     });
 
+    it("should restore unified backup with 3.x.0 adapter - skip keyless non-child device", async () => {
+        const backupFile = getTempFile();
+        const backup = JSON.parse(JSON.stringify(backupMatchingConfig));
+        backup.devices.push({
+            nwk_address: "20fa",
+            ieee_address: "00128d11124fa80b",
+            is_child: false,
+        });
+        fs.writeFileSync(backupFile, JSON.stringify(backup), "utf8");
+        adapter = new ZStackAdapter(networkOptions, transportOptions, backupFile, {concurrent: 3});
+        mockZnpRequestWith(empty3x0AlignedRequestMock);
+        const result = await adapter.start();
+        expect(result).toBe("restored");
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.SYS, "nvWrite", {
+            sysid: NvSystemIds.ZSTACK,
+            itemid: NvItemsIds.ZCD_NV_EX_ADDRMGR,
+            subid: backupMatchingConfig.devices.length,
+            offset: 0,
+            len: 12,
+            value: Buffer.from("00ff00000000000000000000", "hex"),
+        });
+    });
+
     it("should fail when backup file is corrupted - Coordinator backup is corrupted", async () => {
         const backupFile = getTempFile();
         fs.writeFileSync(backupFile, "{", "utf8");
