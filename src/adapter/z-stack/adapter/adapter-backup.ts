@@ -299,6 +299,9 @@ export class AdapterBackup {
 
         /* populate device & security tables and write them */
         for (const device of backup.devices) {
+            if (!device.isDirectChild && !device.linkKey) {
+                continue;
+            }
             const ame = addressManagerTable.getNextFree();
             ame.nwkAddr = device.networkAddress != null ? device.networkAddress : NULL_NODE_ID;
             ame.extAddr = device.ieeeAddress;
