@@ -1,8 +1,17 @@
 verifyDepsBeforeRun: false
 
 allowBuilds:
-    "@serialport/bindings-cpp": true
     esbuild: true
 
 minimumReleaseAgeExclude:
     - zigbee-on-host
+    - "@koenkk/serialport-napi-rs-android-arm64"
+    - "@koenkk/serialport-napi-rs-darwin-arm64"
+    - "@koenkk/serialport-napi-rs-darwin-x64"
+    - "@koenkk/serialport-napi-rs-linux-arm64-gnu"
+    - "@koenkk/serialport-napi-rs-linux-arm64-musl"
+    - "@koenkk/serialport-napi-rs-linux-x64-gnu"
+    - "@koenkk/serialport-napi-rs-linux-x64-musl"
+    - "@koenkk/serialport-napi-rs-win32-arm64-msvc"
+    - "@koenkk/serialport-napi-rs-win32-x64-msvc"
+    - "@koenkk/serialport-napi-rs"

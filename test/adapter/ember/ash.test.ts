@@ -1,4 +1,6 @@
-import {MockBinding, type MockPortBinding} from "@serialport/binding-mock";
+// biome-ignore assist/source/organizeImports: mock
+import {currentMockPort, emitSerialPortData, scheduleSerialPortData} from "../../mockSerialPort";
+
 import {afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi} from "vitest";
 import {EzspStatus} from "../../../src/adapter/ember/enums";
 import {EzspBuffalo} from "../../../src/adapter/ember/ezsp/buffalo";
@@ -19,11 +21,8 @@ import {EZSP_HOST_RX_POOL_SIZE, TX_POOL_BUFFERS} from "../../../src/adapter/embe
 import {EzspBuffer} from "../../../src/adapter/ember/uart/queues";
 import {lowByte} from "../../../src/adapter/ember/utils/math";
 import {AdapterTransport} from "../../../src/adapter/transport";
-import {wait} from "../../../src/utils/";
-import {ASH_ACK_FIRST_BYTES, adapterSONOFFDongleE, RECD_RSTACK_BYTES, SEND_ACK_FIRST_BYTES, SEND_RST_BYTES} from "./consts";
-
-const mockSerialPortCloseEvent = vi.fn();
-const mockSerialPortErrorEvent = vi.fn();
+import {ASH_ACK_FIRST_BYTES, RECD_RSTACK_BYTES, SEND_ACK_FIRST_BYTES, SEND_DATA_VERSION, SEND_RST_BYTES} from "./consts";
+import {flushPromises} from "../../testUtils";
 
 // todo doesnt reset if closing
 // todo doesnt start if closing or connected
@@ -32,8 +31,6 @@ const mockSerialPortErrorEvent = vi.fn();
 // todo emit `reset` only on port error
 // todo emit `close` only when ASH layer stopped
 // todo emit `frame` only on valid DATA frame
-
-const mocks = [mockSerialPortCloseEvent, mockSerialPortErrorEvent];
 
 const ADAPTER_PATH = "/dev/ttyACM0";
 
@@ -59,23 +56,17 @@ describe("Ember UART ASH Protocol", () => {
     });
 
     beforeEach(() => {
-        for (const mock of mocks) {
-            mock.mockClear();
-        }
-
         frameSequence = 0;
         transport = new AdapterTransport({path: ADAPTER_PATH, baudRate: 100, rtscts: true});
-        transport.serialPortBinding = MockBinding;
         uartAsh = new UartAsh(transport);
         buffalo = new EzspBuffalo(Buffer.alloc(EZSP_MAX_FRAME_LENGTH));
-        MockBinding.createPort(ADAPTER_PATH, {/*echo: true,*/ record: true, /*readyData: emitRSTACK,*/ ...adapterSONOFFDongleE});
 
         buffalo.setPosition(0);
     });
 
     afterEach(async () => {
         await uartAsh.stop();
-        MockBinding.reset();
+        await flushPromises();
     });
 
     it("Inits properly and allocates buffers as needed", () => {
@@ -140,7 +131,6 @@ describe("Ember UART ASH Protocol", () => {
 
         const resetResult = await uartAsh.resetNcp();
 
-        expect(transport.serialPortBinding).toBe(MockBinding); // just making sure mock was registered
         expect(resetResult).toStrictEqual(EzspStatus.SUCCESS);
         expect(resetNcpSpy).toHaveBeenCalledTimes(1);
         //@ts-expect-error private
@@ -148,15 +138,17 @@ describe("Ember UART ASH Protocol", () => {
         expect(transport.serialPortInstance).toBeDefined();
         expect(transport.isOpen).toBeTruthy();
 
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(Buffer.from(RECD_RSTACK_BYTES));
+        scheduleSerialPortData(Buffer.from(RECD_RSTACK_BYTES));
         const startResult = await uartAsh.start();
 
         expect(startResult).toStrictEqual(EzspStatus.SUCCESS);
         expect(sendExecSpy).toHaveBeenCalled();
-        await new Promise(setImmediate); // flush
-        expect((transport.serialPortInstance!.port as MockPortBinding).recording).toStrictEqual(
-            Buffer.from([...SEND_RST_BYTES, ...ASH_ACK_FIRST_BYTES]),
-        );
+        await flushPromises();
+
+        const port = currentMockPort();
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(1, Buffer.from(SEND_RST_BYTES));
+        expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(2, Buffer.from(ASH_ACK_FIRST_BYTES));
+
         expect(uartAsh.connected).toBeTruthy();
         expect(uartAsh.counters.txAllFrames).toStrictEqual(2); // RST + ACK
         expect(uartAsh.counters.txAckFrames).toStrictEqual(1); // post-RSTACK ACK
@@ -167,8 +159,6 @@ describe("Ember UART ASH Protocol", () => {
                 expect(uartAsh.counters[key as keyof typeof uartAsh.counters]).toStrictEqual(0);
             }
         }
-
-        await uartAsh.stop();
     });
 
     it.skip("Resets but failed to start b/c error in RSTACK frame returned by NCP", async () => {
@@ -186,10 +176,10 @@ describe("Ember UART ASH Protocol", () => {
         const badCrcRSTACK = Buffer.from(RECD_RSTACK_BYTES);
         badCrcRSTACK[badCrcRSTACK.length - 2] = 0; // throw CRC low
 
-        (transport.serialPortInstance!.port as MockPortBinding).emitData(badCrcRSTACK);
+        scheduleSerialPortData(badCrcRSTACK);
         const startResult = await uartAsh.start();
 
-        await wait(10);
+        await flushPromises();
 
         expect(startResult).toStrictEqual(EzspStatus.HOST_FATAL_ERROR);
         expect(uartAsh.counters.txAllFrames).toStrictEqual(1);
@@ -204,7 +194,7 @@ describe("Ember UART ASH Protocol", () => {
     describe("In CONNECTED state...", () => {
         beforeEach(async () => {
             const resetResult = await uartAsh.resetNcp();
-            (transport.serialPortInstance!.port as MockPortBinding).emitData(Buffer.from(RECD_RSTACK_BYTES));
+            scheduleSerialPortData(Buffer.from(RECD_RSTACK_BYTES));
             const startResult = await uartAsh.start();
 
             expect(resetResult).toStrictEqual(EzspStatus.SUCCESS);
@@ -212,10 +202,10 @@ describe("Ember UART ASH Protocol", () => {
             expect(uartAsh.connected).toBeTruthy();
 
             uartAsh.sendExec(); // ACK for RSTACK == 8070787e
+            await flushPromises();
             expect(uartAsh.idle).toBeTruthy();
             expect(uartAsh.counters.txAckFrames).toStrictEqual(1); // ACK for RSTACK
         });
-        afterEach(async () => {});
 
         it("Sends DATA frame to NCP", async () => {
             buffalo.setPosition(EZSP_PARAMETERS_INDEX);
@@ -232,17 +222,14 @@ describe("Ember UART ASH Protocol", () => {
             const sendBuf = buffalo.getWritten();
 
             uartAsh.send(sendBuf.length, sendBuf);
-
-            await wait(10);
+            await flushPromises();
 
             expect(uartAsh.counters.txDataFrames).toStrictEqual(1);
-            expect((transport.serialPortInstance!.port as MockPortBinding).recording).toStrictEqual(
-                Buffer.concat([
-                    Buffer.from("1ac038bc7e", "hex"), // RST
-                    Buffer.from("8070787e", "hex"), // RSTACK ACK
-                    Buffer.from("004221a8597c057e", "hex"), // DATA
-                ]),
-            );
+
+            const port = currentMockPort();
+            expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(1, Buffer.from(SEND_RST_BYTES));
+            expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(2, Buffer.from(ASH_ACK_FIRST_BYTES));
+            expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(3, Buffer.from(SEND_DATA_VERSION));
         });
 
         it("Sends DATA frame and receives response from NCP", async () => {
@@ -261,11 +248,9 @@ describe("Ember UART ASH Protocol", () => {
 
             uartAsh.send(sendBuf.length, sendBuf);
 
-            await wait(10);
-
-            (transport.serialPortInstance!.port as MockPortBinding).emitData(Buffer.from(SEND_ACK_FIRST_BYTES)); // just an ACK, doesn't matter what it is
-
-            await wait(10); // force wait new frame
+            await flushPromises();
+            await emitSerialPortData(Buffer.from(SEND_ACK_FIRST_BYTES)); // just an ACK, doesn't matter what it is
+            await flushPromises();
 
             expect(uartAsh.counters.txAckFrames).toStrictEqual(1);
             expect(uartAsh.counters.rxAckFrames).toStrictEqual(1);
@@ -292,24 +277,20 @@ describe("Ember UART ASH Protocol", () => {
             const sendBuf = buffalo.getWritten();
 
             for (let i = 0; i <= CONFIG_TX_K; i++) {
-                console.log(sendBuf);
                 uartAsh.send(sendBuf.length, sendBuf);
+                await flushPromises();
             }
-
-            await wait(10);
 
             expect(uartAsh.counters.txDataFrames).toStrictEqual(3);
             expect(uartAsh.txQueue.length).toStrictEqual(1);
 
-            expect((transport.serialPortInstance!.port as MockPortBinding).recording).toStrictEqual(
-                Buffer.concat([
-                    Buffer.from("1ac038bc7e", "hex"), // RST
-                    Buffer.from("8070787e", "hex"), // RSTACK ACK
-                    Buffer.from("004221a8597c057e", "hex"), // DATA 1
-                    Buffer.from("104221a859785f7e", "hex"), // DATA 2
-                    Buffer.from("204221a85974b17e", "hex"), // DATA 3
-                ]),
-            );
+            const port = currentMockPort();
+            console.log(vi.mocked(port.write).mock.calls);
+            expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(1, Buffer.from(SEND_RST_BYTES));
+            expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(2, Buffer.from(ASH_ACK_FIRST_BYTES));
+            expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(3, Buffer.from(SEND_DATA_VERSION));
+            expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(4, Buffer.from("104221a859785f7e", "hex")); // DATA 2
+            expect(vi.mocked(port.write)).toHaveBeenNthCalledWith(5, Buffer.from("204221a85974b17e", "hex")); // DATA 3
         });
     });
 });

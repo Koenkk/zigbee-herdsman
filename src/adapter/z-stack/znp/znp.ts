@@ -123,18 +123,23 @@ export class Znp extends EventEmitter<ZnpEventMap> {
             // and give ZNP 1 second to start.
             try {
                 logger.info("Writing CC2530/CC2531 skip bootloader payload", NS);
-                this.transport.write(Buffer.from([0xef]));
+                this.transport.write(Buffer.from([0xef])).catch((error) => {
+                    logger.error(`Failed to write to transport ${error}`, NS);
+                });
                 await wait(1000);
                 await this.request(Subsystem.SYS, "ping", {capabilities: 1}, undefined, 250 /* v8 ignore next */);
             } catch {
                 // Skip bootloader on some CC2652 devices (e.g. zzh-p)
                 logger.info("Skip bootloader for CC2652/CC1352", NS);
                 if (this.transport.isSerial) {
-                    await this.transport.set({dtr: false, rts: false});
+                    await this.transport.writeDataTerminalReady(false);
+                    await this.transport.writeRequestToSend(false);
                     await wait(150);
-                    await this.transport.set({dtr: false, rts: true});
+                    await this.transport.writeDataTerminalReady(false);
+                    await this.transport.writeRequestToSend(true);
                     await wait(150);
-                    await this.transport.set({dtr: false, rts: false});
+                    await this.transport.writeDataTerminalReady(false);
+                    await this.transport.writeRequestToSend(false);
                     await wait(150);
                 }
             }
@@ -182,7 +187,9 @@ export class Znp extends EventEmitter<ZnpEventMap> {
             if (object.type === Type.SREQ) {
                 const t = object.command.name === "bdbStartCommissioning" || object.command.name === "startupFromApp" ? 40000 : timeouts.SREQ;
                 const waiter = this.waitress.waitFor({type: Type.SRSP, subsystem: object.subsystem, command: object.command.name}, timeout || t);
-                this.transport.write(object.unpiFrame.toBuffer());
+                this.transport.write(object.unpiFrame.toBuffer()).catch((error) => {
+                    logger.error(`Failed to write to transport ${error}`, NS);
+                });
                 const result = await waiter.start().promise;
                 if (result?.payload.status !== undefined && !expectedStatuses.includes(result.payload.status)) {
                     if (typeof waiterID === "number") {
@@ -202,12 +209,16 @@ export class Znp extends EventEmitter<ZnpEventMap> {
             if (object.type === Type.AREQ && object.isResetCommand()) {
                 const waiter = this.waitress.waitFor({type: Type.AREQ, subsystem: Subsystem.SYS, command: "resetInd"}, timeout || timeouts.reset);
                 this.queue.clear();
-                this.transport.write(object.unpiFrame.toBuffer());
+                this.transport.write(object.unpiFrame.toBuffer()).catch((error) => {
+                    logger.error(`Failed to write to transport ${error}`, NS);
+                });
                 return await waiter.start().promise;
             }
 
             if (object.type === Type.AREQ) {
-                this.transport.write(object.unpiFrame.toBuffer());
+                this.transport.write(object.unpiFrame.toBuffer()).catch((error) => {
+                    logger.error(`Failed to write to transport ${error}`, NS);
+                });
                 /* v8 ignore start */
             } else {
                 throw new Error(`Unknown type '${object.type}'`);
@@ -224,7 +235,9 @@ export class Znp extends EventEmitter<ZnpEventMap> {
             const unpiFrame = new UnpiFrame(Type.SREQ, Subsystem.ZDO, cmd.ID, payload);
             const waiter = this.waitress.waitFor({type: Type.SRSP, subsystem: Subsystem.ZDO, command: cmd.name}, timeouts.SREQ);
 
-            this.transport.write(unpiFrame.toBuffer());
+            this.transport.write(unpiFrame.toBuffer()).catch((error) => {
+                logger.error(`Failed to write to transport ${error}`, NS);
+            });
 
             const result = await waiter.start().promise;
 
