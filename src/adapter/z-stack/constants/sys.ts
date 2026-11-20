@@ -14,6 +14,7 @@ const SYS = {
         DEBUG: 128,
         APP: 256,
         ZOAD: 4096,
+        ZEROSTACK: 8192,
     },
     osalTimerEvent: {
         EVENT_0: 0,

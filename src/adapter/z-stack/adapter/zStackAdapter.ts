@@ -53,6 +53,7 @@ export class ZStackAdapter extends Adapter {
         maintrel: number;
         revision: string;
     };
+    private zeroStack = false;
     // @ts-expect-error initialized in `start`
     private queue: Queue;
     private supportsLED?: boolean;
@@ -80,11 +81,13 @@ export class ZStackAdapter extends Adapter {
      */
     public async start(): Promise<StartResult> {
         await this.znp.open();
+        this.zeroStack = false;
 
         const attempts = 3;
         for (let i = 0; i < attempts; i++) {
             try {
-                await this.znp.request(Subsystem.SYS, "ping", {capabilities: 1});
+                const pingRsp = await this.znp.requestWithReply(Subsystem.SYS, "ping", {capabilities: Constants.SYS.capabilities.SYS});
+                this.zeroStack = (pingRsp.payload.capabilities & Constants.SYS.capabilities.ZEROSTACK) !== 0;
                 break;
             } catch (e) {
                 if (attempts - 1 === i) {
@@ -107,7 +110,11 @@ export class ZStackAdapter extends Adapter {
 
         this.queue = new Queue(concurrent);
 
-        logger.debug(() => `Detected znp version '${ZnpVersion[this.version.product]}' (${JSON.stringify(this.version)})`, NS);
+        logger.debug(
+            () =>
+                `Detected znp version '${ZnpVersion[this.version.product]}'${this.zeroStack ? " (ZeroStack)" : ""} (${JSON.stringify(this.version)})`,
+            NS,
+        );
         this.adapterManager = new ZnpAdapterManager(this, this.znp, {
             backupPath: this.backupPath,
             version: this.version.product,
@@ -145,7 +152,10 @@ export class ZStackAdapter extends Adapter {
     }
 
     public async getCoordinatorVersion(): Promise<CoordinatorVersion> {
-        return await Promise.resolve({type: ZnpVersion[this.version.product], meta: this.version});
+        return await Promise.resolve({
+            type: ZnpVersion[this.version.product],
+            meta: this.zeroStack ? {...this.version, stack: "ZeroStack"} : this.version,
+        });
     }
 
     public async permitJoin(seconds: number, networkAddress?: number): Promise<void> {
