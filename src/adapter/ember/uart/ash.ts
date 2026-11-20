@@ -663,6 +663,11 @@ export class UartAsh extends EventEmitter<UartAshEventMap> {
                 if (this.sendState === SendState.IDLE) {
                     // sending RST or just woke NCP
                     this.appendOutputByte(AshReservedByte.CANCEL);
+                    if (this.flags & Flag.RST && this.transport.isSerial && !this.transport.rtscts) {
+                        // Resume an NCP left paused by XOFF; cancel XON too if its UART does not consume it.
+                        this.appendOutputByte(AshReservedByte.XON);
+                        this.appendOutputByte(AshReservedByte.CANCEL);
+                    }
                 } else if (this.sendState === SendState.TX_DATA) {
                     // cancel frame in progress
                     this.counters.txCancelled += 1;
