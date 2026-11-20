@@ -8778,6 +8778,36 @@ describe("Controller", () => {
         expect(endpoint.pendingRequests.size).toStrictEqual(1);
     });
 
+    it("Default sendPolicy applies only to global commands", () => {
+        const globalFrame = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            1,
+            "readRsp",
+            "genBasic",
+            [{attrId: 0, status: Zcl.Status.SUCCESS, dataType: Zcl.DataType.UINT8, attrData: 8}],
+            {},
+        );
+        // setWeeklySchedule has ID 0x01, same as foundation readRsp
+        const specificFrame = Zcl.Frame.create(
+            Zcl.FrameType.SPECIFIC,
+            Zcl.Direction.CLIENT_TO_SERVER,
+            false,
+            undefined,
+            2,
+            "setWeeklySchedule",
+            "hvacThermostat",
+            {dayofweek: 2, mode: 1, numoftrans: 1, transitions: [{transitionTime: 390, heatSetpoint: 2200}]},
+            {},
+        );
+
+        expect(new Request(async () => {}, globalFrame, 100).sendPolicy).toStrictEqual("immediate");
+        expect(new Request(async () => {}, specificFrame, 100).sendPolicy).toStrictEqual(undefined);
+        expect(new Request(async () => {}, specificFrame, 100, "keep-payload").sendPolicy).toStrictEqual("keep-payload");
+    });
+
     it("Write to device with pendingRequestTimeout > 0, error", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
