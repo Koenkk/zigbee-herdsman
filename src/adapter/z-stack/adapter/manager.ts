@@ -121,8 +121,8 @@ export class ZnpAdapterManager {
                       (await this.znp.requestWithReply(Subsystem.SAPI, "readConfiguration", {configid: NvItemsIds.PRECFGKEY})).payload.value,
                   )
                 : await this.nv.readItem(NvItemsIds.PRECFGKEY, 0, Structs.nwkKey);
-        let activeKeyInfo = await this.nv.readItem(NvItemsIds.NWK_ACTIVE_KEY_INFO, 0, Structs.nwkKeyDescriptor);
-        let alternateKeyInfo = await this.nv.readItem(NvItemsIds.NWK_ALTERN_KEY_INFO, 0, Structs.nwkKeyDescriptor);
+        let activeKeyInfo: ReturnType<typeof Structs.nwkKeyDescriptor>;
+        let alternateKeyInfo: ReturnType<typeof Structs.nwkKeyDescriptor>;
 
         /* Z-Stack 1.2 does not provide key info entries */
         if (this.options.version === ZnpVersion.ZStack12) {
@@ -130,6 +130,9 @@ export class ZnpAdapterManager {
             activeKeyInfo.key = Buffer.from(preconfiguredKey.key);
             alternateKeyInfo = Structs.nwkKeyDescriptor();
             alternateKeyInfo.key = Buffer.from(preconfiguredKey.key);
+        } else {
+            activeKeyInfo = await this.nv.readItem(NvItemsIds.NWK_ACTIVE_KEY_INFO, 0, Structs.nwkKeyDescriptor);
+            alternateKeyInfo = await this.nv.readItem(NvItemsIds.NWK_ALTERN_KEY_INFO, 0, Structs.nwkKeyDescriptor);
         }
 
         /* get backup if available and supported by target */
