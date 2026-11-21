@@ -2132,6 +2132,16 @@ describe("zstack-adapter", () => {
         expect(result).toBe("reset");
     });
 
+    it("should start network with 1.2 adapter without reading key info NV items", async () => {
+        mockZnpRequestWith(commissioned12UnalignedRequestMock);
+        const result = await adapter.start();
+        expect(result).toBe("resumed");
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.SYS, "osalNvLength", {id: NvItemsIds.NWK_ACTIVE_KEY_INFO});
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.SYS, "osalNvLength", {id: NvItemsIds.NWK_ALTERN_KEY_INFO});
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.SYS, "osalNvReadExt", {id: NvItemsIds.NWK_ACTIVE_KEY_INFO, offset: 0});
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.SYS, "osalNvReadExt", {id: NvItemsIds.NWK_ALTERN_KEY_INFO, offset: 0});
+    });
+
     it("Add install code: Install Code + CRC", async () => {
         basicMocks();
         await adapter.start();
