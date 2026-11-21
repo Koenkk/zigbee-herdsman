@@ -159,7 +159,7 @@ export class AdapterBackup {
             networkUpdateId: nib.nwkUpdateId,
             coordinatorIeeeAddress: ieeeAddress,
             devices:
-                addressManagerTable?.used
+                addressManagerTable?.entries
                     .map((ame, ami) => {
                         /* take all entries of assoc and/or security type */
                         /* v8 ignore start */
@@ -171,9 +171,8 @@ export class AdapterBackup {
                         const sme = securityManagerTable.used.find((e) => e.ami === ami);
                         if (sme) {
                             const apsKeyDataIndex = version === ZnpVersion.ZStack30x ? sme.keyNvId - NvItemsIds.APS_LINK_KEY_DATA_START : sme.keyNvId;
-                            /* v8 ignore next */
-                            const apsKeyData = apsLinkKeyDataTable.used[apsKeyDataIndex] || null;
-                            if (apsKeyData) {
+                            const apsKeyData = apsLinkKeyDataTable.entries[apsKeyDataIndex];
+                            if (apsLinkKeyDataTable.used.includes(apsKeyData)) {
                                 linkKeyInfo = {
                                     key: apsKeyData.key,
                                     rxCounter: apsKeyData.rxFrmCntr,
@@ -300,6 +299,9 @@ export class AdapterBackup {
 
         /* populate device & security tables and write them */
         for (const device of backup.devices) {
+            if (!device.isDirectChild && !device.linkKey) {
+                continue;
+            }
             const ame = addressManagerTable.getNextFree();
             ame.nwkAddr = device.networkAddress != null ? device.networkAddress : NULL_NODE_ID;
             ame.extAddr = device.ieeeAddress;

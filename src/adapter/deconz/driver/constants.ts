@@ -236,7 +236,7 @@ interface ApsDataRequest {
     asduPayload: Buffer;
     txOptions: number;
     radius: number;
-    timeout: number; // seconds
+    timeout: number; // milliseconds
 }
 
 type Command = Buffer | number | bigint;

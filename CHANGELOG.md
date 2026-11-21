@@ -1,5 +1,43 @@
 # Changelog
 
+## [11.2.2](https://github.com/Koenkk/zigbee-herdsman/compare/v11.2.1...v11.2.2) (2026-11-19)
+
+
+### Bug Fixes
+
+* ember: larger rollover for waitress ([#1951](https://github.com/Koenkk/zigbee-herdsman/issues/1951)) ([2c5157d](https://github.com/Koenkk/zigbee-herdsman/commit/2c5157db18b44f96499cdd44a75fefd668d56ab1))
+* **ignore:** bump the minor-patch group with 2 updates ([#1953](https://github.com/Koenkk/zigbee-herdsman/issues/1953)) ([199c2f2](https://github.com/Koenkk/zigbee-herdsman/commit/199c2f222a2b63c5c341af0c1bceda56845d34e0))
+* Koenkk/zigbee-herdsman[#1940](https://github.com/Koenkk/zigbee-herdsman/issues/1940) ([#1941](https://github.com/Koenkk/zigbee-herdsman/issues/1941)) ([c0e0f03](https://github.com/Koenkk/zigbee-herdsman/commit/c0e0f03293e9b1cd388dd383ec0f395617354f56))
+* Z-Stack: fix swallowed NV errors after retries are exhausted ([#1955](https://github.com/Koenkk/zigbee-herdsman/issues/1955)) ([a8a8f0a](https://github.com/Koenkk/zigbee-herdsman/commit/a8a8f0a4af405dee03d2074c138fa4a70009a30d))
+* Z-Stack: skip keyless non-child devices when restoring address manager NV ([#1958](https://github.com/Koenkk/zigbee-herdsman/issues/1958)) ([b0e7b53](https://github.com/Koenkk/zigbee-herdsman/commit/b0e7b5370d4a3684e2db53d6b5dcfc26597d1216))
+* ZStack: use physical NV slot indices for Z-Stack backup link keys ([#1950](https://github.com/Koenkk/zigbee-herdsman/issues/1950)) ([eb6338c](https://github.com/Koenkk/zigbee-herdsman/commit/eb6338c4d665aa5adb50c40dbdbe5910e4cbda14))
+
+## [11.2.1](https://github.com/Koenkk/zigbee-herdsman/compare/v11.2.0...v11.2.1) (2026-11-03)
+
+
+### Bug Fixes
+
+* Deconz timeout handling ([#1932](https://github.com/Koenkk/zigbee-herdsman/issues/1932)) ([3c38148](https://github.com/Koenkk/zigbee-herdsman/commit/3c381485485e1c8abe79a30075ab3a31d54f8f01))
+* **ignore:** bump @biomejs/biome from 2.5.12 to 2.6.3 in the minor-patch group ([#1925](https://github.com/Koenkk/zigbee-herdsman/issues/1925)) ([48d47a4](https://github.com/Koenkk/zigbee-herdsman/commit/48d47a40d4849d97461037189bb3548f289b0e56))
+* **ignore:** bump source-map-js from 1.2.1 to 1.2.2 ([#1935](https://github.com/Koenkk/zigbee-herdsman/issues/1935)) ([1db528a](https://github.com/Koenkk/zigbee-herdsman/commit/1db528aeaff00463387e2ec172306d9992f0dab0))
+* **ignore:** bump the minor-patch group with 2 updates ([#1934](https://github.com/Koenkk/zigbee-herdsman/issues/1934)) ([5514149](https://github.com/Koenkk/zigbee-herdsman/commit/55141495a8089d9b9098a65372175a65841ad93a))
+* **ignore:** bump vite from 7.3.6 to 7.3.7 ([#1936](https://github.com/Koenkk/zigbee-herdsman/issues/1936)) ([fa53e2b](https://github.com/Koenkk/zigbee-herdsman/commit/fa53e2bd217d569dfe9c971732c49212379f6e64))
+* Regenerate cluster types to include Tuya `dataReportAlt` ([#1937](https://github.com/Koenkk/zigbee-herdsman/issues/1937)) ([0b85000](https://github.com/Koenkk/zigbee-herdsman/commit/0b8500042853f0c5c75b86416fa3711c1316fb6e))
+* Use ZCL frame type to deconflict matching ([#1930](https://github.com/Koenkk/zigbee-herdsman/issues/1930)) ([75e47fe](https://github.com/Koenkk/zigbee-herdsman/commit/75e47feee0c7cdd5e84b8f364d574b215d7d094e))
+
+## [11.2.0](https://github.com/Koenkk/zigbee-herdsman/compare/v11.1.1...v11.2.0) (2026-10-31)
+
+
+### Features
+
+* Support for SONOFF Dongle-MP10 auto-discovery ([#1920](https://github.com/Koenkk/zigbee-herdsman/issues/1920)) ([6764136](https://github.com/Koenkk/zigbee-herdsman/commit/6764136fdf781db6d965f8fd5b02e166d6b132e5))
+
+
+### Bug Fixes
+
+* Tuya: parse EF00 command 0x0A as `dataReportAlt` ([#1924](https://github.com/Koenkk/zigbee-herdsman/issues/1924)) ([8f5faff](https://github.com/Koenkk/zigbee-herdsman/commit/8f5faffa813ccbefe16b1de88a9832ecfe1ab6bf))
+* Update group database when device is already in the group ([#1923](https://github.com/Koenkk/zigbee-herdsman/issues/1923)) ([b560461](https://github.com/Koenkk/zigbee-herdsman/commit/b560461ed2c5322c60322e1679c278d413efb0b0))
+
 ## [11.1.1](https://github.com/Koenkk/zigbee-herdsman/compare/v11.1.0...v11.1.1) (2026-10-19)
 
 

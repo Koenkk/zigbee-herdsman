@@ -1727,7 +1727,7 @@ export class EmberAdapter extends Adapter {
     public waitFor(
         networkAddress: number,
         endpoint: number,
-        _frameType: Zcl.FrameType,
+        frameType: Zcl.FrameType,
         _direction: Zcl.Direction,
         transactionSequenceNumber: number | undefined,
         clusterID: number,
@@ -1748,6 +1748,7 @@ export class EmberAdapter extends Adapter {
                     groupId: 0,
                     options: EmberApsOption.NONE,
                 },
+                zclFrameType: frameType,
                 zclSequence: transactionSequenceNumber,
                 commandIdentifier,
                 defaultRspCommandId,
@@ -2055,6 +2056,7 @@ export class EmberAdapter extends Adapter {
                     {
                         target: networkAddress,
                         apsFrame,
+                        zclFrameType: zclFrame.header.frameControl.frameType,
                         zclSequence: zclFrame.header.transactionSequenceNumber,
                         commandIdentifier: commandResponseId,
                     },
@@ -2252,6 +2254,7 @@ export class EmberAdapter extends Adapter {
                     {
                         target: undefined,
                         apsFrame: apsFrame,
+                        zclFrameType: zclFrame.header.frameControl.frameType,
                         zclSequence: zclFrame.header.transactionSequenceNumber,
                         commandIdentifier: command.response,
                     },

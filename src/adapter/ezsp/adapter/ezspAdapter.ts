@@ -360,6 +360,7 @@ export class EZSPAdapter extends Adapter {
             response = this.waitForInternal(
                 networkAddress,
                 endpoint,
+                zclFrame.header.frameControl.frameType,
                 zclFrame.header.transactionSequenceNumber,
                 zclFrame.cluster.ID,
                 command.response,
@@ -370,6 +371,7 @@ export class EZSPAdapter extends Adapter {
             response = this.waitForInternal(
                 networkAddress,
                 endpoint,
+                zclFrame.header.frameControl.frameType, // waitress automatically matches on defaultRsp no matter what
                 zclFrame.header.transactionSequenceNumber,
                 zclFrame.cluster.ID,
                 Zcl.Foundation.defaultRsp.ID,
@@ -532,7 +534,16 @@ export class EZSPAdapter extends Adapter {
             let response: ReturnType<typeof this.waitForInternal> | undefined;
 
             if (!disableResponse && command.response !== undefined) {
-                this.waitForInternal(undefined, 0xfe, undefined, zclFrame.cluster.ID, command.response, undefined, timeout);
+                this.waitForInternal(
+                    undefined,
+                    0xfe,
+                    zclFrame.header.frameControl.frameType,
+                    undefined,
+                    zclFrame.cluster.ID,
+                    command.response,
+                    undefined,
+                    timeout,
+                );
             }
 
             try {
@@ -569,6 +580,7 @@ export class EZSPAdapter extends Adapter {
     private waitForInternal(
         networkAddress: number | undefined,
         endpoint: number,
+        frameType: Zcl.FrameType,
         transactionSequenceNumber: number | undefined,
         clusterId: number,
         commandId: number,
@@ -576,7 +588,7 @@ export class EZSPAdapter extends Adapter {
         timeout: number,
     ): {start: () => {promise: Promise<ZclPayload>}; cancel: () => void} {
         const waiter = this.waitress.waitFor(
-            {address: networkAddress, endpoint, clusterId, commandId, defaultRspCommandId, transactionSequenceNumber},
+            {address: networkAddress, endpoint, frameType, clusterId, commandId, defaultRspCommandId, transactionSequenceNumber},
             timeout,
         );
         const cancel = (): void => this.waitress.remove(waiter.ID);
@@ -586,7 +598,7 @@ export class EZSPAdapter extends Adapter {
     public waitFor(
         networkAddress: number,
         endpoint: number,
-        _frameType: Zcl.FrameType,
+        frameType: Zcl.FrameType,
         _direction: Zcl.Direction,
         transactionSequenceNumber: number | undefined,
         clusterId: number,
@@ -594,7 +606,16 @@ export class EZSPAdapter extends Adapter {
         defaultRspCommandId: number | undefined,
         timeout: number,
     ): {promise: Promise<ZclPayload>; cancel: () => void} {
-        const waiter = this.waitForInternal(networkAddress, endpoint, transactionSequenceNumber, clusterId, commandId, defaultRspCommandId, timeout);
+        const waiter = this.waitForInternal(
+            networkAddress,
+            endpoint,
+            frameType,
+            transactionSequenceNumber,
+            clusterId,
+            commandId,
+            defaultRspCommandId,
+            timeout,
+        );
 
         return {cancel: waiter.cancel, promise: waiter.start().promise};
     }

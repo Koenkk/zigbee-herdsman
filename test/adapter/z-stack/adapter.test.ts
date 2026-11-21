@@ -1592,6 +1592,15 @@ describe("zstack-adapter", () => {
         expect(result).toBe("resumed");
     });
 
+    it("should fail to start network with 3.x.0 adapter when nv request fails", async () => {
+        mockZnpRequestWith(
+            commissioned3x0AlignedRequestMock.clone().handle(Subsystem.SYS, "osalNvLength", () => {
+                throw new Error("SRSP - SYS - osalNvLength after 6000ms");
+            }),
+        );
+        await expect(adapter.start()).rejects.toThrowError("SRSP - SYS - osalNvLength after 6000ms");
+    });
+
     it("should restore unified backup with 3.0.x adapter and create backup - empty", async () => {
         const backupFile = getTempFile();
         fs.writeFileSync(backupFile, JSON.stringify(backupMatchingConfig), "utf8");
@@ -1722,6 +1731,66 @@ describe("zstack-adapter", () => {
         expect(missingDevice).not.toBeNull();
         expect(backupWithMissingDevice.devices.length).toBe(backup.devices.length);
         expect(missingDevice?.linkKey?.key.toString("hex")).toBe("bff550908aa1529ee90eea3c3bdc26fc");
+    });
+
+    it("should create backup with 3.x.0 adapter - link keys after freed address manager and aps link key data slots", async () => {
+        const backupFile = getTempFile();
+        fs.writeFileSync(backupFile, JSON.stringify(backupMatchingConfig), "utf8");
+        adapter = new ZStackAdapter(networkOptions, transportOptions, backupFile, {concurrent: 3});
+        mockZnpRequestWith(empty3x0AlignedRequestMock);
+        expect(await adapter.start()).toBe("restored");
+        const nvWrite = {sysid: NvSystemIds.ZSTACK, offset: 0};
+        for (const subid of [0, 1]) {
+            await mockZnpRequest(Subsystem.SYS, "nvWrite", {
+                ...nvWrite,
+                itemid: NvItemsIds.ZCD_NV_EX_ADDRMGR,
+                subid,
+                value: Buffer.from("00ff00000000000000000000", "hex"),
+            });
+        }
+        await mockZnpRequest(Subsystem.SYS, "nvWrite", {
+            ...nvWrite,
+            itemid: NvItemsIds.ZCD_NV_EX_APS_KEY_DATA_TABLE,
+            subid: 0,
+            value: Buffer.alloc(24, 0),
+        });
+
+        const backup = await adapter.backup([]);
+        const findDevice = (ieee: string) => backup.devices.find((d) => d.ieeeAddress.toString("hex") === ieee);
+        expect(findDevice("00158d00024f4518")?.linkKey).toStrictEqual({
+            key: Buffer.from("267e1e31fcd8171f8acf63459effbca5", "hex"),
+            rxCounter: 0,
+            txCounter: 2544,
+        });
+        expect(findDevice("00158d00024f810d")?.linkKey).toBeUndefined();
+        expect(findDevice("00158d00024f810e")?.linkKey).toStrictEqual({
+            key: Buffer.from("55ba1e31fcd8171fee0b63459effeea5", "hex"),
+            rxCounter: 24,
+            txCounter: 2591,
+        });
+    });
+
+    it("should restore unified backup with 3.x.0 adapter - skip keyless non-child device", async () => {
+        const backupFile = getTempFile();
+        const backup = JSON.parse(JSON.stringify(backupMatchingConfig));
+        backup.devices.push({
+            nwk_address: "20fa",
+            ieee_address: "00128d11124fa80b",
+            is_child: false,
+        });
+        fs.writeFileSync(backupFile, JSON.stringify(backup), "utf8");
+        adapter = new ZStackAdapter(networkOptions, transportOptions, backupFile, {concurrent: 3});
+        mockZnpRequestWith(empty3x0AlignedRequestMock);
+        const result = await adapter.start();
+        expect(result).toBe("restored");
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.SYS, "nvWrite", {
+            sysid: NvSystemIds.ZSTACK,
+            itemid: NvItemsIds.ZCD_NV_EX_ADDRMGR,
+            subid: backupMatchingConfig.devices.length,
+            offset: 0,
+            len: 12,
+            value: Buffer.from("00ff00000000000000000000", "hex"),
+        });
     });
 
     it("should fail when backup file is corrupted - Coordinator backup is corrupted", async () => {
@@ -4013,6 +4082,59 @@ describe("zstack-adapter", () => {
             data: responseFrame.toBuffer(),
         });
         const wait = adapter.waitFor(2, 20, 0, 1, 100, 0, 1, undefined, 10);
+        znpReceived(object);
+        const result = await wait.promise;
+        expect(result.endpoint).toStrictEqual(20);
+        expect(result.groupID).toStrictEqual(12);
+        expect(result.linkquality).toStrictEqual(101);
+        expect(result.address).toStrictEqual(2);
+        expect(result.data).toStrictEqual(Buffer.from([24, 100, 1, 0, 0, 0, 32, 2]));
+    });
+
+    it("Wait for same frameType resolves on proper cmd", async () => {
+        basicMocks();
+        await adapter.start();
+
+        const badResponseFrame = Zcl.Frame.create(
+            Zcl.FrameType.SPECIFIC,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            100,
+            "viewRsp",
+            0x04,
+            {status: 0, groupid: 1, groupname: "abc"},
+            {},
+        );
+        const badObject = mockZpiObject(Type.AREQ, Subsystem.AF, "incomingMsg", {
+            clusterid: 0,
+            srcendpoint: 20,
+            srcaddr: 2,
+            linkquality: 101,
+            groupid: 12,
+            data: badResponseFrame.toBuffer(),
+        });
+        const responseFrame = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            100,
+            "readRsp",
+            0x04,
+            [{attrId: 0, attrData: 2, dataType: 32, status: 0}],
+            {},
+        );
+        const object = mockZpiObject(Type.AREQ, Subsystem.AF, "incomingMsg", {
+            clusterid: 0,
+            srcendpoint: 20,
+            srcaddr: 2,
+            linkquality: 101,
+            groupid: 12,
+            data: responseFrame.toBuffer(),
+        });
+        const wait = adapter.waitFor(2, 20, 0, 1, 100, 0, 1, undefined, 10);
+        znpReceived(badObject);
         znpReceived(object);
         const result = await wait.promise;
         expect(result.endpoint).toStrictEqual(20);
