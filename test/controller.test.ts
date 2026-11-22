@@ -9744,15 +9744,6 @@ describe("Controller", () => {
         expect(endpoint.clusters.genOnOff).toStrictEqual({attributes: {onOff: 1}, attributeList: {}});
     });
 
-    it("Does not treat an empty discovery cache as proof of missing attributes", async () => {
-        await controller.start();
-        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
-        const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
-
-        endpoint.saveClusterAttributeDiscovery("genOnOff", []);
-        expect(endpoint.hasClusterAttribute("genOnOff", 0xffff)).toBeUndefined();
-    });
-
     it("Caches unknown discovered attributes by numeric ID fallback", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
@@ -9761,7 +9752,6 @@ describe("Controller", () => {
         endpoint.saveClusterAttributeDiscovery("genOnOff", [{attrId: 0xffff, dataType: Zcl.DataType.BOOLEAN}]);
 
         expect(endpoint.clusters.genOnOff.attributeList["65535"]).toStrictEqual({type: Zcl.DataType.BOOLEAN, access: undefined});
-        expect(endpoint.hasClusterAttribute("genOnOff", 0xffff)).toBe(true);
     });
 
     it("Updates existing discovered attribute cache entries", async () => {
@@ -9784,7 +9774,6 @@ describe("Controller", () => {
         const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
         mocksendZclFrameToEndpoint.mockClear();
         const cluster = Zcl.Clusters.genOnOff;
-        expect(endpoint.hasClusterAttribute("genOnOff", "onOff")).toBeUndefined();
         const frames = [
             Zcl.Frame.create(
                 Zcl.FrameType.GLOBAL,
@@ -9832,7 +9821,6 @@ describe("Controller", () => {
                       globalSceneCtrl: {type: Zcl.DataType.UINT8, access: undefined},
                   },
         );
-        expect(endpoint.hasClusterAttribute("genOnOff", "onOff")).toBeUndefined();
 
         for (const frame of frames) {
             await mockAdapterEvents.zclPayload({
@@ -9849,8 +9837,6 @@ describe("Controller", () => {
 
         expect(mocksendZclFrameToEndpoint.mock.calls[0][3].payload).toStrictEqual({startAttrId: 0, maxAttrIds: 255});
         expect(mocksendZclFrameToEndpoint.mock.calls[1][3].payload).toStrictEqual({startAttrId: 1, maxAttrIds: 255});
-        expect(endpoint.hasClusterAttribute("genOnOff", "onOff")).toBe(true);
-        expect(endpoint.hasClusterAttribute("genOnOff", "startUpOnOff")).toBeUndefined();
         expect(endpoint.clusters.genOnOff.attributeList).toMatchObject({
             onOff: {access: extended ? 1 : undefined},
             globalSceneCtrl: {access: extended ? 3 : undefined},

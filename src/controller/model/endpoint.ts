@@ -365,24 +365,6 @@ export class Endpoint extends ZigbeeEntity {
         return discoveredAttributes;
     }
 
-    public hasClusterAttribute(clusterKey: number | string, attributeKey: number | string): boolean | undefined {
-        const cluster = this.getCluster(clusterKey);
-        const clusterCache = this.clusters[cluster.name];
-
-        if (!clusterCache) {
-            return undefined;
-        }
-
-        const attribute = Zcl.Utils.getClusterAttribute(cluster, attributeKey, undefined);
-        const cacheKey = attribute?.name ?? String(attributeKey);
-
-        if (cacheKey in clusterCache.attributes || cacheKey in clusterCache.attributeList) {
-            return true;
-        }
-
-        return undefined;
-    }
-
     public getClusterAttributeValue(clusterKey: number | string, attributeKey: number | string): number | string | undefined {
         const cluster = this.getCluster(clusterKey);
 
