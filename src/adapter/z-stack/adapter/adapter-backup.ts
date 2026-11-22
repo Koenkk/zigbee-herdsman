@@ -97,7 +97,7 @@ export class AdapterBackup {
             `fetched adapter address manager table (capacity=${addressManagerTable?.capacity || 0}, used=${addressManagerTable?.usedCount || 0})`,
             NS,
         );
-        const securityManagerTable = await this.getSecurityManagerTable();
+        const securityManagerTable = await this.getSecurityManagerTable(version);
         logger.debug(
             `fetched adapter security manager table (capacity=${securityManagerTable?.usedCount || 0}, used=${securityManagerTable?.usedCount || 0})`,
             NS,
@@ -271,7 +271,7 @@ export class AdapterBackup {
 
         /* determine table sizes */
         const currentAddressManagerTable = await this.getAddressManagerTable(version);
-        const currentSecurityManagerTable = await this.getSecurityManagerTable();
+        const currentSecurityManagerTable = await this.getSecurityManagerTable(version);
         const currentApsLinkKeyDataTable = await this.getApsLinkKeyDataTable(version);
         const currentTclkTable = await this.getTclkTable(version);
         const currentNwkSecMaterialTable = await this.getNetworkSecurityMaterialTable(version);
@@ -455,8 +455,13 @@ export class AdapterBackup {
 
     /**
      * Internal method to retrieve security manager table. Also referred to as APS Link Key Table.
+     *
+     * @param version ZNP stack version the adapter is running.
      */
-    private async getSecurityManagerTable(): Promise<ReturnType<typeof Structs.securityManagerTable>> {
+    private async getSecurityManagerTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.securityManagerTable>> {
+        if (version === ZnpVersion.ZStack12) {
+            return Structs.securityManagerTable(0);
+        }
         return await this.nv.readItem(NvItemsIds.APS_LINK_KEY_TABLE, 0, Structs.securityManagerTable);
     }
 
@@ -466,6 +471,9 @@ export class AdapterBackup {
      * @param version ZNP stack version the adapter is running.
      */
     private async getApsLinkKeyDataTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.apsLinkKeyDataTable>> {
+        if (version === ZnpVersion.ZStack12) {
+            return Structs.apsLinkKeyDataTable(0);
+        }
         if (version === ZnpVersion.ZStack3x0) {
             return await this.nv.readTable(
                 "extended",
@@ -484,6 +492,9 @@ export class AdapterBackup {
      * @param version ZNP stack version the adapter is running.
      */
     private async getTclkTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.apsTcLinkKeyTable>> {
+        if (version === ZnpVersion.ZStack12) {
+            return Structs.apsTcLinkKeyTable(0);
+        }
         if (version === ZnpVersion.ZStack3x0) {
             return await this.nv.readTable("extended", NvSystemIds.ZSTACK, NvItemsIds.EX_TCLK_TABLE, undefined, Structs.apsTcLinkKeyTable);
         }
@@ -496,6 +507,9 @@ export class AdapterBackup {
      * @param version ZNP stack version the adapter is running.
      */
     private async getNetworkSecurityMaterialTable(version: ZnpVersion): Promise<ReturnType<typeof Structs.nwkSecMaterialDescriptorTable>> {
+        if (version === ZnpVersion.ZStack12) {
+            return Structs.nwkSecMaterialDescriptorTable(0);
+        }
         if (version === ZnpVersion.ZStack3x0) {
             return await this.nv.readTable(
                 "extended",
