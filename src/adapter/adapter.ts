@@ -115,10 +115,45 @@ export abstract class Adapter extends events.EventEmitter<AdapterEventMap> {
 
                 return new EZSPAdapter(networkOptions, transportOptions, backupPath, adapterOptions);
             }
+            case "zerostack": {
+                const pkg = "@smlight/zerostack-adapter";
+                let mod: unknown;
+
+                try {
+                    mod = await Adapter.loadOptional(pkg);
+                } catch (error) {
+                    if (
+                        error instanceof Error &&
+                        "code" in error &&
+                        (error.code === "ERR_MODULE_NOT_FOUND" || error.code === "MODULE_NOT_FOUND") &&
+                        error.message.includes(`'${pkg}'`)
+                    ) {
+                        throw new Error(`Adapter 'zerostack' requires optional package '${pkg}' to be installed.`, {cause: error});
+                    }
+
+                    throw error;
+                }
+
+                const fn = typeof mod === "object" && mod !== null && "createZeroStackAdapter" in mod ? mod.createZeroStackAdapter : undefined;
+                const inst: unknown = typeof fn === "function" ? fn(Adapter, networkOptions, transportOptions, backupPath, adapterOptions) : null;
+
+                if (inst instanceof Adapter) {
+                    return inst;
+                }
+
+                throw new Error(`Package '${pkg}' does not export a valid 'createZeroStackAdapter' factory.`);
+            }
             default: {
-                throw new Error(`Adapter '${discovered.adapter}' does not exists, possible options: zstack, ember, deconz, zigate, zboss, zoh, ezsp`);
+                throw new Error(
+                    `Adapter '${discovered.adapter}' does not exists, possible options: zstack, ember, deconz, zigate, zboss, zoh, ezsp, zerostack`,
+                );
             }
         }
+    }
+
+    /** @internal */
+    static loadOptional(pkg: string): Promise<unknown> {
+        return import(pkg);
     }
 
     static clusterWaitressTimeoutFormatter(matcher: ClusterWaitressMatcher, timeout: number): string {

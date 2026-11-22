@@ -469,7 +469,7 @@ function matchUsbFingerprint(
 
 export async function matchUsbAdapter(adapter: Adapter, path: string): Promise<UsbAdapterFingerprint | false> {
     // no point in matching this
-    if (adapter === "zoh") {
+    if (adapter === "zoh" || adapter === "zerostack") {
         return false;
     }
 
