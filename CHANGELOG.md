@@ -1,5 +1,21 @@
 # Changelog
 
+## [11.2.4](https://github.com/Koenkk/zigbee-herdsman/compare/v11.2.3...v11.2.4) (2026-11-22)
+
+
+### Bug Fixes
+
+* Time-limit default response de-duplication ([#1926](https://github.com/Koenkk/zigbee-herdsman/issues/1926)) ([72cb75e](https://github.com/Koenkk/zigbee-herdsman/commit/72cb75e67db91fc3c830627c682dac255fc139fd))
+
+## [11.2.3](https://github.com/Koenkk/zigbee-herdsman/compare/v11.2.2...v11.2.3) (2026-11-21)
+
+
+### Bug Fixes
+
+* **ignore:** bump @biomejs/biome from 2.6.6 to 2.6.8 in the minor-patch group ([#1959](https://github.com/Koenkk/zigbee-herdsman/issues/1959)) ([18ee239](https://github.com/Koenkk/zigbee-herdsman/commit/18ee2397cc04ba484ffe1312b7556f31f41662f3))
+* **ignore:** bump debounce from 3.0.0 to 4.0.0 ([#1960](https://github.com/Koenkk/zigbee-herdsman/issues/1960)) ([8047088](https://github.com/Koenkk/zigbee-herdsman/commit/8047088779e7a951484d7d84fc1802702af0fdbe))
+* Z-Stack: skip reading key info NV items on Z-Stack 1.2 ([#1963](https://github.com/Koenkk/zigbee-herdsman/issues/1963)) ([c1ecd4e](https://github.com/Koenkk/zigbee-herdsman/commit/c1ecd4e04dfca93a56805d74e7fe3d8ed96330d7))
+
 ## [11.2.2](https://github.com/Koenkk/zigbee-herdsman/compare/v11.2.1...v11.2.2) (2026-11-19)
 
 
