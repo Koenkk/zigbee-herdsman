@@ -30,7 +30,6 @@ import Group from "./group";
 import {ZigbeeEntity} from "./zigbeeEntity";
 
 const NS = "zh:controller:endpoint";
-const DISCOVER_EXT_UNSUPPORTED_META_KEY = "zclDiscoverExtUnsupported";
 
 export interface ConfigureReportingItem<Cl extends string | number, Custom extends TCustomCluster | undefined = undefined> {
     attribute: ClusterOrRawAttributeKeys<Cl, Custom>[number] | {ID: number; type: number};
@@ -75,10 +74,9 @@ export interface Clusters {
         attributeList: {
             [attribute: string]: {
                 type: number;
-                access: number | null;
+                access?: number;
             };
         };
-        retrievedAttrs: boolean;
     };
 }
 
@@ -259,7 +257,6 @@ export class Endpoint extends ZigbeeEntity {
 
             entry.attributes ??= {};
             entry.attributeList ??= {};
-            entry.retrievedAttrs ??= false;
         }
 
         // Migrate cluster renames from https://github.com/Koenkk/zigbee-herdsman/pull/1503 @deprecated 3.0
@@ -323,7 +320,7 @@ export class Endpoint extends ZigbeeEntity {
         const cluster = this.getCluster(clusterKey);
 
         if (!this.clusters[cluster.name]) {
-            this.clusters[cluster.name] = {attributes: {}, attributeList: {}, retrievedAttrs: false};
+            this.clusters[cluster.name] = {attributes: {}, attributeList: {}};
         }
 
         for (const attribute in list) {
@@ -331,47 +328,41 @@ export class Endpoint extends ZigbeeEntity {
         }
     }
 
-    public saveClusterAttributeDiscovery(
-        clusterKey: number | string,
-        attrInfos: Array<{attrId: number; dataType: number; access?: number}>,
-        discComplete: boolean,
-    ): void {
+    public saveClusterAttributeDiscovery(clusterKey: number | string, attrInfos: Array<{attrId: number; dataType: number; access?: number}>): void {
         const cluster = this.getCluster(clusterKey);
         let clusterCache = this.clusters[cluster.name];
 
         if (!clusterCache) {
-            clusterCache = {attributes: {}, attributeList: {}, retrievedAttrs: false};
+            clusterCache = {attributes: {}, attributeList: {}};
             this.clusters[cluster.name] = clusterCache;
         }
 
-        const manufacturerID = this.getDevice().manufacturerID;
         const attributeList = clusterCache.attributeList;
+        const discoveredAttributes = this.convertClusterAttributeDiscovery(cluster, attrInfos);
+        for (const [attributeKey, discoveredAttribute] of Object.entries(discoveredAttributes)) {
+            const entry = attributeList[attributeKey];
+            if (entry) {
+                Object.assign(entry, discoveredAttribute);
+            } else {
+                attributeList[attributeKey] = discoveredAttribute;
+            }
+        }
+    }
+
+    private convertClusterAttributeDiscovery(
+        cluster: ZclTypes.Cluster,
+        attrInfos: Array<{attrId: number; dataType: number; access?: number}>,
+    ): Clusters[string]["attributeList"] {
+        const manufacturerID = this.getDevice().manufacturerID;
+        const discoveredAttributes: Clusters[string]["attributeList"] = {};
+
         for (const attrInfo of attrInfos) {
             const attribute = Zcl.Utils.getClusterAttribute(cluster, attrInfo.attrId, manufacturerID);
             const attributeKey = attribute?.name ?? String(attrInfo.attrId);
-            const access = attrInfo.access ?? null;
-            const entry = attributeList[attributeKey];
-            if (entry) {
-                entry.type = attrInfo.dataType;
-                entry.access = access;
-            } else {
-                attributeList[attributeKey] = {type: attrInfo.dataType, access: attrInfo.access ?? null};
-            }
+            discoveredAttributes[attributeKey] = {type: attrInfo.dataType, access: attrInfo.access};
         }
-        clusterCache.retrievedAttrs = discComplete;
-    }
 
-    public hasClusterAttributes(clusterKey: number | string, access = false): boolean {
-        const cluster = this.getCluster(clusterKey);
-        const clusterCache = this.clusters[cluster.name];
-
-        if (!clusterCache?.retrievedAttrs) {
-            return false;
-        }
-        if (!access) {
-            return true;
-        }
-        return Object.values(clusterCache.attributeList)[0]?.access != null;
+        return discoveredAttributes;
     }
 
     public hasClusterAttribute(clusterKey: number | string, attributeKey: number | string): boolean | undefined {
@@ -389,7 +380,7 @@ export class Endpoint extends ZigbeeEntity {
             return true;
         }
 
-        return clusterCache.retrievedAttrs ? false : undefined;
+        return undefined;
     }
 
     public getClusterAttributeValue(clusterKey: number | string, attributeKey: number | string): number | string | undefined {
@@ -680,15 +671,10 @@ export class Endpoint extends ZigbeeEntity {
         options?: Options,
         startAttrId = 0,
         maxAttrIds = 0xff,
-    ): Promise<boolean> {
-        const device = this.getDevice();
-        // Return early if the device does not support the command
-        if (extended && device.meta[DISCOVER_EXT_UNSUPPORTED_META_KEY]) {
-            return false;
-        }
-
+    ): Promise<Clusters[string]["attributeList"] | number> {
         const cluster = this.getCluster(clusterKey, undefined, options?.manufacturerCode);
         let discComplete = false;
+        const discoveredAttributes: Clusters[string]["attributeList"] = {};
 
         while (!discComplete) {
             const request = {startAttrId, maxAttrIds};
@@ -700,18 +686,13 @@ export class Endpoint extends ZigbeeEntity {
                 throw new Error(`No response received while discovering attributes for cluster '${cluster.name}'`);
             }
 
-            if ("statusCode" in response.payload && response.payload.statusCode !== Zcl.Status.SUCCESS) {
-                if (response.payload.statusCode === Zcl.Status.UNSUP_COMMAND) {
-                    if (extended) {
-                        device.meta[DISCOVER_EXT_UNSUPPORTED_META_KEY] = true;
-                        device.save();
-                    }
-                }
-                return false;
+            if ("statusCode" in response.payload) {
+                return response.payload.statusCode;
             }
 
             const payload = response.payload as TFoundation["discoverRsp"] | TFoundation["discoverExtRsp"];
             const attrInfos = extended ? (payload as TFoundation["discoverExtRsp"]).attrInfos : (payload as TFoundation["discoverRsp"]).attrInfos;
+            Object.assign(discoveredAttributes, this.convertClusterAttributeDiscovery(cluster, attrInfos));
             discComplete = payload.discComplete === 1;
 
             if (!discComplete) {
@@ -724,7 +705,8 @@ export class Endpoint extends ZigbeeEntity {
                 startAttrId = lastAttrInfo.attrId + 1;
             }
         }
-        return true;
+
+        return discoveredAttributes;
     }
 
     /**

@@ -1091,12 +1091,12 @@ export class Controller extends events.EventEmitter<ControllerEventMap> {
                     }
 
                     case "discoverRsp": {
-                        endpoint.saveClusterAttributeDiscovery(frame.cluster.ID, frame.payload.attrInfos, frame.payload.discComplete === 1);
+                        endpoint.saveClusterAttributeDiscovery(frame.cluster.ID, frame.payload.attrInfos);
                         break;
                     }
 
                     case "discoverExtRsp": {
-                        endpoint.saveClusterAttributeDiscovery(frame.cluster.ID, frame.payload.attrInfos, frame.payload.discComplete === 1);
+                        endpoint.saveClusterAttributeDiscovery(frame.cluster.ID, frame.payload.attrInfos);
                         break;
                     }
 
