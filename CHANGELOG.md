@@ -1,5 +1,12 @@
 # Changelog
 
+## [11.2.4](https://github.com/Koenkk/zigbee-herdsman/compare/v11.2.3...v11.2.4) (2026-11-22)
+
+
+### Bug Fixes
+
+* Time-limit default response de-duplication ([#1926](https://github.com/Koenkk/zigbee-herdsman/issues/1926)) ([72cb75e](https://github.com/Koenkk/zigbee-herdsman/commit/72cb75e67db91fc3c830627c682dac255fc139fd))
+
 ## [11.2.3](https://github.com/Koenkk/zigbee-herdsman/compare/v11.2.2...v11.2.3) (2026-11-21)
 
 
