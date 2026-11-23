@@ -329,6 +329,10 @@ export class Endpoint extends ZigbeeEntity {
     }
 
     public saveClusterAttributeDiscovery(clusterKey: number | string, attrInfos: Array<{attrId: number; dataType: number; access?: number}>): void {
+        if (attrInfos.length === 0) {
+            return;
+        }
+
         const cluster = this.getCluster(clusterKey);
         let clusterCache = this.clusters[cluster.name];
 
@@ -338,7 +342,7 @@ export class Endpoint extends ZigbeeEntity {
         }
 
         const attributeList = clusterCache.attributeList;
-        const discoveredAttributes = this.convertClusterAttributeDiscovery(cluster, attrInfos);
+        const discoveredAttributes = ZclFrameConverter.attributeDiscovery(cluster, attrInfos, this.getDevice().manufacturerID);
         for (const [attributeKey, discoveredAttribute] of Object.entries(discoveredAttributes)) {
             const entry = attributeList[attributeKey];
             if (entry) {
@@ -347,22 +351,6 @@ export class Endpoint extends ZigbeeEntity {
                 attributeList[attributeKey] = discoveredAttribute;
             }
         }
-    }
-
-    private convertClusterAttributeDiscovery(
-        cluster: ZclTypes.Cluster,
-        attrInfos: Array<{attrId: number; dataType: number; access?: number}>,
-    ): Clusters[string]["attributeList"] {
-        const manufacturerID = this.getDevice().manufacturerID;
-        const discoveredAttributes: Clusters[string]["attributeList"] = {};
-
-        for (const attrInfo of attrInfos) {
-            const attribute = Zcl.Utils.getClusterAttribute(cluster, attrInfo.attrId, manufacturerID);
-            const attributeKey = attribute?.name ?? String(attrInfo.attrId);
-            discoveredAttributes[attributeKey] = {type: attrInfo.dataType, access: attrInfo.access};
-        }
-
-        return discoveredAttributes;
     }
 
     public getClusterAttributeValue(clusterKey: number | string, attributeKey: number | string): number | string | undefined {
@@ -653,12 +641,12 @@ export class Endpoint extends ZigbeeEntity {
         options?: Options,
         startAttrId = 0,
         maxAttrIds = 0xff,
-    ): Promise<Clusters[string]["attributeList"] | number> {
+    ): Promise<Clusters[string]["attributeList"]> {
         const cluster = this.getCluster(clusterKey, undefined, options?.manufacturerCode);
         let discComplete = false;
         const discoveredAttributes: Clusters[string]["attributeList"] = {};
 
-        while (!discComplete) {
+        do {
             const request = {startAttrId, maxAttrIds};
             const response = extended
                 ? await this.zclCommand(cluster, "discoverExt", request, options)
@@ -668,13 +656,13 @@ export class Endpoint extends ZigbeeEntity {
                 throw new Error(`No response received while discovering attributes for cluster '${cluster.name}'`);
             }
 
-            if ("statusCode" in response.payload) {
-                return response.payload.statusCode;
+            if ("statusCode" in response.payload && response.payload.statusCode !== Zcl.Status.SUCCESS) {
+                throw new Zcl.StatusError(response.payload.statusCode);
             }
 
             const payload = response.payload as TFoundation["discoverRsp"] | TFoundation["discoverExtRsp"];
             const attrInfos = extended ? (payload as TFoundation["discoverExtRsp"]).attrInfos : (payload as TFoundation["discoverRsp"]).attrInfos;
-            Object.assign(discoveredAttributes, this.convertClusterAttributeDiscovery(cluster, attrInfos));
+            Object.assign(discoveredAttributes, ZclFrameConverter.attributeDiscovery(cluster, attrInfos, this.getDevice().manufacturerID));
             discComplete = payload.discComplete;
 
             if (!discComplete) {
@@ -686,7 +674,7 @@ export class Endpoint extends ZigbeeEntity {
 
                 startAttrId = lastAttrInfo.attrId + 1;
             }
-        }
+        } while (!discComplete);
 
         return discoveredAttributes;
     }

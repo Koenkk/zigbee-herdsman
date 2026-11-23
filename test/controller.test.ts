@@ -9744,6 +9744,16 @@ describe("Controller", () => {
         expect(endpoint.clusters.genOnOff).toStrictEqual({attributes: {onOff: 1}, attributeList: {}});
     });
 
+    it("Ignores empty attribute discovery lists", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+
+        endpoint.saveClusterAttributeDiscovery("genOnOff", []);
+
+        expect(endpoint.clusters.genOnOff).toBeUndefined();
+    });
+
     it("Caches unknown discovered attributes by numeric ID fallback", async () => {
         await controller.start();
         await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
@@ -9945,7 +9955,7 @@ describe("Controller", () => {
             data: failureResponse.toBuffer(),
         });
 
-        await expect(endpoint.discoverAttributes("genOnOff")).resolves.toBe(Zcl.Status.FAILURE);
+        await expect(endpoint.discoverAttributes("genOnOff")).rejects.toThrow(new Zcl.StatusError(Zcl.Status.FAILURE));
         expect(endpoint.clusters.genOnOff).toBeUndefined();
 
         const incompletePage = Zcl.Frame.create(
