@@ -544,9 +544,9 @@ export const Foundation = {
         name: "discoverRsp",
         ID: 0x0d,
         parse(buffalo) {
-            const discComplete = buffalo.readUInt8();
+            const discComplete = buffalo.readUInt8() === 1;
             const attrInfos: {attrId: number; dataType: number}[] = [];
-            const payload: {discComplete: number; attrInfos: typeof attrInfos} = {discComplete, attrInfos};
+            const payload: {discComplete: boolean; attrInfos: typeof attrInfos} = {discComplete, attrInfos};
 
             do {
                 const attrId = buffalo.readUInt16();
@@ -562,7 +562,7 @@ export const Foundation = {
                 throw new ZclStatusError(Status.MALFORMED_COMMAND);
             }
 
-            buffalo.writeUInt8(payload.discComplete);
+            buffalo.writeUInt8(payload.discComplete ? 1 : 0);
 
             for (const entry of payload.attrInfos) {
                 buffalo.writeUInt16(entry.attrId);
@@ -703,9 +703,9 @@ export const Foundation = {
         name: "discoverCommandsRsp",
         ID: 0x12,
         parse(buffalo) {
-            const discComplete = buffalo.readUInt8();
+            const discComplete = buffalo.readUInt8() === 1;
             const commandIds: number[] = [];
-            const payload: {discComplete: number; commandIds: typeof commandIds} = {discComplete, commandIds};
+            const payload: {discComplete: boolean; commandIds: typeof commandIds} = {discComplete, commandIds};
 
             do {
                 const commandId = buffalo.readUInt8();
@@ -720,7 +720,7 @@ export const Foundation = {
                 throw new ZclStatusError(Status.MALFORMED_COMMAND);
             }
 
-            buffalo.writeUInt8(payload.discComplete);
+            buffalo.writeUInt8(payload.discComplete ? 1 : 0);
 
             for (const commandId of payload.commandIds) {
                 buffalo.writeUInt8(commandId);
@@ -751,9 +751,9 @@ export const Foundation = {
         name: "discoverCommandsGenRsp",
         ID: 0x14,
         parse(buffalo) {
-            const discComplete = buffalo.readUInt8();
+            const discComplete = buffalo.readUInt8() === 1;
             const commandIds: number[] = [];
-            const payload: {discComplete: number; commandIds: typeof commandIds} = {discComplete, commandIds};
+            const payload: {discComplete: boolean; commandIds: typeof commandIds} = {discComplete, commandIds};
 
             do {
                 const commandId = buffalo.readUInt8();
@@ -768,7 +768,7 @@ export const Foundation = {
                 throw new ZclStatusError(Status.MALFORMED_COMMAND);
             }
 
-            buffalo.writeUInt8(payload.discComplete);
+            buffalo.writeUInt8(payload.discComplete ? 1 : 0);
 
             for (const commandId of payload.commandIds) {
                 buffalo.writeUInt8(commandId);
@@ -800,9 +800,9 @@ export const Foundation = {
         name: "discoverExtRsp",
         ID: 0x16,
         parse(buffalo) {
-            const discComplete = buffalo.readUInt8();
+            const discComplete = buffalo.readUInt8() === 1;
             const attrInfos: {attrId: number; dataType: number; access: number}[] = [];
-            const payload: {discComplete: number; attrInfos: typeof attrInfos} = {discComplete, attrInfos};
+            const payload: {discComplete: boolean; attrInfos: typeof attrInfos} = {discComplete, attrInfos};
 
             do {
                 const attrId = buffalo.readUInt16();
@@ -819,7 +819,7 @@ export const Foundation = {
                 throw new ZclStatusError(Status.MALFORMED_COMMAND);
             }
 
-            buffalo.writeUInt8(payload.discComplete);
+            buffalo.writeUInt8(payload.discComplete ? 1 : 0);
 
             for (const entry of payload.attrInfos) {
                 buffalo.writeUInt16(entry.attrId);

@@ -622,7 +622,7 @@ describe("Foundation", () => {
             "discoverRsp",
             "genOnOff",
             {
-                discComplete: 1,
+                discComplete: true,
                 attrInfos: [
                     {attrId: Zcl.Clusters.genOnOff.attributes.onOff.ID, dataType: Zcl.Clusters.genOnOff.attributes.onOff.type},
                     {attrId: Zcl.Clusters.genOnOff.attributes.globalSceneCtrl.ID, dataType: Zcl.Clusters.genOnOff.attributes.globalSceneCtrl.type},
@@ -836,7 +836,7 @@ describe("Foundation", () => {
             "discoverCommandsRsp",
             "genOnOff",
             {
-                discComplete: 1,
+                discComplete: true,
                 commandIds: [Zcl.Clusters.genOnOff.commands.off.ID, Zcl.Clusters.genOnOff.commands.on.ID],
             },
             {},
@@ -898,7 +898,7 @@ describe("Foundation", () => {
             "discoverCommandsGenRsp",
             "genOnOff",
             {
-                discComplete: 1,
+                discComplete: true,
                 commandIds: [Zcl.Clusters.genOnOff.commands.off.ID, Zcl.Clusters.genOnOff.commands.on.ID],
             },
             {},
@@ -960,7 +960,7 @@ describe("Foundation", () => {
             "discoverExtRsp",
             "genOnOff",
             {
-                discComplete: 1,
+                discComplete: true,
                 attrInfos: [
                     {attrId: Zcl.Clusters.genOnOff.attributes.onOff.ID, dataType: Zcl.Clusters.genOnOff.attributes.onOff.type, access: 1},
                     {

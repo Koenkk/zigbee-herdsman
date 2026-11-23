@@ -675,7 +675,7 @@ export class Endpoint extends ZigbeeEntity {
             const payload = response.payload as TFoundation["discoverRsp"] | TFoundation["discoverExtRsp"];
             const attrInfos = extended ? (payload as TFoundation["discoverExtRsp"]).attrInfos : (payload as TFoundation["discoverRsp"]).attrInfos;
             Object.assign(discoveredAttributes, this.convertClusterAttributeDiscovery(cluster, attrInfos));
-            discComplete = payload.discComplete === 1;
+            discComplete = payload.discComplete;
 
             if (!discComplete) {
                 const lastAttrInfo = attrInfos.at(-1);

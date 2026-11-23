@@ -9784,7 +9784,7 @@ describe("Controller", () => {
                 extended ? "discoverExtRsp" : "discoverRsp",
                 cluster.ID,
                 {
-                    discComplete: 0,
+                    discComplete: false,
                     attrInfos: [extended ? {attrId: 0, dataType: Zcl.DataType.BOOLEAN, access: 1} : {attrId: 0, dataType: Zcl.DataType.BOOLEAN}],
                 },
                 {},
@@ -9798,7 +9798,7 @@ describe("Controller", () => {
                 extended ? "discoverExtRsp" : "discoverRsp",
                 cluster.ID,
                 {
-                    discComplete: 1,
+                    discComplete: true,
                     attrInfos: [
                         extended ? {attrId: 0x4000, dataType: Zcl.DataType.UINT8, access: 3} : {attrId: 0x4000, dataType: Zcl.DataType.UINT8},
                     ],
@@ -9856,7 +9856,7 @@ describe("Controller", () => {
                 10,
                 "discoverRsp",
                 Zcl.Clusters.genOnOff.ID,
-                {discComplete: 1, attrInfos: [{attrId: 0, dataType: Zcl.DataType.BOOLEAN}]},
+                {discComplete: true, attrInfos: [{attrId: 0, dataType: Zcl.DataType.BOOLEAN}]},
                 {},
             ),
             Zcl.Frame.create(
@@ -9867,7 +9867,7 @@ describe("Controller", () => {
                 11,
                 "discoverExtRsp",
                 Zcl.Clusters.genLevelCtrl.ID,
-                {discComplete: 1, attrInfos: [{attrId: 0, dataType: Zcl.DataType.UINT8, access: 3}]},
+                {discComplete: true, attrInfos: [{attrId: 0, dataType: Zcl.DataType.UINT8, access: 3}]},
                 {},
             ),
         ];
@@ -9903,7 +9903,7 @@ describe("Controller", () => {
             10,
             "discoverRsp",
             Zcl.Clusters.genOnOff.ID,
-            {discComplete: 1, attrInfos: [{attrId: 0, dataType: Zcl.DataType.BOOLEAN}]},
+            {discComplete: true, attrInfos: [{attrId: 0, dataType: Zcl.DataType.BOOLEAN}]},
             {},
         );
         mocksendZclFrameToEndpoint.mockReturnValueOnce({
@@ -9956,7 +9956,7 @@ describe("Controller", () => {
             11,
             "discoverRsp",
             Zcl.Clusters.genOnOff.ID,
-            {discComplete: 0, attrInfos: [{attrId: 0xffff, dataType: Zcl.DataType.BOOLEAN}]},
+            {discComplete: false, attrInfos: [{attrId: 0xffff, dataType: Zcl.DataType.BOOLEAN}]},
             {},
         );
         mocksendZclFrameToEndpoint.mockReturnValueOnce({
