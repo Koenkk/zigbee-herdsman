@@ -1,5 +1,12 @@
 # Changelog
 
+## [11.2.5](https://github.com/Koenkk/zigbee-herdsman/compare/v11.2.4...v11.2.5) (2026-11-24)
+
+
+### Bug Fixes
+
+* Z-Stack: skip unsupported NV tables during 1.2 backup ([#1965](https://github.com/Koenkk/zigbee-herdsman/issues/1965)) ([fe84f51](https://github.com/Koenkk/zigbee-herdsman/commit/fe84f5196861322b190bfc69d6a46ea91dcc679d))
+
 ## [11.2.4](https://github.com/Koenkk/zigbee-herdsman/compare/v11.2.3...v11.2.4) (2026-11-22)
 
 
