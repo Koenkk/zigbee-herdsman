@@ -639,8 +639,8 @@ export class Endpoint extends ZigbeeEntity {
         clusterKey: number | string,
         extended = false,
         options?: Options,
-        startAttrId = 0,
-        maxAttrIds = 0xff,
+        startAttrId = 0x0000,
+        maxAttrIds = 255,
     ): Promise<Clusters[string]["attributeList"]> {
         const cluster = this.getCluster(clusterKey, undefined, options?.manufacturerCode);
         let discComplete = false;
