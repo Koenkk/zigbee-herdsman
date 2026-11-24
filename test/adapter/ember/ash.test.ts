@@ -16,6 +16,7 @@ import {
 import {EzspFrameID} from "../../../src/adapter/ember/ezsp/enums";
 import {CONFIG_TX_K, UartAsh} from "../../../src/adapter/ember/uart/ash";
 import {EZSP_HOST_RX_POOL_SIZE, TX_POOL_BUFFERS} from "../../../src/adapter/ember/uart/consts";
+import {AshReservedByte} from "../../../src/adapter/ember/uart/enums";
 import {EzspBuffer} from "../../../src/adapter/ember/uart/queues";
 import {lowByte} from "../../../src/adapter/ember/utils/math";
 import {AdapterTransport} from "../../../src/adapter/transport";
@@ -168,6 +169,29 @@ describe("Ember UART ASH Protocol", () => {
             }
         }
 
+        await uartAsh.stop();
+    });
+
+    it.each([
+        {rtscts: false, isSerial: true, resume: true},
+        {rtscts: true, isSerial: true, resume: false},
+        {rtscts: false, isSerial: false, resume: false},
+    ])("Resumes software flow only for serial resets: %o", async ({rtscts, isSerial, resume}) => {
+        await uartAsh.stop();
+        transport = new AdapterTransport({path: ADAPTER_PATH, baudRate: 100, rtscts});
+        transport.serialPortBinding = MockBinding;
+        vi.spyOn(transport, "isSerial", "get").mockReturnValue(isSerial);
+        uartAsh = new UartAsh(transport);
+
+        expect(await uartAsh.resetNcp()).toStrictEqual(EzspStatus.SUCCESS);
+        (transport.serialPortInstance!.port as MockPortBinding).emitData(Buffer.from(RECD_RSTACK_BYTES));
+        expect(await uartAsh.start()).toStrictEqual(EzspStatus.SUCCESS);
+        await new Promise(setImmediate);
+        const prefix = resume ? [AshReservedByte.CANCEL, AshReservedByte.XON] : [];
+        expect((transport.serialPortInstance!.port as MockPortBinding).recording).toStrictEqual(
+            Buffer.from([...prefix, ...SEND_RST_BYTES, ...ASH_ACK_FIRST_BYTES]),
+        );
+        expect(uartAsh.connected).toBeTruthy();
         await uartAsh.stop();
     });
 
