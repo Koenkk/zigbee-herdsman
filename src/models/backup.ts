@@ -34,4 +34,8 @@ export interface Backup {
         version?: number;
         hashed_tclk?: Buffer;
     };
+    espzb?: {
+        /** espzb protocol major version of the NCP that produced the backup */
+        version?: number;
+    };
 }

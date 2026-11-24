@@ -1,0 +1,95 @@
+{
+    "description": "espzb protocol 1.0 conformance vectors (docs/PROTOCOL.md). Hex strings; wire = SLIP-encoded frame.",
+    "crc16": [
+        {
+            "data": "313233343536373839",
+            "crc": 56950
+        },
+        {
+            "data": "0000090009070000001400000000",
+            "crc": 17914
+        }
+    ],
+    "frames": [
+        {
+            "name": "ZNSP documented command frame (esp-zigbee-sdk v1.x ncp.rst)",
+            "type": 0,
+            "id": 9,
+            "sn": 9,
+            "payload": "00001400000000",
+            "wire": "c00000090009070000001400000000fa45c0"
+        },
+        {
+            "name": "EXT_GET_INFO request",
+            "type": 0,
+            "id": 3584,
+            "sn": 0,
+            "payload": "",
+            "wire": "c00000000e000000bd51c0"
+        },
+        {
+            "name": "status-only response",
+            "type": 1,
+            "id": 12,
+            "sn": 7,
+            "payload": "00",
+            "wire": "c010000c00070100008e98c0"
+        },
+        {
+            "name": "NETWORK_PAN_ID_GET response (PAN 0x1a62)",
+            "type": 1,
+            "id": 11,
+            "sn": 8,
+            "payload": "00621a",
+            "wire": "c010000b0008030000621a6b5fc0"
+        },
+        {
+            "name": "payload with SLIP END/ESC bytes (escaping)",
+            "type": 0,
+            "id": 3586,
+            "sn": 192,
+            "payload": "c0db00dcddc0",
+            "wire": "c00000020edbdc0600dbdcdbdd00dcdddbdc6856c0"
+        },
+        {
+            "name": "NETWORK_STACK_STATUS_HANDLER notify (CONNECTED)",
+            "type": 2,
+            "id": 3,
+            "sn": 3,
+            "payload": "0200",
+            "wire": "c0200003000302000200a2b7c0"
+        },
+        {
+            "name": "APS_DATA_REQUEST: genOnOff.on to 0x1234/1",
+            "type": 0,
+            "id": 768,
+            "sn": 42,
+            "payload": "34120000000000000101020401060004000000000000000000000003000000012a01",
+            "wire": "c0000000032a220034120000000000000101020401060004000000000000000000000003000000012a01af89c0"
+        },
+        {
+            "name": "APS_DATA_INDICATION: temperature report 23.45 C from 0x1234",
+            "type": 2,
+            "id": 769,
+            "sn": 5,
+            "payload": "05020000000000000000010234120000000000000104010204000196d30000000900000018010a000029290900",
+            "wire": "c020000103052d0005020000000000000000010234120000000000000104010204000196d30000000900000018010a00002929090026a1c0"
+        },
+        {
+            "name": "APS_DATA_CONFIRM for request sn=42 (MAC_NO_ACK)",
+            "type": 2,
+            "id": 770,
+            "sn": 42,
+            "payload": "04023412000000000000010100000000e900000000",
+            "wire": "c0200002032a150004023412000000000000010100000000e90000000098fbc0"
+        },
+        {
+            "name": "EXT_APP_SIGNAL DEVICE_UPDATE (unsecure join, accept)",
+            "type": 2,
+            "id": 3648,
+            "sn": 6,
+            "payload": "07000c01bbaa22004b1200341201000000",
+            "wire": "c02000400e06110007000c01bbaa22004b1200341201000000e831c0"
+        }
+    ]
+}

@@ -1,6 +1,7 @@
 import {describe, expect, it, vi} from "vitest";
 import {checkInstallCode} from "../src/controller/helpers/installCodes";
-import {Queue, Utils, Waitress, wait} from "../src/utils";
+import type * as Models from "../src/models";
+import {BackupUtils, Queue, Utils, Waitress, wait} from "../src/utils";
 import {AsyncMutex} from "../src/utils/async-mutex";
 import {logger, setLogger} from "../src/utils/logger";
 
@@ -12,6 +13,31 @@ const mockLogger = {
 };
 
 describe("Utils", () => {
+    it("Round-trips the espzb marker through the unified backup format", () => {
+        const backup: Models.Backup = {
+            networkOptions: {
+                panId: 0x1a62,
+                extendedPanId: Buffer.alloc(8, 0xdd),
+                channelList: [15],
+                networkKey: Buffer.alloc(16, 1),
+                networkKeyDistribute: false,
+            },
+            logicalChannel: 15,
+            networkKeyInfo: {sequenceNumber: 0, frameCounter: 42},
+            securityLevel: 5,
+            networkUpdateId: 0,
+            coordinatorIeeeAddress: Buffer.from("7cdfa1fffe5a31c0", "hex"),
+            devices: [],
+            espzb: {version: 1},
+        };
+        const unified = BackupUtils.toUnifiedBackup(backup);
+        expect(unified.metadata.internal.espzbVersion).toStrictEqual(1);
+        expect(unified.coordinator_ieee).toStrictEqual("7cdfa1fffe5a31c0");
+        expect(BackupUtils.fromUnifiedBackup(unified).espzb).toStrictEqual({version: 1});
+        const {espzb: _espzb, ...withoutMarker} = backup;
+        expect(BackupUtils.fromUnifiedBackup(BackupUtils.toUnifiedBackup(withoutMarker)).espzb).toBeUndefined();
+    });
+
     it("Is Number Array", () => {
         expect(Utils.isNumberArray([1, 2, 3])).toBeTruthy();
         expect(Utils.isNumberArray([1, 2, "3"])).toBeFalsy();
