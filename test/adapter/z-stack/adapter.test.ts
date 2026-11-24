@@ -1708,6 +1708,39 @@ describe("zstack-adapter", () => {
         expect(backup.networkKeyInfo.frameCounter).toBe(0);
     });
 
+    it("should create backup with 1.2 adapter without reading unsupported NV tables", async () => {
+        const addrMgrTable = Structs.addressManagerTable(1);
+        addrMgrTable.entries[0].user = Structs.AddressManagerUser.Assoc;
+        addrMgrTable.entries[0].nwkAddr = 0x1234;
+        addrMgrTable.entries[0].extAddr = Buffer.from("00124b002226ef87", "hex");
+
+        const builder = commissioned12UnalignedRequestMock
+            .clone()
+            .nv(NvItemsIds.NWKKEY, Buffer.alloc(21, 0))
+            .nv(NvItemsIds.ADDRMGR, addrMgrTable.serialize("unaligned"));
+
+        mockZnpRequestWith(builder);
+        const result = await adapter.start();
+        expect(result).toBe("resumed");
+
+        mockZnpRequest.mockClear();
+        const backup = await adapter.backup([]);
+        expect(backup.networkKeyInfo.frameCounter).toBe(0);
+        expect(backup.devices).toStrictEqual([
+            {
+                networkAddress: 0x1234,
+                ieeeAddress: Buffer.from("00124b002226ef87", "hex"),
+                isDirectChild: true,
+                linkKey: undefined,
+            },
+        ]);
+
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.SYS, "osalNvLength", {id: NvItemsIds.APS_LINK_KEY_TABLE});
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.SYS, "osalNvLength", {id: NvItemsIds.APS_LINK_KEY_DATA_START});
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.SYS, "osalNvLength", {id: NvItemsIds.LEGACY_TCLK_TABLE_START});
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.SYS, "osalNvLength", {id: NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START});
+    });
+
     it("should keep missing devices in backup", async () => {
         const backupFile = getTempFile();
         const backupWithMissingDevice = JSON.parse(JSON.stringify(backupMatchingConfig));
