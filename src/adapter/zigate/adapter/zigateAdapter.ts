@@ -3,6 +3,7 @@
 import type * as Models from "../../../models";
 import {Queue, Waitress, wait} from "../../../utils";
 import {logger} from "../../../utils/logger";
+import {MetricType, metrics} from "../../../utils/metrics";
 import * as ZSpec from "../../../zspec";
 import type {BroadcastAddress} from "../../../zspec/enums";
 import * as Zcl from "../../../zspec/zcl";
@@ -179,21 +180,7 @@ export class ZiGateAdapter extends Adapter {
         return await Promise.reject(new Error("This adapter does not support backup"));
     }
 
-    public async sendZdo(
-        ieeeAddress: string,
-        networkAddress: number,
-        clusterId: Zdo.ClusterId,
-        payload: Buffer,
-        disableResponse: true,
-    ): Promise<void>;
-    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
-        ieeeAddress: string,
-        networkAddress: number,
-        clusterId: K,
-        payload: Buffer,
-        disableResponse: false,
-    ): Promise<ZdoTypes.RequestToResponseMap[K]>;
-    public async sendZdo<K extends keyof ZdoTypes.RequestToResponseMap>(
+    protected async sendZdoImpl<K extends keyof ZdoTypes.RequestToResponseMap>(
         ieeeAddress: string,
         networkAddress: number,
         clusterId: K,
@@ -268,7 +255,7 @@ export class ZiGateAdapter extends Adapter {
         }, networkAddress);
     }
 
-    public async sendZclFrameToEndpoint(
+    protected async sendZclFrameToEndpointImpl(
         ieeeAddr: string,
         networkAddress: number,
         endpoint: number,
@@ -365,6 +352,7 @@ export class ZiGateAdapter extends Adapter {
         } catch {
             if (responseAttempt < 1 && !disableRecovery) {
                 // @todo discover route
+                metrics.emit("metric", {type: MetricType.AdapterRetry, adapterType: "zigate", ieeeAddr, reason: "send_failure"});
                 return await this.sendZclFrameToEndpointInternal(
                     ieeeAddr,
                     networkAddress,
@@ -392,6 +380,7 @@ export class ZiGateAdapter extends Adapter {
             } catch (error) {
                 logger.error(`Response error ${(error as Error).message} (${ieeeAddr}:${networkAddress},${responseAttempt})`, NS);
                 if (responseAttempt < 1 && !disableRecovery) {
+                    metrics.emit("metric", {type: MetricType.AdapterRetry, adapterType: "zigate", ieeeAddr, reason: "no_response"});
                     return await this.sendZclFrameToEndpointInternal(
                         ieeeAddr,
                         networkAddress,
@@ -413,7 +402,7 @@ export class ZiGateAdapter extends Adapter {
         }
     }
 
-    public async sendZclFrameToAll(
+    protected async sendZclFrameToAllImpl(
         endpoint: number,
         zclFrame: Zcl.Frame,
         sourceEndpoint: number,
@@ -447,7 +436,7 @@ export class ZiGateAdapter extends Adapter {
         });
     }
 
-    public async sendZclFrameToGroup(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
+    protected async sendZclFrameToGroupImpl(groupID: number, zclFrame: Zcl.Frame, sourceEndpoint?: number, profileId?: number): Promise<void> {
         return await this.queue.execute<void>(async () => {
             const data = zclFrame.toBuffer();
             const payload: RawAPSDataRequestPayload = {
