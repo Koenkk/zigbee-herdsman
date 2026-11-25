@@ -668,7 +668,10 @@ export class Endpoint extends ZigbeeEntity {
             if (!discComplete) {
                 const lastAttrInfo = attrInfos.at(-1);
                 if (!lastAttrInfo || lastAttrInfo.attrId === 0xffff) {
-                    logger.warning(`Stopping attribute discovery after invalid/empty response with start '${startAttrId}' for cluster '${cluster.name}'`, NS);
+                    logger.warning(
+                        `Stopping attribute discovery after invalid/empty response with start '${startAttrId}' for cluster '${cluster.name}'`,
+                        NS,
+                    );
                     return discoveredAttributes;
                 }
 
