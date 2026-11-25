@@ -1592,6 +1592,15 @@ describe("zstack-adapter", () => {
         expect(result).toBe("resumed");
     });
 
+    it("should fail to start network with 3.x.0 adapter when nv request fails", async () => {
+        mockZnpRequestWith(
+            commissioned3x0AlignedRequestMock.clone().handle(Subsystem.SYS, "osalNvLength", () => {
+                throw new Error("SRSP - SYS - osalNvLength after 6000ms");
+            }),
+        );
+        await expect(adapter.start()).rejects.toThrowError("SRSP - SYS - osalNvLength after 6000ms");
+    });
+
     it("should restore unified backup with 3.0.x adapter and create backup - empty", async () => {
         const backupFile = getTempFile();
         fs.writeFileSync(backupFile, JSON.stringify(backupMatchingConfig), "utf8");
@@ -1699,6 +1708,39 @@ describe("zstack-adapter", () => {
         expect(backup.networkKeyInfo.frameCounter).toBe(0);
     });
 
+    it("should create backup with 1.2 adapter without reading unsupported NV tables", async () => {
+        const addrMgrTable = Structs.addressManagerTable(1);
+        addrMgrTable.entries[0].user = Structs.AddressManagerUser.Assoc;
+        addrMgrTable.entries[0].nwkAddr = 0x1234;
+        addrMgrTable.entries[0].extAddr = Buffer.from("00124b002226ef87", "hex");
+
+        const builder = commissioned12UnalignedRequestMock
+            .clone()
+            .nv(NvItemsIds.NWKKEY, Buffer.alloc(21, 0))
+            .nv(NvItemsIds.ADDRMGR, addrMgrTable.serialize("unaligned"));
+
+        mockZnpRequestWith(builder);
+        const result = await adapter.start();
+        expect(result).toBe("resumed");
+
+        mockZnpRequest.mockClear();
+        const backup = await adapter.backup([]);
+        expect(backup.networkKeyInfo.frameCounter).toBe(0);
+        expect(backup.devices).toStrictEqual([
+            {
+                networkAddress: 0x1234,
+                ieeeAddress: Buffer.from("00124b002226ef87", "hex"),
+                isDirectChild: true,
+                linkKey: undefined,
+            },
+        ]);
+
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.SYS, "osalNvLength", {id: NvItemsIds.APS_LINK_KEY_TABLE});
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.SYS, "osalNvLength", {id: NvItemsIds.APS_LINK_KEY_DATA_START});
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.SYS, "osalNvLength", {id: NvItemsIds.LEGACY_TCLK_TABLE_START});
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.SYS, "osalNvLength", {id: NvItemsIds.LEGACY_NWK_SEC_MATERIAL_TABLE_START});
+    });
+
     it("should keep missing devices in backup", async () => {
         const backupFile = getTempFile();
         const backupWithMissingDevice = JSON.parse(JSON.stringify(backupMatchingConfig));
@@ -1758,6 +1800,29 @@ describe("zstack-adapter", () => {
             key: Buffer.from("55ba1e31fcd8171fee0b63459effeea5", "hex"),
             rxCounter: 24,
             txCounter: 2591,
+        });
+    });
+
+    it("should restore unified backup with 3.x.0 adapter - skip keyless non-child device", async () => {
+        const backupFile = getTempFile();
+        const backup = JSON.parse(JSON.stringify(backupMatchingConfig));
+        backup.devices.push({
+            nwk_address: "20fa",
+            ieee_address: "00128d11124fa80b",
+            is_child: false,
+        });
+        fs.writeFileSync(backupFile, JSON.stringify(backup), "utf8");
+        adapter = new ZStackAdapter(networkOptions, transportOptions, backupFile, {concurrent: 3});
+        mockZnpRequestWith(empty3x0AlignedRequestMock);
+        const result = await adapter.start();
+        expect(result).toBe("restored");
+        expect(mockZnpRequest).toHaveBeenCalledWith(Subsystem.SYS, "nvWrite", {
+            sysid: NvSystemIds.ZSTACK,
+            itemid: NvItemsIds.ZCD_NV_EX_ADDRMGR,
+            subid: backupMatchingConfig.devices.length,
+            offset: 0,
+            len: 12,
+            value: Buffer.from("00ff00000000000000000000", "hex"),
         });
     });
 
@@ -2098,6 +2163,16 @@ describe("zstack-adapter", () => {
         mockZnpRequestWith(commissioned12UnalignedMismatchRequestMock);
         const result = await adapter.start();
         expect(result).toBe("reset");
+    });
+
+    it("should start network with 1.2 adapter without reading key info NV items", async () => {
+        mockZnpRequestWith(commissioned12UnalignedRequestMock);
+        const result = await adapter.start();
+        expect(result).toBe("resumed");
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.SYS, "osalNvLength", {id: NvItemsIds.NWK_ACTIVE_KEY_INFO});
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.SYS, "osalNvLength", {id: NvItemsIds.NWK_ALTERN_KEY_INFO});
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.SYS, "osalNvReadExt", {id: NvItemsIds.NWK_ACTIVE_KEY_INFO, offset: 0});
+        expect(mockZnpRequest).not.toHaveBeenCalledWith(Subsystem.SYS, "osalNvReadExt", {id: NvItemsIds.NWK_ALTERN_KEY_INFO, offset: 0});
     });
 
     it("Add install code: Install Code + CRC", async () => {

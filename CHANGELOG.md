@@ -1,5 +1,40 @@
 # Changelog
 
+## [11.2.5](https://github.com/Koenkk/zigbee-herdsman/compare/v11.2.4...v11.2.5) (2026-11-24)
+
+
+### Bug Fixes
+
+* Z-Stack: skip unsupported NV tables during 1.2 backup ([#1965](https://github.com/Koenkk/zigbee-herdsman/issues/1965)) ([fe84f51](https://github.com/Koenkk/zigbee-herdsman/commit/fe84f5196861322b190bfc69d6a46ea91dcc679d))
+
+## [11.2.4](https://github.com/Koenkk/zigbee-herdsman/compare/v11.2.3...v11.2.4) (2026-11-22)
+
+
+### Bug Fixes
+
+* Time-limit default response de-duplication ([#1926](https://github.com/Koenkk/zigbee-herdsman/issues/1926)) ([72cb75e](https://github.com/Koenkk/zigbee-herdsman/commit/72cb75e67db91fc3c830627c682dac255fc139fd))
+
+## [11.2.3](https://github.com/Koenkk/zigbee-herdsman/compare/v11.2.2...v11.2.3) (2026-11-21)
+
+
+### Bug Fixes
+
+* **ignore:** bump @biomejs/biome from 2.6.6 to 2.6.8 in the minor-patch group ([#1959](https://github.com/Koenkk/zigbee-herdsman/issues/1959)) ([18ee239](https://github.com/Koenkk/zigbee-herdsman/commit/18ee2397cc04ba484ffe1312b7556f31f41662f3))
+* **ignore:** bump debounce from 3.0.0 to 4.0.0 ([#1960](https://github.com/Koenkk/zigbee-herdsman/issues/1960)) ([8047088](https://github.com/Koenkk/zigbee-herdsman/commit/8047088779e7a951484d7d84fc1802702af0fdbe))
+* Z-Stack: skip reading key info NV items on Z-Stack 1.2 ([#1963](https://github.com/Koenkk/zigbee-herdsman/issues/1963)) ([c1ecd4e](https://github.com/Koenkk/zigbee-herdsman/commit/c1ecd4e04dfca93a56805d74e7fe3d8ed96330d7))
+
+## [11.2.2](https://github.com/Koenkk/zigbee-herdsman/compare/v11.2.1...v11.2.2) (2026-11-19)
+
+
+### Bug Fixes
+
+* ember: larger rollover for waitress ([#1951](https://github.com/Koenkk/zigbee-herdsman/issues/1951)) ([2c5157d](https://github.com/Koenkk/zigbee-herdsman/commit/2c5157db18b44f96499cdd44a75fefd668d56ab1))
+* **ignore:** bump the minor-patch group with 2 updates ([#1953](https://github.com/Koenkk/zigbee-herdsman/issues/1953)) ([199c2f2](https://github.com/Koenkk/zigbee-herdsman/commit/199c2f222a2b63c5c341af0c1bceda56845d34e0))
+* Koenkk/zigbee-herdsman[#1940](https://github.com/Koenkk/zigbee-herdsman/issues/1940) ([#1941](https://github.com/Koenkk/zigbee-herdsman/issues/1941)) ([c0e0f03](https://github.com/Koenkk/zigbee-herdsman/commit/c0e0f03293e9b1cd388dd383ec0f395617354f56))
+* Z-Stack: fix swallowed NV errors after retries are exhausted ([#1955](https://github.com/Koenkk/zigbee-herdsman/issues/1955)) ([a8a8f0a](https://github.com/Koenkk/zigbee-herdsman/commit/a8a8f0a4af405dee03d2074c138fa4a70009a30d))
+* Z-Stack: skip keyless non-child devices when restoring address manager NV ([#1958](https://github.com/Koenkk/zigbee-herdsman/issues/1958)) ([b0e7b53](https://github.com/Koenkk/zigbee-herdsman/commit/b0e7b5370d4a3684e2db53d6b5dcfc26597d1216))
+* ZStack: use physical NV slot indices for Z-Stack backup link keys ([#1950](https://github.com/Koenkk/zigbee-herdsman/issues/1950)) ([eb6338c](https://github.com/Koenkk/zigbee-herdsman/commit/eb6338c4d665aa5adb50c40dbdbe5910e4cbda14))
+
 ## [11.2.1](https://github.com/Koenkk/zigbee-herdsman/compare/v11.2.0...v11.2.1) (2026-11-03)
 
 
