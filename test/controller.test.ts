@@ -9975,7 +9975,9 @@ describe("Controller", () => {
             data: incompletePage.toBuffer(),
         });
 
-        await expect(endpoint.discoverAttributes("genOnOff")).rejects.toThrow("did not make progress");
+        await expect(endpoint.discoverAttributes("genOnOff")).resolves.toStrictEqual({
+            "65535": {type: Zcl.DataType.BOOLEAN, access: undefined},
+        });
     });
 
     it("zclCommand with cluster/command objects", async () => {
