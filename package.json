@@ -36,6 +36,14 @@
         "slip": "^1.0.2",
         "zigbee-on-host": "^0.3.2"
     },
+    "peerDependencies": {
+        "@smlight/zerostack-adapter": ">=0.1.3 <1.0.0"
+    },
+    "peerDependenciesMeta": {
+        "@smlight/zerostack-adapter": {
+            "optional": true
+        }
+    },
     "deprecated": false,
     "description": "An open source Zigbee gateway solution with node.js.",
     "devDependencies": {

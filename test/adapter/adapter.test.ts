@@ -1093,7 +1093,7 @@ describe("Adapter", () => {
                         "test.db.backup",
                         {disableLED: false},
                     ),
-                ).rejects.toThrow(`Adapter 'invalid' does not exists, possible options: zstack, ember, deconz, zigate, zboss, zoh, ezsp`);
+                ).rejects.toThrow(`Adapter 'invalid' does not exists, possible options: zstack, ember, deconz, zigate, zboss, zoh, ezsp, zerostack`);
             });
         });
 
@@ -1360,5 +1360,163 @@ describe("Adapter", () => {
         await flushPromises();
 
         expect(emitSpy).toHaveBeenCalledTimes(0);
+    });
+
+    describe("zerostack optional adapter", () => {
+        const NETWORK_OPTIONS: TsType.NetworkOptions = {
+            panID: 0x1a62,
+            channelList: [11],
+            extendedPanID: [0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd, 0xdd],
+            networkKey: [1, 3, 5, 7, 9, 11, 13, 15, 0, 2, 4, 6, 8, 10, 12, 13],
+        };
+        const ADAPTER_OPTIONS: TsType.AdapterOptions = {disableLED: false};
+
+        class StubZeroStackAdapter extends Adapter {
+            public start = vi.fn();
+            public stop = vi.fn();
+            public getCoordinatorIEEE = vi.fn();
+            public getCoordinatorVersion = vi.fn();
+            public reset = vi.fn();
+            public supportsBackup = vi.fn();
+            public backup = vi.fn();
+            public getNetworkParameters = vi.fn();
+            public addInstallCode = vi.fn();
+            public waitFor = vi.fn();
+            public sendZdo = vi.fn();
+            public permitJoin = vi.fn();
+            public sendZclFrameToEndpoint = vi.fn();
+            public sendZclFrameToGroup = vi.fn();
+            public sendZclFrameToAll = vi.fn();
+            public setChannelInterPAN = vi.fn();
+            public sendZclFrameInterPANToIeeeAddr = vi.fn();
+            public sendZclFrameInterPANBroadcast = vi.fn();
+            public restoreChannelInterPAN = vi.fn();
+        }
+
+        let loadOptionalSpy: MockInstance | undefined;
+
+        beforeEach(() => {
+            mockList.mockClear();
+        });
+
+        afterEach(() => {
+            loadOptionalSpy?.mockRestore();
+            loadOptionalSpy = undefined;
+        });
+
+        it("loads modules dynamically via Adapter.loadOptional", async () => {
+            await expect(Adapter.loadOptional("./const.js")).resolves.toMatchObject({
+                WORKAROUND_JOIN_MANUF_IEEE_PREFIX_TO_CODE: expect.any(Object),
+            });
+            await expect(Adapter.loadOptional("nonexistent-optional-pkg-for-test")).rejects.toMatchObject({
+                code: "ERR_MODULE_NOT_FOUND",
+            });
+        });
+
+        it.each([
+            [
+                "ESM ERR_MODULE_NOT_FOUND",
+                Object.assign(new Error("Cannot find package '@smlight/zerostack-adapter' imported from /app/dist/adapter/adapter.js"), {
+                    code: "ERR_MODULE_NOT_FOUND",
+                }),
+            ],
+            [
+                "CJS MODULE_NOT_FOUND",
+                Object.assign(new Error("Cannot find module '@smlight/zerostack-adapter'"), {
+                    code: "MODULE_NOT_FOUND",
+                }),
+            ],
+        ])("rewrites %s for @smlight/zerostack-adapter", async (_label, origErr) => {
+            loadOptionalSpy = vi.spyOn(Adapter, "loadOptional").mockRejectedValueOnce(origErr);
+
+            const err = await Adapter.create(
+                NETWORK_OPTIONS,
+                {adapter: "zerostack", path: "tcp://127.0.0.1:6638"},
+                "test.db.backup",
+                ADAPTER_OPTIONS,
+            ).catch((error: unknown) => error);
+
+            expect(loadOptionalSpy).toHaveBeenCalledTimes(1);
+            expect(loadOptionalSpy).toHaveBeenCalledWith("@smlight/zerostack-adapter");
+            expect(err).toBeInstanceOf(Error);
+            expect(err).toMatchObject({
+                message: "Adapter 'zerostack' requires optional package '@smlight/zerostack-adapter' to be installed.",
+            });
+            expect(err instanceof Error ? err.cause : undefined).toBe(origErr);
+        });
+
+        it.each<[string, unknown]>([
+            ["ERR_DLOPEN_FAILED", Object.assign(new Error("libudev.so.1: cannot open shared object file"), {code: "ERR_DLOPEN_FAILED"})],
+            [
+                "transitive ERR_MODULE_NOT_FOUND",
+                Object.assign(new Error("Cannot find package 'missing-native-dep' imported from @smlight/zerostack-adapter/dist/index.js"), {
+                    code: "ERR_MODULE_NOT_FOUND",
+                }),
+            ],
+            ["Error without code", new Error("unexpected import failure")],
+            ["non-Error rejection", "non-error rejection"],
+        ])("propagates %s unmasked", async (_label, err) => {
+            loadOptionalSpy = vi.spyOn(Adapter, "loadOptional").mockRejectedValueOnce(err);
+
+            await expect(
+                Adapter.create(NETWORK_OPTIONS, {adapter: "zerostack", path: "tcp://127.0.0.1:6638"}, "test.db.backup", ADAPTER_OPTIONS),
+            ).rejects.toBe(err);
+            expect(loadOptionalSpy).toHaveBeenCalledTimes(1);
+            expect(loadOptionalSpy).toHaveBeenCalledWith("@smlight/zerostack-adapter");
+        });
+
+        it.each<[string, unknown]>([
+            ["null", null],
+            ["undefined", undefined],
+            ["empty object", {}],
+            ["non-function factory", {createZeroStackAdapter: "invalid"}],
+            ["factory returning non-Adapter", {createZeroStackAdapter: () => ({notAnAdapter: true})}],
+        ])("rejects invalid package export (%s)", async (_label, exported) => {
+            loadOptionalSpy = vi.spyOn(Adapter, "loadOptional").mockResolvedValueOnce(exported);
+
+            await expect(
+                Adapter.create(NETWORK_OPTIONS, {adapter: "zerostack", path: "tcp://127.0.0.1:6638"}, "test.db.backup", ADAPTER_OPTIONS),
+            ).rejects.toThrow("Package '@smlight/zerostack-adapter' does not export a valid 'createZeroStackAdapter' factory.");
+            expect(loadOptionalSpy).toHaveBeenCalledTimes(1);
+            expect(loadOptionalSpy).toHaveBeenCalledWith("@smlight/zerostack-adapter");
+        });
+
+        it.each([
+            ["/dev/ttyUSB0", "/dev/ttyUSB0"],
+            ["tcp://192.168.1.50:6638", "tcp://192.168.1.50:6638"],
+            ["socket://192.168.1.50:6638", "tcp://192.168.1.50:6638"],
+        ])("instantiates via createZeroStackAdapter for %s", async (inputPath, expectedPath) => {
+            let created: StubZeroStackAdapter | undefined;
+            const factory = vi.fn(
+                (
+                    _adapterBase: typeof Adapter,
+                    networkOptions: TsType.NetworkOptions,
+                    transportOptions: TsType.TransportOptions,
+                    backupPath: string,
+                    options: TsType.AdapterOptions,
+                ) => {
+                    created = new StubZeroStackAdapter(networkOptions, transportOptions, backupPath, options);
+
+                    return created;
+                },
+            );
+            loadOptionalSpy = vi.spyOn(Adapter, "loadOptional").mockResolvedValueOnce({createZeroStackAdapter: factory});
+
+            const adapter = await Adapter.create(NETWORK_OPTIONS, {adapter: "zerostack", path: inputPath}, "test.db.backup", ADAPTER_OPTIONS);
+
+            expect(loadOptionalSpy).toHaveBeenCalledTimes(1);
+            expect(loadOptionalSpy).toHaveBeenCalledWith("@smlight/zerostack-adapter");
+            expect(factory).toHaveBeenCalledTimes(1);
+            expect(factory).toHaveBeenCalledWith(
+                Adapter,
+                NETWORK_OPTIONS,
+                {path: expectedPath, adapter: "zerostack"},
+                "test.db.backup",
+                ADAPTER_OPTIONS,
+            );
+            expect(adapter).toBe(created);
+            expect(adapter.transport.options).toStrictEqual({path: expectedPath, adapter: "zerostack"});
+            expect(mockList).toHaveBeenCalledTimes(0);
+        });
     });
 });

@@ -121,6 +121,9 @@ importers:
       '@serialport/stream':
         specifier: ^13.0.0
         version: 13.0.0(supports-color@7.2.0)
+      '@smlight/zerostack-adapter':
+        specifier: '>=0.1.3 <1.0.0'
+        version: 0.3.2(zigbee-herdsman@11.2.5(supports-color@7.2.0))
       bonjour-service:
         specifier: ^1.4.4
         version: 1.4.4
@@ -616,6 +619,12 @@ packages:
   '@serialport/stream@13.0.0':
     resolution: {integrity: sha512-F7xLJKsjGo2WuEWMSEO1SimRcOA+WtWICsY13r0ahx8s2SecPQH06338g28OT7cW7uRXI7oEQAk62qh5gHJW3g==}
     engines: {node: '>=20.0.0'}
+
+  '@smlight/zerostack-adapter@0.3.2':
+    resolution: {integrity: sha512-pnMrjRjTbBYsJQMkj6P8fzLIPEXlQaoOR7AapA9MA++PUpKB6NTsA+0EBdJ8M2tK9Qi685GbGjJTzW6rdTzIeg==}
+    engines: {node: ^22.2.0 || ^24 || <=26.2}
+    peerDependencies:
+      zigbee-herdsman: ^11.2.0
 
   '@types/chai@5.2.3':
     resolution: {integrity: sha512-Mw558oeA9fFbv65/y4mHtXDs9bPnFMZAL/jxdPFUpOHHIXX91mcgEHbS5Lahr+pwZFR8A7GQleRWeI6cGFC2UA==}
@@ -1263,6 +1272,10 @@ packages:
     resolution: {integrity: sha512-si7QWI6zUMq56bESFvagtmzMdGOtoxfR+Sez11Mobfc7tm+VkUckk9bW2UeffTGVUbOksxmSw0AA2gs8g71NCQ==}
     engines: {node: '>=12'}
 
+  zigbee-herdsman@11.2.5:
+    resolution: {integrity: sha512-QLRONk/iJSxW1h7V0Dt5swttkIUX8nuVMU1fqiXOArNMEHL/JmlJ760m4r1rkNr3+DqDY2mRP7x5xIBBrT7TBg==}
+    engines: {node: ^22.2.0 || ^24 || <=26.2}
+
   zigbee-on-host@0.3.2:
     resolution: {integrity: sha512-63/Magh42EyUmJsMkCwh56oi1jXGzPj6nFJKIZcFvfDo8ZpUSaW2pmRArW5inhyhLDr4TjpJay7GeH5NpON35g==}
     engines: {node: '>=22.12.0'}
@@ -1553,6 +1566,10 @@ snapshots:
       debug: 4.4.0(supports-color@7.2.0)
     transitivePeerDependencies:
       - supports-color
+
+  '@smlight/zerostack-adapter@0.3.2(zigbee-herdsman@11.2.5(supports-color@7.2.0))':
+    dependencies:
+      zigbee-herdsman: 11.2.5(supports-color@7.2.0)
 
   '@types/chai@5.2.3':
     dependencies:
@@ -2187,5 +2204,19 @@ snapshots:
       ansi-styles: 6.2.3
       string-width: 5.1.2
       strip-ansi: 7.2.0
+
+  zigbee-herdsman@11.2.5(supports-color@7.2.0):
+    dependencies:
+      '@date-fns/tz': 1.5.0
+      '@serialport/bindings-cpp': 13.0.1(supports-color@7.2.0)
+      '@serialport/parser-delimiter': 13.0.0
+      '@serialport/stream': 13.0.0(supports-color@7.2.0)
+      bonjour-service: 1.4.4
+      debounce: 4.0.0
+      fast-deep-equal: 3.1.3
+      slip: 1.0.2
+      zigbee-on-host: 0.3.2
+    transitivePeerDependencies:
+      - supports-color
 
   zigbee-on-host@0.3.2: {}
