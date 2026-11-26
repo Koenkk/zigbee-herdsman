@@ -5391,7 +5391,9 @@ export class Ezsp extends EventEmitter<EmberEzspEventMap> {
             // Shelly custom Clusters require a special profile ID
             apsFrame.profileId === ZSpec.CUSTOM_SHELLY_PROFILE_ID ||
             // Control4 custom Clusters require a special profile ID
-            apsFrame.profileId === ZSpec.CUSTOM_CONTROL4_PROFILE_ID
+            apsFrame.profileId === ZSpec.CUSTOM_CONTROL4_PROFILE_ID ||
+            // Control4 devices find their controller on a second one
+            apsFrame.profileId === ZSpec.CUSTOM_CONTROL4_IDENTITY_PROFILE_ID
         ) {
             this.emit("incomingMessage", type, apsFrame, packetInfo.lastHopLqi, packetInfo.senderShortId, messageContents);
         }

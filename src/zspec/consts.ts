@@ -23,6 +23,8 @@ export const WILDCARD_PROFILE_ID = 0xffff;
 export const CUSTOM_SHELLY_PROFILE_ID = 0xc001;
 /** The profile ID used to access Control4 devices custom clusters. */
 export const CUSTOM_CONTROL4_PROFILE_ID = 0xc25c;
+/** The profile ID Control4 devices use to find their controller (identity reads, check-ins). */
+export const CUSTOM_CONTROL4_IDENTITY_PROFILE_ID = 0xc25d;
 
 /** The default HA endpoint. */
 export const HA_ENDPOINT = 0x01;
