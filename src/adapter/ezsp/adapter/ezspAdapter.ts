@@ -54,7 +54,9 @@ export class EZSPAdapter extends Adapter {
             // Shelly custom Clusters require a special profile ID
             frame.apsFrame.profileId === ZSpec.CUSTOM_SHELLY_PROFILE_ID ||
             // Control4 custom Clusters require a special profile ID
-            frame.apsFrame.profileId === ZSpec.CUSTOM_CONTROL4_PROFILE_ID
+            frame.apsFrame.profileId === ZSpec.CUSTOM_CONTROL4_PROFILE_ID ||
+            // Control4 devices find their controller on a second one
+            frame.apsFrame.profileId === ZSpec.CUSTOM_CONTROL4_IDENTITY_PROFILE_ID
         ) {
             const payload: ZclPayload = {
                 clusterID: frame.apsFrame.clusterId,
