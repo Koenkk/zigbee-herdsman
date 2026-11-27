@@ -1,5 +1,18 @@
 # Changelog
 
+## [11.3.0](https://github.com/Koenkk/zigbee-herdsman/compare/v11.2.5...v11.3.0) (2026-11-27)
+
+
+### Features
+
+* Accept the Control4 identity profile ID on the EZSP adapters ([#1970](https://github.com/Koenkk/zigbee-herdsman/issues/1970)) ([9581210](https://github.com/Koenkk/zigbee-herdsman/commit/95812102712d53088649ccd6081808eb543f079c))
+
+
+### Bug Fixes
+
+* Develco ZHOT201: fix interview failing https://github.com/Koenkk/zigbee2mqtt/issues/4765 ([2974138](https://github.com/Koenkk/zigbee-herdsman/commit/29741381b278b2e504abe133b605ec54683e97d1))
+* Z-Stack: export unaddressed 0xFFFF/0xFFFE AddrMgr entries as null ([#1969](https://github.com/Koenkk/zigbee-herdsman/issues/1969)) ([0fdeafe](https://github.com/Koenkk/zigbee-herdsman/commit/0fdeafef5b02d8a6e10d0ed28d9582d381acb855))
+
 ## [11.2.5](https://github.com/Koenkk/zigbee-herdsman/compare/v11.2.4...v11.2.5) (2026-11-24)
 
 
