@@ -1,7 +1,8 @@
 import {logger} from "../../utils/logger";
 import * as Zcl from "../../zspec/zcl";
 import type {TFoundation} from "../../zspec/zcl/definition/clusters-types";
-import type {CustomClusters} from "../../zspec/zcl/definition/tstype";
+import type {Cluster, CustomClusters} from "../../zspec/zcl/definition/tstype";
+import type {Clusters} from "../model/endpoint";
 import type {ClusterOrRawWriteAttributes, TCustomCluster} from "../tstype";
 
 const NS = "zh:controller:zcl";
@@ -64,4 +65,20 @@ function attributeList(frame: Zcl.Frame, deviceManufacturerID: number | undefine
     return payload;
 }
 
-export {attributeKeyValue, attributeList};
+function attributeDiscovery(
+    cluster: Cluster,
+    attrInfos: Array<{attrId: number; dataType: number; access?: number}>,
+    deviceManufacturerID: number | undefined,
+): Clusters[string]["attributeList"] {
+    const discoveredAttributes: Clusters[string]["attributeList"] = {};
+
+    for (const attrInfo of attrInfos) {
+        const attribute = Zcl.Utils.getClusterAttribute(cluster, attrInfo.attrId, deviceManufacturerID);
+        const attributeKey = attribute?.name ?? String(attrInfo.attrId);
+        discoveredAttributes[attributeKey] = {type: attrInfo.dataType, access: attrInfo.access};
+    }
+
+    return discoveredAttributes;
+}
+
+export {attributeDiscovery, attributeKeyValue, attributeList};

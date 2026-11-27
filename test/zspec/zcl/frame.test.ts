@@ -659,7 +659,7 @@ describe("ZCL Frame", () => {
 
     it("Writes & Reads oneof strategy", () => {
         const expected = {
-            discComplete: 123,
+            discComplete: true,
             attrInfos: [
                 {attrId: 32, dataType: Zcl.DataType.UINT16},
                 {attrId: 67, dataType: Zcl.DataType.ARRAY},

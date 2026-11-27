@@ -622,7 +622,7 @@ describe("Foundation", () => {
             "discoverRsp",
             "genOnOff",
             {
-                discComplete: 1,
+                discComplete: true,
                 attrInfos: [
                     {attrId: Zcl.Clusters.genOnOff.attributes.onOff.ID, dataType: Zcl.Clusters.genOnOff.attributes.onOff.type},
                     {attrId: Zcl.Clusters.genOnOff.attributes.globalSceneCtrl.ID, dataType: Zcl.Clusters.genOnOff.attributes.globalSceneCtrl.type},
@@ -836,7 +836,7 @@ describe("Foundation", () => {
             "discoverCommandsRsp",
             "genOnOff",
             {
-                discComplete: 1,
+                discComplete: true,
                 commandIds: [Zcl.Clusters.genOnOff.commands.off.ID, Zcl.Clusters.genOnOff.commands.on.ID],
             },
             {},
@@ -854,6 +854,22 @@ describe("Foundation", () => {
                 payload: DISCOVER_COMMANDS_RSP_FRAME.payload,
                 cluster: {name: "genOnOff"},
             });
+        });
+
+        it("writes an incomplete discovery response", () => {
+            const frame = Zcl.Frame.create(
+                Zcl.FrameType.GLOBAL,
+                Zcl.Direction.SERVER_TO_CLIENT,
+                true,
+                undefined,
+                10,
+                "discoverCommandsRsp",
+                "genOnOff",
+                {discComplete: false, commandIds: [Zcl.Clusters.genOnOff.commands.off.ID]},
+                {},
+            );
+
+            expect(frame.toBuffer()).toStrictEqual(Buffer.from([0x18, 0x0a, 0x12, 0x00, 0x00]));
         });
     });
 
@@ -898,7 +914,7 @@ describe("Foundation", () => {
             "discoverCommandsGenRsp",
             "genOnOff",
             {
-                discComplete: 1,
+                discComplete: true,
                 commandIds: [Zcl.Clusters.genOnOff.commands.off.ID, Zcl.Clusters.genOnOff.commands.on.ID],
             },
             {},
@@ -916,6 +932,22 @@ describe("Foundation", () => {
                 payload: DISCOVER_COMMANDS_GEN_RSP_FRAME.payload,
                 cluster: {name: "genOnOff"},
             });
+        });
+
+        it("writes an incomplete generated discovery response", () => {
+            const frame = Zcl.Frame.create(
+                Zcl.FrameType.GLOBAL,
+                Zcl.Direction.SERVER_TO_CLIENT,
+                true,
+                undefined,
+                10,
+                "discoverCommandsGenRsp",
+                "genOnOff",
+                {discComplete: false, commandIds: [Zcl.Clusters.genOnOff.commands.off.ID]},
+                {},
+            );
+
+            expect(frame.toBuffer()).toStrictEqual(Buffer.from([0x18, 0x0a, 0x14, 0x00, 0x00]));
         });
     });
 
@@ -960,7 +992,7 @@ describe("Foundation", () => {
             "discoverExtRsp",
             "genOnOff",
             {
-                discComplete: 1,
+                discComplete: true,
                 attrInfos: [
                     {attrId: Zcl.Clusters.genOnOff.attributes.onOff.ID, dataType: Zcl.Clusters.genOnOff.attributes.onOff.type, access: 1},
                     {

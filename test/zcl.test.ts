@@ -573,7 +573,7 @@ describe("Zcl", () => {
         );
 
         const payload = {
-            discComplete: 0,
+            discComplete: false,
             attrInfos: [
                 {attrId: 32, dataType: 32},
                 {attrId: 33, dataType: 32},
@@ -1497,7 +1497,7 @@ describe("Zcl", () => {
     it("ZclFrame to buffer discoverRsp", () => {
         const expected = Buffer.from([24, 23, 13, 0, 32, 0, 32, 33, 0, 32, 49, 0, 48, 51, 0, 32, 53, 0, 24]);
         const payload = {
-            discComplete: 0,
+            discComplete: false,
             attrInfos: [
                 {attrId: 32, dataType: 32},
                 {attrId: 33, dataType: 32},

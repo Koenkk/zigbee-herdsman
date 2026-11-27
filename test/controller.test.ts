@@ -3604,6 +3604,7 @@ describe("Controller", () => {
                             attributes: {
                                 modelId: "lumi.occupancy",
                             },
+                            attributeList: {},
                         },
                     },
                     inputClusters: [],
@@ -3666,6 +3667,7 @@ describe("Controller", () => {
                             attributes: {
                                 modelId: "lumi.occupancy",
                             },
+                            attributeList: {},
                         },
                     },
                     inputClusters: [],
@@ -6963,7 +6965,7 @@ describe("Controller", () => {
                     outputClusters: [0, 3, 4, 6, 8, 5],
                     profileID: 49246,
                     ID: 1,
-                    clusters: {genBasic: {dir: {value: 3}, attributes: {modelId: "RWL021"}}},
+                    clusters: {genBasic: {dir: {value: 3}, attributes: {modelId: "RWL021"}, attributeList: {}}},
                     deviceIeeeAddress: "0x0017880104e45517",
                     deviceNetworkAddress: 6538,
                     _binds: [{type: "endpoint", endpointID: 1, deviceIeeeAddr: "0x000b57fffec6a5b2"}],
@@ -9725,6 +9727,257 @@ describe("Controller", () => {
         mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
 
         await endpoint.zclCommand("genOnOff", "discover", {startAttrId: 1, maxAttrIds: 255});
+    });
+
+    it("Migrate legacy endpoint attribute cache", () => {
+        const endpoint = Endpoint.fromDatabaseRecord(
+            {
+                epId: 1,
+                inClusterList: [],
+                outClusterList: [],
+                clusters: {genOnOff: {attributes: {onOff: 1}}},
+            },
+            129,
+            "0x129",
+        );
+
+        expect(endpoint.clusters.genOnOff).toStrictEqual({attributes: {onOff: 1}, attributeList: {}});
+    });
+
+    it("Ignores empty attribute discovery lists", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+
+        endpoint.saveClusterAttributeDiscovery("genOnOff", []);
+
+        expect(endpoint.clusters.genOnOff).toBeUndefined();
+    });
+
+    it("Caches unknown discovered attributes by numeric ID fallback", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+
+        endpoint.saveClusterAttributeDiscovery("genOnOff", [{attrId: 0xffff, dataType: Zcl.DataType.BOOLEAN}]);
+
+        expect(endpoint.clusters.genOnOff.attributeList["65535"]).toStrictEqual({type: Zcl.DataType.BOOLEAN, access: undefined});
+    });
+
+    it("Updates existing discovered attribute cache entries", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+
+        endpoint.saveClusterAttributeDiscovery("genOnOff", [{attrId: 0xffff, dataType: Zcl.DataType.BOOLEAN, access: 1}]);
+        const entry = endpoint.clusters.genOnOff.attributeList["65535"];
+
+        endpoint.saveClusterAttributeDiscovery("genOnOff", [{attrId: 0xffff, dataType: Zcl.DataType.UINT8, access: 3}]);
+
+        expect(endpoint.clusters.genOnOff.attributeList["65535"]).toBe(entry);
+        expect(entry).toStrictEqual({type: Zcl.DataType.UINT8, access: 3});
+    });
+
+    it.each([false, true])("Discover attributes (extended: %s)", async (extended) => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+        mocksendZclFrameToEndpoint.mockClear();
+        const cluster = Zcl.Clusters.genOnOff;
+        const frames = [
+            Zcl.Frame.create(
+                Zcl.FrameType.GLOBAL,
+                Zcl.Direction.SERVER_TO_CLIENT,
+                true,
+                undefined,
+                10,
+                extended ? "discoverExtRsp" : "discoverRsp",
+                cluster.ID,
+                {
+                    discComplete: false,
+                    attrInfos: [extended ? {attrId: 0, dataType: Zcl.DataType.BOOLEAN, access: 1} : {attrId: 0, dataType: Zcl.DataType.BOOLEAN}],
+                },
+                {},
+            ),
+            Zcl.Frame.create(
+                Zcl.FrameType.GLOBAL,
+                Zcl.Direction.SERVER_TO_CLIENT,
+                true,
+                undefined,
+                11,
+                extended ? "discoverExtRsp" : "discoverRsp",
+                cluster.ID,
+                {
+                    discComplete: true,
+                    attrInfos: [
+                        extended ? {attrId: 0x4000, dataType: Zcl.DataType.UINT8, access: 3} : {attrId: 0x4000, dataType: Zcl.DataType.UINT8},
+                    ],
+                },
+                {},
+            ),
+        ];
+        mocksendZclFrameToEndpoint
+            .mockReturnValueOnce({clusterID: cluster.ID, header: frames[0].header, data: frames[0].toBuffer()})
+            .mockReturnValueOnce({clusterID: cluster.ID, header: frames[1].header, data: frames[1].toBuffer()});
+
+        await expect(endpoint.discoverAttributes("genOnOff", extended, undefined, 0)).resolves.toStrictEqual(
+            extended
+                ? {
+                      onOff: {type: Zcl.DataType.BOOLEAN, access: 1},
+                      globalSceneCtrl: {type: Zcl.DataType.UINT8, access: 3},
+                  }
+                : {
+                      onOff: {type: Zcl.DataType.BOOLEAN, access: undefined},
+                      globalSceneCtrl: {type: Zcl.DataType.UINT8, access: undefined},
+                  },
+        );
+
+        for (const frame of frames) {
+            await mockAdapterEvents.zclPayload({
+                wasBroadcast: false,
+                address: 129,
+                clusterID: frame.cluster.ID,
+                data: frame.toBuffer(),
+                header: frame.header,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 0,
+            });
+        }
+
+        expect(mocksendZclFrameToEndpoint.mock.calls[0][3].payload).toStrictEqual({startAttrId: 0, maxAttrIds: 255});
+        expect(mocksendZclFrameToEndpoint.mock.calls[1][3].payload).toStrictEqual({startAttrId: 1, maxAttrIds: 255});
+        expect(endpoint.clusters.genOnOff.attributeList).toMatchObject({
+            onOff: {access: extended ? 1 : undefined},
+            globalSceneCtrl: {access: extended ? 3 : undefined},
+        });
+    });
+
+    it("Caches incoming basic and extended discovery responses", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+        const responses = [
+            Zcl.Frame.create(
+                Zcl.FrameType.GLOBAL,
+                Zcl.Direction.SERVER_TO_CLIENT,
+                true,
+                undefined,
+                10,
+                "discoverRsp",
+                Zcl.Clusters.genOnOff.ID,
+                {discComplete: true, attrInfos: [{attrId: 0, dataType: Zcl.DataType.BOOLEAN}]},
+                {},
+            ),
+            Zcl.Frame.create(
+                Zcl.FrameType.GLOBAL,
+                Zcl.Direction.SERVER_TO_CLIENT,
+                true,
+                undefined,
+                11,
+                "discoverExtRsp",
+                Zcl.Clusters.genLevelCtrl.ID,
+                {discComplete: true, attrInfos: [{attrId: 0, dataType: Zcl.DataType.UINT8, access: 3}]},
+                {},
+            ),
+        ];
+
+        for (const response of responses) {
+            await mockAdapterEvents.zclPayload({
+                wasBroadcast: false,
+                address: 129,
+                clusterID: response.cluster.ID,
+                data: response.toBuffer(),
+                header: response.header,
+                endpoint: 1,
+                linkquality: 50,
+                groupID: 0,
+            });
+        }
+
+        expect(endpoint.clusters.genOnOff.attributeList.onOff).toStrictEqual({type: Zcl.DataType.BOOLEAN, access: undefined});
+        expect(endpoint.clusters.genLevelCtrl.attributeList.currentLevel).toStrictEqual({type: Zcl.DataType.UINT8, access: 3});
+    });
+
+    it("Runs normal discovery with an explicit options object", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+        mocksendZclFrameToEndpoint.mockClear();
+
+        const response = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            10,
+            "discoverRsp",
+            Zcl.Clusters.genOnOff.ID,
+            {discComplete: true, attrInfos: [{attrId: 0, dataType: Zcl.DataType.BOOLEAN}]},
+            {},
+        );
+        mocksendZclFrameToEndpoint.mockReturnValueOnce({
+            clusterID: response.cluster.ID,
+            header: response.header,
+            data: response.toBuffer(),
+        });
+
+        await expect(endpoint.discoverAttributes("genOnOff", false, {}, 0, 0xff)).resolves.toStrictEqual({
+            onOff: {type: Zcl.DataType.BOOLEAN, access: undefined},
+        });
+        expect(mocksendZclFrameToEndpoint).toHaveBeenCalledTimes(1);
+        expect(mocksendZclFrameToEndpoint.mock.calls[0][3].command.name).toBe("discover");
+    });
+
+    it("Stops discovery on other failures and guards against non-progressing pages", async () => {
+        await controller.start();
+        await mockAdapterEvents.deviceJoined({networkAddress: 129, ieeeAddr: "0x129"});
+        const endpoint = controller.getDeviceByIeeeAddr("0x129")!.getEndpoint(1)!;
+        mocksendZclFrameToEndpoint.mockClear();
+
+        mocksendZclFrameToEndpoint.mockReturnValueOnce(null);
+        await expect(endpoint.discoverAttributes("genOnOff")).rejects.toThrow("No response received");
+
+        const failureResponse = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            10,
+            "defaultRsp",
+            Zcl.Clusters.genOnOff.ID,
+            {cmdId: Zcl.Foundation.discover.ID, statusCode: Zcl.Status.FAILURE},
+            {},
+        );
+        mocksendZclFrameToEndpoint.mockReturnValueOnce({
+            clusterID: failureResponse.cluster.ID,
+            header: failureResponse.header,
+            data: failureResponse.toBuffer(),
+        });
+
+        await expect(endpoint.discoverAttributes("genOnOff")).rejects.toThrow(new Zcl.StatusError(Zcl.Status.FAILURE));
+        expect(endpoint.clusters.genOnOff).toBeUndefined();
+
+        const incompletePage = Zcl.Frame.create(
+            Zcl.FrameType.GLOBAL,
+            Zcl.Direction.SERVER_TO_CLIENT,
+            true,
+            undefined,
+            11,
+            "discoverRsp",
+            Zcl.Clusters.genOnOff.ID,
+            {discComplete: false, attrInfos: [{attrId: 0xffff, dataType: Zcl.DataType.BOOLEAN}]},
+            {},
+        );
+        mocksendZclFrameToEndpoint.mockReturnValueOnce({
+            clusterID: incompletePage.cluster.ID,
+            header: incompletePage.header,
+            data: incompletePage.toBuffer(),
+        });
+
+        await expect(endpoint.discoverAttributes("genOnOff")).resolves.toStrictEqual({
+            "65535": {type: Zcl.DataType.BOOLEAN, access: undefined},
+        });
     });
 
     it("zclCommand with cluster/command objects", async () => {
