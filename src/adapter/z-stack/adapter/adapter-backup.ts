@@ -14,6 +14,7 @@ import type {AdapterNvMemory} from "./adapter-nv-memory";
 import {ZnpVersion} from "./tstype";
 
 const NS = "zh:zstack:backup";
+const INVALID_NODE_ADDR = 0xfffe;
 
 /**
  * Class providing ZNP adapter backup and restore procedures based mostly on NV memory manipulation.
@@ -201,7 +202,7 @@ export class AdapterBackup {
                             }
                         }
                         return {
-                            networkAddress: ame.nwkAddr,
+                            networkAddress: ame.nwkAddr === NULL_NODE_ID || ame.nwkAddr === INVALID_NODE_ADDR ? null : ame.nwkAddr,
                             ieeeAddress: ame.extAddr,
                             isDirectChild: (ame.user & AddressManagerUser.Assoc) > 0,
                             linkKey: !linkKeyInfo ? undefined : linkKeyInfo,

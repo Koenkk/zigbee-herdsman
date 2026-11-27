@@ -1803,6 +1803,27 @@ describe("zstack-adapter", () => {
         });
     });
 
+    it("should create backup with 3.x.0 adapter - unaddressed address manager entries as null", async () => {
+        const backupFile = getTempFile();
+        fs.writeFileSync(backupFile, JSON.stringify(backupMatchingConfig), "utf8");
+        adapter = new ZStackAdapter(networkOptions, transportOptions, backupFile, {concurrent: 3});
+        mockZnpRequestWith(empty3x0AlignedRequestMock);
+        expect(await adapter.start()).toBe("restored");
+        await mockZnpRequest(Subsystem.SYS, "nvWrite", {
+            sysid: NvSystemIds.ZSTACK,
+            itemid: NvItemsIds.ZCD_NV_EX_ADDRMGR,
+            subid: 0,
+            offset: 0,
+            value: Buffer.from("01fffeff87ef2622004b1200", "hex"),
+        });
+
+        const backup = await adapter.backup([]);
+        const findDevice = (ieee: string) => backup.devices.find((d) => d.ieeeAddress.toString("hex") === ieee);
+        expect(findDevice("00124b002226ef87")?.networkAddress).toBeNull();
+        expect(findDevice("04cf8cdf3c79455f")?.networkAddress).toBe(0xc2dc);
+        expect(findDevice("00158d00024f810e")?.networkAddress).toBeNull();
+    });
+
     it("should restore unified backup with 3.x.0 adapter - skip keyless non-child device", async () => {
         const backupFile = getTempFile();
         const backup = JSON.parse(JSON.stringify(backupMatchingConfig));
