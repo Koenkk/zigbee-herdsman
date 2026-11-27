@@ -972,6 +972,7 @@ export class Device extends Entity<ControllerEventMap> {
             "SNZB-01": {}, // iAS enroll fails: https://github.com/Koenkk/zigbee2mqtt/issues/29474
             "3011": {type: "EndDevice", powerSource: Zcl.PowerSource.Battery}, // NYCE NCZ-3011-HA fails IAS CIE address write during interview: https://github.com/Koenkk/zigbee2mqtt/issues/32480
             "Smart Siren": {manufacturerName: "AduroSmart Eria"}, // iAS enroll fails: https://github.com/Koenkk/zigbee2mqtt/issues/32839
+            "^ZHOT[12]01": {}, // Develco, iAS enroll fails (zoneState UNSUPPORTED_ATTRIBUTE): https://github.com/Koenkk/zigbee2mqtt/issues/4765
         };
 
         let match: string | undefined;
