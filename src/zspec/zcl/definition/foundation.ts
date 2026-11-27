@@ -548,12 +548,12 @@ export const Foundation = {
             const attrInfos: {attrId: number; dataType: number}[] = [];
             const payload: {discComplete: boolean; attrInfos: typeof attrInfos} = {discComplete, attrInfos};
 
-            do {
+            while (buffalo.isMore()) {
                 const attrId = buffalo.readUInt16();
                 const dataType = buffalo.readUInt8();
 
                 attrInfos.push({attrId, dataType});
-            } while (buffalo.isMore());
+            }
 
             return payload;
         },
@@ -707,11 +707,11 @@ export const Foundation = {
             const commandIds: number[] = [];
             const payload: {discComplete: boolean; commandIds: typeof commandIds} = {discComplete, commandIds};
 
-            do {
+            while (buffalo.isMore()) {
                 const commandId = buffalo.readUInt8();
 
                 commandIds.push(commandId);
-            } while (buffalo.isMore());
+            }
 
             return payload;
         },
@@ -755,11 +755,11 @@ export const Foundation = {
             const commandIds: number[] = [];
             const payload: {discComplete: boolean; commandIds: typeof commandIds} = {discComplete, commandIds};
 
-            do {
+            while (buffalo.isMore()) {
                 const commandId = buffalo.readUInt8();
 
                 commandIds.push(commandId);
-            } while (buffalo.isMore());
+            }
 
             return payload;
         },
@@ -804,13 +804,13 @@ export const Foundation = {
             const attrInfos: {attrId: number; dataType: number; access: number}[] = [];
             const payload: {discComplete: boolean; attrInfos: typeof attrInfos} = {discComplete, attrInfos};
 
-            do {
+            while (buffalo.isMore()) {
                 const attrId = buffalo.readUInt16();
                 const dataType = buffalo.readUInt8();
                 const access = buffalo.readUInt8();
 
                 attrInfos.push({attrId, dataType, access});
-            } while (buffalo.isMore());
+            }
 
             return payload;
         },
